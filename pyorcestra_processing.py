@@ -6,7 +6,7 @@ from orcestra.postprocess.level1 import (
     filter_radiometer,
     filter_radar,
     correct_radar_height,
-    coarsen_radiometer,
+    resample_radiometer,
 )
 from plot_functions import produce_hourly_hamp_ql, hamp_ql
 
@@ -36,15 +36,9 @@ ds_183_lev0 = ds_183.pipe(radiometer)
 ds_kv_lev0 = ds_kv.pipe(radiometer)
 
 # %% produce level1 data
-ds_11990_lev1 = ds_11990_lev0.pipe(filter_radiometer, ds_bahamas_lev0).pipe(
-    coarsen_radiometer
-)
-ds_183_lev1 = ds_183_lev0.pipe(filter_radiometer, ds_bahamas_lev0).pipe(
-    coarsen_radiometer
-)
-ds_kv_lev1 = ds_kv_lev0.pipe(filter_radiometer, ds_bahamas_lev0).pipe(
-    coarsen_radiometer
-)
+ds_11990_lev1 = ds_11990_lev0.pipe(filter_radiometer, ds_bahamas_lev0)
+ds_183_lev1 = ds_183_lev0.pipe(filter_radiometer, ds_bahamas_lev0)
+ds_kv_lev1 = ds_kv_lev0.pipe(filter_radiometer, ds_bahamas_lev0)
 ds_radar_lev1 = ds_radar_lev0.pipe(filter_radar, ds_bahamas_lev0).pipe(
     correct_radar_height, ds_bahamas_lev0
 )
@@ -71,3 +65,5 @@ fig.savefig(
 produce_hourly_hamp_ql(
     ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1, "20200218"
 )
+
+# %%
