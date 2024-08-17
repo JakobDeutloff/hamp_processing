@@ -9,20 +9,20 @@ from orcestra.postprocess.level1 import (
 )
 from src.plot_functions import produce_hourly_hamp_ql, hamp_ql
 from src.helper_functions import read_planet
-import numpy as np
-import matplotlib.pyplot as plt
 
 # %% define data directories
 flight = "RF01_20240811"
 date = "240811"
+radar_file = "20240811_1215.nc"
+
 path_planet = "/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/planet_data/2024-08-16-TE03124060001-IWG1.csv"
 path_radiometer = f"/Volumes/Upload/HALO/Radiometer/{flight}"
-path_radar = f"/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Radar_Data/RF01_20{date}/20{date}_1215.nc"
+path_radar = f"/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Radar_Data/{flight}/{radar_file}"
 path_bahamas = (
     f"/Volumes/ORCESTRA/HALO-20{date}a/bahamas/QL_HALO-20{date}a_BAHAMAS_V01.nc"
 )
 
-# %% read  level 0 data
+# %% read data and do level0 processing
 ds_planet = read_planet(path_planet)
 ds_bahamas = xr.open_dataset(path_bahamas).pipe(bahamas)
 ds_radar_lev0 = xr.open_dataset(path_radar).pipe(radar)
@@ -31,7 +31,7 @@ ds_11990_lev0 = xr.open_dataset(f"{path_radiometer}/11990/{date}.BRT.NC").pipe(
     radiometer
 )
 ds_kv_lev0 = xr.open_dataset(f"{path_radiometer}/KV/{date}.BRT.NC").pipe(radiometer)
-# %% produce level1 data
+# %% level1 processing
 ds_radar_lev1 = ds_radar_lev0.pipe(filter_radar, ds_bahamas["IRS_PHI"]).pipe(
     correct_radar_height,
     ds_bahamas["IRS_PHI"],
@@ -54,8 +54,9 @@ fig, ax = hamp_ql(
     ds_11990_lev1,
     ds_183_lev1,
     ds_kv_lev1,
-    timeframe=slice(ds_radar_lev1.time[0].values, ds_radar_lev1.time[-1].values),
+    timeframe=slice(ds_183_lev1.time[0].values, ds_183_lev1.time[-1].values),
     flight=flight,
+    figsize=(18, 18)
 )
 fig.savefig(f"quicklooks/hamp/{flight}/hamp_ql_{flight}.png", dpi=500)
 

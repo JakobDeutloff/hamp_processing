@@ -211,7 +211,7 @@ def produce_hourly_hamp_ql(ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1
     """
 
     # make new directory for this flight
-    os.makedirs(f"quicklooks/{flightname}", exist_ok=True)
+    os.makedirs(f"quicklooks/hamp/{flightname}", exist_ok=True)
 
     # Round start and end times to full hour
     start_time = pd.Timestamp(ds_183_lev1.time[0].values).floor('H')
