@@ -32,6 +32,14 @@ def save_figure(fig, format, savename, dpi):
         raise ValueError("Figure format unknown, please choose 'pdf' or 'png'")
 
 
+def add_earthcare_underpass(ax, ec_under_time):
+    color = "r"
+    ax.axvline(ec_under_time, color=color, linestyle="--", linewidth=1.0)
+
+    x, y = ec_under_time, ax.get_ylim()[1]
+    ax.annotate("EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
+
+
 def hamp_timeslice_quicklook(
     hampdata: PostProcessedHAMPData,
     timeframe,
@@ -51,6 +59,8 @@ def hamp_timeslice_quicklook(
         Timeframe to plot.
     flight : str, optional
         name of flight, e.g. "RF01_20240811"
+    ec_under_time: Time, Optional
+        time of earthcare underpass
     figsize : tuple, optional
         Figure size in inches, by default (10, 14)
     savefigparams : tuple, optional
@@ -106,7 +116,7 @@ def hamp_timeslice_quicklook(
         ax.set_title("")
         ax.spines[["top", "right"]].set_visible(False)
         if ec_under_time:
-            ax.axvline(ec_under_time, color="r", linestyle="--", linewidth=1.0)
+            add_earthcare_underpass(ax, ec_under_time)
 
     fig.suptitle(f"HAMP {flight}", y=0.92)
 
@@ -233,6 +243,7 @@ def radar_quicklook(
     hampdata: PostProcessedHAMPData,
     timeframe,
     flight=None,
+    ec_under_time=None,
     figsize=(9, 5),
     savefigparams=[None, None, None],
 ):
@@ -247,6 +258,8 @@ def radar_quicklook(
         Timeframe to plot.
     flight : str, optional
         name of flight, e.g. "RF01_20240811"
+    ec_under_time: Time, Optional
+        time of earthcare underpass
     figsize : tuple, optional
         Figure size in inches, by default (10, 14)
     savefigparams : tuple, optional
@@ -269,6 +282,8 @@ def radar_quicklook(
     plot_radar_timeseries(ds_radar_plot, fig, axes[0], None)
     axes[0].set_xlabel("")
     axes[0].set_title("Timeseries")
+    if ec_under_time:
+        add_earthcare_underpass(axes[0], ec_under_time)
 
     signal_range = [-30, 30]
     plot_radar_histogram(ds_radar_plot, axes[1], signal_range=signal_range)
