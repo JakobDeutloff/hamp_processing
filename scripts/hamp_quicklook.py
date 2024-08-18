@@ -43,7 +43,7 @@ ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
 
 # %% produce HAMP single quicklook between startime and endtime
 starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
-is_savefig = True
+is_savefig = "png"
 savename = f"{savedir}/hamp_timesliceql_{flight}.png"
 dpi = 500
 plotql.hamp_timeslice_quicklook(
@@ -57,20 +57,20 @@ plotql.hamp_timeslice_quicklook(
 
 # %% produce radar-only single quicklook between startime and endtime
 starttime, endtime = hampdata.radar.time[0].values, hampdata.radar.time[-1].values
-is_savefig = True
+is_savefig = "png"
 savename = f"{savedir}/radar_timesliceql_{flight}.png"
 dpi = 500
 plotql.radar_quicklook(
     hampdata,
     timeframe=slice(starttime, endtime),
     flight=flight,
-    figsize=(9, 5),
+    figsize=(12, 6),
     savefigparams=[is_savefig, savename, dpi],
 )
 
 # %% produce radiometer-only single quicklook between startime and endtime
 starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
-is_savefig = True
+is_savefig = "png"
 savename = f"{savedir}/radiometers_timesliceql_{flight}.png"
 dpi = 500
 plotql.radiometer_quicklook(
@@ -87,9 +87,9 @@ start_hour = pd.Timestamp(hampdata["183"].time[0].values).floor(
 end_hour = pd.Timestamp(hampdata["183"].time[-1].values).ceil(
     "h"
 )  # Round end time to full hour
-is_savepdf = False
+is_savefig = "png"
+savename = f"{savedir}/radiometers_timesliceql_{flight}.pdf"
+dpi = 500
 plotql.hamp_hourly_quicklooks(
-    hampdata, flight, start_hour, end_hour, saveparams=[is_savepdf, savedir]
+    hampdata, flight, start_hour, end_hour, savefigparams=[is_savefig, savedir, dpi]
 )
-
-# %%
