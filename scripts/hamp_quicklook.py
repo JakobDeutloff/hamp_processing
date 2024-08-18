@@ -7,23 +7,26 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pandas as pd
 from src import plot_quicklooks as plotql
 from src import load_data_functions as loadfuncs
+import yaml
 
 # %%
 ### ----------- USER PARAMETERS YOU MUST SET ----------- ###
-# flight name, date and letter (for data paths below)
-flight = "RF01_20240811"
-date = "20240811"
-flightletter = "a"
+# Load configuration from YAML file
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
 
-# paths to flight data (choose either planet or bahamas and set `is_planet` boolean accordingly)
-is_planet = False
-path_bahamas = f"/Volumes/ORCESTRA/HALO-{date}{flightletter}/bahamas/QL_HALO-{date}{flightletter}_BAHAMAS_V01.nc"
-# path_planet = "/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/planet_data/2024-08-16-TE03124060001-IWG1.csv"
-path_radiometer = f"/Volumes/ORCESTRA/HALO-{date}{flightletter}/radiometer"
-path_radar = f"/Users/yoctoyotta1024/Documents/c1_springsummer2024/orcestra/radar_data/{flight}/*.nc"
+# Extract parameters from the configuration
+flight = config["flight"]
+date = config["date"]
+flightletter = config["flightletter"]
+is_planet = config["is_planet"]
 
-# path to directory to save quicklook .png and/or .pdf figures inside
-savedir = f"/Users/yoctoyotta1024/Documents/c1_springsummer2024/orcestra/hamp_processing/quicklooks/{flight}"
+# Format paths using the extracted parameters
+path_bahamas = config["paths"]["bahamas"].format(date=date, flightletter=flightletter)
+path_radiometer = config["paths"]["radiometer"].format(date=date, flightletter=flightletter)
+path_radar = config["paths"]["radar"].format(flight=flight)
+savedir = config["savedir"].format(flight=flight)
+
 ### ---------------------------------------------------- ###
 
 # %% create HAMP post-processed data
