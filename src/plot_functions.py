@@ -1,9 +1,6 @@
-import os
 import matplotlib.pyplot as plt
-import xarray as xr
-import matplotlib.cm as cm
 import matplotlib.colors as mcolors
-import pandas as pd
+import numpy as np
 
 
 def plot_radiometer_timeseries(ds, ax, is_90=False):
@@ -42,7 +39,7 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
     ax.set_ylabel("TB / K")
 
 
-def plot_radar_timeseries(ds, fig, ax):
+def plot_radar_timeseries(ds, fig, ax, cax, cmap="plasma"):
     """WIP 15:41 UTC"""
 
     # check if radar data is available
@@ -60,11 +57,42 @@ def plot_radar_timeseries(ds, fig, ax):
             ds.time,
             ds.height / 1e3,
             ds.dBZg.where(ds.dBZg > -25).T,
-            cmap="turbo",
+            cmap=cmap,
             vmin=-25,
             vmax=25,
         )
-        cax = fig.add_axes([0.84, 0.63, 0.02, 0.25])
-        cb = fig.colorbar(pcol, cax=cax, label="dBZe", extend="max")
+        if cax:
+            fig.colorbar(pcol, cax=cax, label="Reflectivity /dBZe", extend="max")
+        else:
+            fig.colorbar(pcol, ax=ax, label="Reflectivity /dBZe", extend="max")
 
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Height / km")
+
+
+def plot_radar_histogram(ds, ax, signal_range=[], height_range=[], cmap="magma_r"):
+    # get data in correct format for 2D histogram
+    height = np.meshgrid(ds.height, ds.time)[0].flatten() / 1e3  # [km]
+    signal = ds.dBZg.where(ds.dBZg > -25).values.flatten()  # [dBZ]
+
+    # remove nan data
+    height = height[~np.isnan(signal)]
+    signal = signal[~np.isnan(signal)]
+
+    # set histogram parameters
+    if height_range == []:
+        height_range = [0.0, height.max()]
+    if signal_range == []:
+        signal_range = [signal.min(), signal.max()]
+
+    # plot 2D histogram
+    ax.hist2d(
+        signal,
+        height,
+        range=[signal_range, height_range],
+        bins=[len(ds.height), 60],
+        cmap=cmap,
+    )
+
+    ax.set_xlabel("reflectivity, Z /dBZe")
     ax.set_ylabel("Height / km")
