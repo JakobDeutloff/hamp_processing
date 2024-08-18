@@ -42,10 +42,13 @@ track = helpfuncs.get_earthcare_track(config["date"])
 
 # %% find time when earthcare crosses halo
 ec_under_time = helpfuncs.find_crossing_time(track, hampdata.flightdata)
+plot_duration = pd.Timedelta("30m")
+starttime, endtime = (
+    ec_under_time - plot_duration / 2,
+    ec_under_time + plot_duration / 2,
+)
 
 # %% produce ec_under single quicklook
-windowsize = pd.Timedelta("30m")
-starttime, endtime = ec_under_time - windowsize / 2, ec_under_time + windowsize / 2
 is_savefig = True
 savename = f"{savedir}/ec_under_{flight}.png"
 dpi = 500
@@ -58,9 +61,7 @@ plotql.hamp_timeslice_quicklook(
     savefigparams=[is_savefig, savename, dpi],
 )
 
-# %% produce radar-only single quicklook between startime and endtime
-windowsize = pd.Timedelta("30m")
-starttime, endtime = ec_under_time - windowsize / 2, ec_under_time + windowsize / 2
+# %% produce radar-only ec_under single quicklook
 is_savefig = True
 savename = f"{savedir}/radar_timesliceql_{flight}.png"
 dpi = 500
