@@ -5,7 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import pandas as pd
 
-from .plot_functions import plot_radiometer
+from .plot_functions import plot_radiometer_timeseries, plot_radar_timeseries
 from .post_processed_hamp_data import PostProcessedHAMPData
 
 
@@ -56,64 +56,35 @@ def hamp_timeslice_quicklook(
 
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
-
-    # check if radar data is available
-    if ds_radar_plot.dBZg.size == 0:
-        axes[0].text(
-            0.5,
-            0.5,
-            "No radar data available",
-            ha="center",
-            va="center",
-            transform=axes[0].transAxes,
-        )
-    else:
-        pcol = axes[0].pcolormesh(
-            ds_radar_plot.time,
-            ds_radar_plot.height / 1e3,
-            ds_radar_plot.dBZg.where(ds_radar_plot.dBZg > -25).T,
-            cmap="turbo",
-            vmin=-25,
-            vmax=25,
-        )
-        cax = fig.add_axes([0.84, 0.63, 0.02, 0.25])
-        cb = fig.colorbar(pcol, cax=cax, label="dBZe", extend="max")
-
-    axes[0].set_ylabel("Height / km")
+    plot_radar_timeseries(ds_radar_plot, fig, axes[0])
     fig.subplots_adjust(right=0.8)
 
     # plot K-Band radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)),
         axes[1],
     )
 
     # plot V-Band radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[2]
     )
 
     # plot 90 GHz radiometer
-    hampdata.radio11990["TBs"].sel(time=timeframe, frequency=90).plot.line(
-        ax=axes[3], x="time", color="k"
+    plot_radiometer_timeseries(
+        hampdata.radio11990["TBs"].sel(time=timeframe, frequency=90),
+        axes[3],
+        is_90=True,
     )
-    axes[3].legend(
-        handles=axes[3].lines,
-        labels=["90 GHz"],
-        loc="center left",
-        bbox_to_anchor=(1, 0.5),
-        frameon=False,
-    )
-    axes[3].set_ylabel("TB / K")
 
     # plot 119 GHz radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata.radio11990["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)),
         axes[4],
     )
 
     # plot 183 GHz radiometer
-    plot_radiometer(hampdata.radio183["TBs"].sel(time=timeframe), axes[5])
+    plot_radiometer_timeseries(hampdata.radio183["TBs"].sel(time=timeframe), axes[5])
 
     for ax in axes:
         ax.set_xlabel("")
@@ -196,36 +167,28 @@ def radiometer_quicklook(
     fig, axes = plt.subplots(5, 1, figsize=figsize, sharex="col")
 
     # plot K-Band radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata["kv"]["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)), axes[0]
     )
 
     # plot V-Band radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata["kv"]["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[1]
     )
 
     # plot 90 GHz radiometer
-    hampdata["11990"]["TBs"].sel(time=timeframe, frequency=90).plot.line(
-        ax=axes[2], x="time", color="k"
+    plot_radiometer_timeseries(
+        hampdata["11990"]["TBs"].sel(time=timeframe, frequency=90), axes[2], is_90=True
     )
-    axes[2].legend(
-        handles=axes[2].lines,
-        labels=["90 GHz"],
-        loc="center left",
-        bbox_to_anchor=(1, 0.5),
-        frameon=False,
-    )
-    axes[2].set_ylabel("TB / K")
 
     # plot 119 GHz radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata["11990"]["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)),
         axes[3],
     )
 
     # plot 183 GHz radiometer
-    plot_radiometer(hampdata["183"]["TBs"].sel(time=timeframe), axes[4])
+    plot_radiometer_timeseries(hampdata["183"]["TBs"].sel(time=timeframe), axes[4])
 
     for ax in axes:
         ax.set_xlabel("")
@@ -233,6 +196,57 @@ def radiometer_quicklook(
         ax.spines[["top", "right"]].set_visible(False)
 
     fig.suptitle(f"HAMP {timeframe.start} - {timeframe.stop}", y=0.92)
+
+    if savefigparams[0]:
+        savename, dpi = savefigparams[1], savefigparams[2]
+        save_png_figure(fig, savename, dpi)
+
+    return fig, axes
+
+
+def radar_quicklook(
+    hampdata: PostProcessedHAMPData,
+    timeframe,
+    flight=None,
+    figsize=(14, 18),
+    savefigparams=[],
+):
+    """
+    Produces radar quicklook for given timeframe and saves as .png if requested.
+
+    Parameters
+    ----------
+    hampdata : PostProcessedHAMPData
+        Level 1 post-processed HAMP dataset
+    timeframe : slice
+        Timeframe to plot.
+    flight : str, optional
+        name of flight, e.g. "RF01_20240811"
+    figsize : tuple, optional
+        Figure size in inches, by default (10, 14)
+    savefigparams : tuple, optional
+        tuple for parameters to save figure as .png.
+        Parameters are: [boolean, string, int] for
+        [save figure if True, name to save figure, dpi of figure]
+
+    Returns
+    -------
+    fig, axes
+        Figure and axes of the plot.
+    """
+
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=figsize)
+
+    # plot radar
+    ds_radar_plot = hampdata.radar.sel(time=timeframe)
+    plot_radar_timeseries(ds_radar_plot, fig, axes[0])
+
+    axes[0].set_xlabel("")
+    axes[0].set_title("Timeseries")
+    for ax in axes:
+        ax.spines[["top", "right"]].set_visible(False)
+
+    fig.suptitle(f"Radar During HAMP {flight}", y=0.92)
 
     if savefigparams[0]:
         savename, dpi = savefigparams[1], savefigparams[2]
