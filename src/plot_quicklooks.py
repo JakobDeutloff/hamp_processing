@@ -27,6 +27,7 @@ def hamp_timeslice_quicklook(
     hampdata: PostProcessedHAMPData,
     timeframe,
     flight=None,
+    ec_under_time=None,
     figsize=(14, 18),
     savefigparams=[],
 ):
@@ -95,6 +96,8 @@ def hamp_timeslice_quicklook(
         ax.set_xlabel("")
         ax.set_title("")
         ax.spines[["top", "right"]].set_visible(False)
+        if ec_under_time:
+            ax.axvline(ec_under_time, color="r", linestyle="-")
 
     fig.suptitle(f"HAMP {flight}", y=0.92)
 
@@ -106,7 +109,7 @@ def hamp_timeslice_quicklook(
 
 
 def hamp_hourly_quicklooks(
-    hampdata: PostProcessedHAMPData, flight, start_hour, end_hour, savepdfparams=[]
+    hampdata: PostProcessedHAMPData, flight, start_hour, end_hour, saveparams=[]
 ):
     """
     Produces hourly HAMP PDF quicklooks for given flight and saves them as pdfs if requested.
@@ -140,9 +143,12 @@ def hamp_hourly_quicklooks(
             savefigparams=[False],
         )
 
-        if savepdfparams[0]:
-            savename = f"{savepdfparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.pdf"
+        if saveparams[0]:
+            savename = f"{saveparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.pdf"
             save_pdf_figure(fig, savename)
+        else:
+            savename = f"{saveparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.png"
+            save_png_figure(fig, savename, dpi=500)
 
 
 def radiometer_quicklook(
