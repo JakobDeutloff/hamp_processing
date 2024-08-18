@@ -47,7 +47,7 @@ plotql.hamp_timeslice_quicklook(
     savefigparams=[is_savefig, savename, dpi],
 )
 
-# %% produce radiometer-only single quicklook between startime and endtime
+# %% produce radar-only single quicklook between startime and endtime
 starttime, endtime = hampdata.radar.time[0].values, hampdata.radar.time[-1].values
 is_savefig = True
 savename = f"{savedir}/radar_timesliceql_{flight}.png"
@@ -55,8 +55,8 @@ dpi = 500
 plotql.radar_quicklook(
     hampdata,
     timeframe=slice(starttime, endtime),
-    flight=None,
-    figsize=(9, 6),
+    flight=flight,
+    figsize=(9, 5),
     savefigparams=[is_savefig, savename, dpi],
 )
 
