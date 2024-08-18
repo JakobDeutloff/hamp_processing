@@ -1,0 +1,12 @@
+# Holds the path definitions for reading data and saving plots 
+# IMPORTANT: You need to adjust the paths to your radar data and quicklook folder
+
+flight: "RF03_20240816"
+date: "20240816"
+flightletter: "a"
+is_planet: false
+paths:
+  bahamas: "/Volumes/ORCESTRA/HALO-{date}{flightletter}/bahamas/QL_HALO-{date}{flightletter}_BAHAMAS_V01.nc"
+  radiometer: "/Volumes/ORCESTRA/HALO-{date}{flightletter}/radiometer"
+  radar: "/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Radar_Data/{flight}/*.nc"
+savedir: "/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/quicklooks/{flight}"
