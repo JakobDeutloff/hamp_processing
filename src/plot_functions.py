@@ -4,6 +4,8 @@ import xarray as xr
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import pandas as pd
+ 
+from .post_processed_hamp_data import PostProcessedHAMPData
 
 def plot_radiometer(ds, ax):
     """
@@ -29,25 +31,25 @@ def plot_radiometer(ds, ax):
     ax.set_ylabel("TB / K")
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False)
 
-
-def hamp_ql(ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, figsize=(14, 18), flight=None):
+def hamp_timeslice_quicklook(hampdata: PostProcessedHAMPData, timeframe, flight=None,
+                                      figsize=(14, 18), savefigparams=[]):
     """
-    Produces HAMP quicklook for given timeframe.
+    Produces HAMP quicklook for given timeframe and saves as .png if requested.
 
     Parameters
     ----------
-    ds_radar_lev1 : xr.Dataset
-        Level1 radar dataset.
-    ds_11990_lev1 : xr.Dataset
-        Level1 119/90 GHz radiometer dataset.
-    ds_183_lev1 : xr.Dataset
-        Level1 183 GHz radiometer dataset.
-    ds_kv_lev1 : xr.Dataset
-        Level1 K/V radiometer dataset.
+    hampdata : PostProcessedHAMPData
+        Level 1 post-processed HAMP dataset
     timeframe : slice
         Timeframe to plot.
+    flight : str, optional
+        name of flight, e.g. "RF01_20240811"
     figsize : tuple, optional
         Figure size in inches, by default (10, 14)
+    savefigparams : tuple, optional
+        tuple for parameters to save figure as .png.
+        Parameters are: [boolean, string, int] for
+        [save figure if True, name to save figure, dpi of figure]
 
     Returns
     -------
@@ -60,7 +62,7 @@ def hamp_ql(ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, fi
     )
 
     # plot radar
-    ds_radar_plot = ds_radar_lev1.sel(time=timeframe)
+    ds_radar_plot = hampdata.radar.sel(time=timeframe)
 
     # check if radar data is available
     if ds_radar_plot.dBZg.size == 0:
@@ -83,16 +85,16 @@ def hamp_ql(ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, fi
 
     # plot K-Band radiometer
     plot_radiometer(
-        ds_kv_lev1["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)), axes[1]
+        hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)), axes[1]
     )
 
     # plot V-Band radiometer
     plot_radiometer(
-        ds_kv_lev1["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[2]
+        hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[2]
     )
 
     # plot 90 GHz radiometer
-    ds_11990_lev1["TBs"].sel(time=timeframe, frequency=90).plot.line(
+    hampdata.radio11990["TBs"].sel(time=timeframe, frequency=90).plot.line(
         ax=axes[3], x="time", color="k"
     )
     axes[3].legend(
@@ -107,11 +109,11 @@ def hamp_ql(ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, fi
 
     # plot 119 GHz radiometer
     plot_radiometer(
-        ds_11990_lev1["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)), axes[4]
+        hampdata.radio11990["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)), axes[4]
     )
 
     # plot 183 GHz radiometer
-    plot_radiometer(ds_183_lev1["TBs"].sel(time=timeframe), axes[5])
+    plot_radiometer(hampdata.radio183["TBs"].sel(time=timeframe), axes[5])
 
     for ax in axes:
         ax.set_xlabel("")
@@ -119,8 +121,13 @@ def hamp_ql(ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, fi
         ax.spines[["top", "right"]].set_visible(False)
 
     fig.suptitle(f"HAMP {flight}", y=0.92)
-    return fig, axes
 
+    if savefigparams[0]:
+        savename, dpi = savefigparams[1], savefigparams[2]
+        fig.savefig(savename, dpi=dpi, bbox_inches="tight", facecolor="w")
+        print("figure saved as .png in: "+savename)
+
+    return fig, axes
 
 def radiometer_ql(ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, figsize=(10, 14)):
     """
@@ -192,35 +199,41 @@ def radiometer_ql(ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, figsize=(10
     return fig, axes
 
 
-def produce_hourly_hamp_ql(ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1, flightname):
+def hamp_hourly_quicklooks(hampdata: PostProcessedHAMPData, flight, start_hour, end_hour,
+                               savepdfparams=[]):
     """
-    Produces hourly HAMP PDF quicklooks for given flight and stores them under the flightname in quicklooks folder.
+    Produces hourly HAMP PDF quicklooks for given flight and saves them as pdfs if requested.
 
     Parameters
     ----------
-    ds_radar_lev1 : xr.Dataset
-        Level1 radar dataset.
-    ds_11990_lev1 : xr.Dataset
-        Level1 119/90 GHz radiometer dataset.
-    ds_183_lev1 : xr.Dataset
-        Level1 183 GHz radiometer dataset.
-    ds_kv_lev1 : xr.Dataset
-        Level1 K/V radiometer dataset.
-    flightname : str
+    hampdata : PostProcessedHAMPData
+        Level 1 post-processed HAMP dataset
+    flight : str
         Name of the flight.
+    start_hour :  pandas.Timestamp
+        start hour of quicklooks
+    end_hour :  pandas.Timestamp
+        final hour of quicklooks
+    savefigparams : tuple, optional
+        tuple for parameters to save figures as .pdfs.
+        Parameters are: [boolean, string, int] for
+        [save pdf figures if True, directory to save .pdfs in]
     """
 
-    # make new directory for this flight
-    os.makedirs(f"quicklooks/hamp/{flightname}", exist_ok=True)
-
-    # Round start and end times to full hour
-    start_time = pd.Timestamp(ds_183_lev1.time[0].values).floor('H')
-    end_time = pd.Timestamp(ds_183_lev1.time[-1].values).ceil('H')
-
     # Generate hourly time slices
-    timeslices = pd.date_range(start=start_time, end=end_time, freq='H')
+    timeslices = pd.date_range(start=start_hour, end=end_hour, freq='h')
 
-    # produce ql plot for each full hour time
+    # produce quicklook plot for each full hour (excludes last timeslice)
     for i in range(0, len(timeslices)-1):
-        fig, _ = hamp_ql(ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1, slice(timeslices[i], timeslices[i+1]))
-        fig.savefig(f"quicklooks/hamp/{flightname}/ql_{timeslices[i].strftime('%Y%m%d_%H%M')}.pdf", bbox_inches='tight')
+        fig, _ = hamp_timeslice_quicklook(
+                    hampdata,
+                    timeframe=slice(timeslices[i], timeslices[i+1]),
+                    flight=flight,
+                    figsize=(18, 18),
+                    savefigparams=[False]
+                )
+        
+        if savepdfparams[0]:
+            savename = f"{savepdfparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.pdf"
+            fig.savefig(savename, bbox_inches='tight')
+            print("figure saved as .pdf in: "+savename)
