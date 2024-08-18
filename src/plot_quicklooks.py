@@ -5,7 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import pandas as pd
 
-from .plot_functions import plot_radiometer
+from .plot_functions import plot_radiometer, plot_radar_timeseries
 from .post_processed_hamp_data import PostProcessedHAMPData
 
 
@@ -56,30 +56,7 @@ def hamp_timeslice_quicklook(
 
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
-
-    # check if radar data is available
-    if ds_radar_plot.dBZg.size == 0:
-        axes[0].text(
-            0.5,
-            0.5,
-            "No radar data available",
-            ha="center",
-            va="center",
-            transform=axes[0].transAxes,
-        )
-    else:
-        pcol = axes[0].pcolormesh(
-            ds_radar_plot.time,
-            ds_radar_plot.height / 1e3,
-            ds_radar_plot.dBZg.where(ds_radar_plot.dBZg > -25).T,
-            cmap="turbo",
-            vmin=-25,
-            vmax=25,
-        )
-        cax = fig.add_axes([0.84, 0.63, 0.02, 0.25])
-        cb = fig.colorbar(pcol, cax=cax, label="dBZe", extend="max")
-
-    axes[0].set_ylabel("Height / km")
+    plot_radar_timeseries(ds_radar_plot, fig, axes[0])
     fig.subplots_adjust(right=0.8)
 
     # plot K-Band radiometer

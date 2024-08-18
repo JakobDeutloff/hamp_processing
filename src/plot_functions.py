@@ -31,5 +31,29 @@ def plot_radiometer(ds, ax):
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False)
 
 
-def plot_radar_composite(ds, ax):
+def plot_radar_timeseries(ds, fig, ax):
     """WIP 15:41 UTC"""
+
+    # check if radar data is available
+    if ds.dBZg.size == 0:
+        ax.text(
+            0.5,
+            0.5,
+            "No radar data available",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+        )
+    else:
+        pcol = ax.pcolormesh(
+            ds.time,
+            ds.height / 1e3,
+            ds.dBZg.where(ds.dBZg > -25).T,
+            cmap="turbo",
+            vmin=-25,
+            vmax=25,
+        )
+        cax = fig.add_axes([0.84, 0.63, 0.02, 0.25])
+        cb = fig.colorbar(pcol, cax=cax, label="dBZe", extend="max")
+
+    ax.set_ylabel("Height / km")
