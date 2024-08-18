@@ -8,6 +8,14 @@ import pandas as pd
 from .plot_functions import plot_radiometer
 from .post_processed_hamp_data import PostProcessedHAMPData
 
+def save_png_figure(fig, savename, dpi):
+    fig.savefig(savename, dpi=dpi, bbox_inches="tight", facecolor="w", format="png")
+    print("figure saved as .png in: "+savename)
+
+def save_pdf_figure(fig, savename):
+    fig.savefig(savename, bbox_inches='tight', format="pdf")
+    print("figure saved as .pdf in: "+savename)
+
 def hamp_timeslice_quicklook(hampdata: PostProcessedHAMPData, timeframe, flight=None,
                                       figsize=(14, 18), savefigparams=[]):
     """
@@ -101,8 +109,7 @@ def hamp_timeslice_quicklook(hampdata: PostProcessedHAMPData, timeframe, flight=
 
     if savefigparams[0]:
         savename, dpi = savefigparams[1], savefigparams[2]
-        fig.savefig(savename, dpi=dpi, bbox_inches="tight", facecolor="w")
-        print("figure saved as .png in: "+savename)
+        save_png_figure(fig, savename, dpi)
 
     return fig, axes
 
@@ -142,28 +149,25 @@ def hamp_hourly_quicklooks(hampdata: PostProcessedHAMPData, flight, start_hour, 
         
         if savepdfparams[0]:
             savename = f"{savepdfparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.pdf"
-            fig.savefig(savename, bbox_inches='tight')
-            print("figure saved as .pdf in: "+savename)
+            save_pdf_figure(fig, savename)
 
-def radiometer_ql(ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, figsize=(10, 14)):
+def radiometer_quicklook(hampdata: PostProcessedHAMPData, timeframe,
+                         figsize=(10, 14), savefigparams=[]):
     """
     Produces HAMP quicklook for given timeframe.
 
     Parameters
     ----------
-    ds_radar_lev1 : xr.Dataset
-        Level1 radar dataset.
-    ds_11990_lev1 : xr.Dataset
-        Level1 119/90 GHz radiometer dataset.
-    ds_183_lev1 : xr.Dataset
-        Level1 183 GHz radiometer dataset.
-    ds_kv_lev1 : xr.Dataset
-        Level1 K/V radiometer dataset.
+    hampdata : PostProcessedHAMPData
+        Level 1 post-processed HAMP dataset
     timeframe : slice
         Timeframe to plot.
     figsize : tuple, optional
         Figure size in inches, by default (10, 14)
-
+    savefigparams : tuple, optional
+        tuple for parameters to save figure as .png.
+        Parameters are: [boolean, string, int] for
+        [save figure if True, name to save figure, dpi of figure]
     Returns
     -------
     fig, axes
@@ -176,16 +180,16 @@ def radiometer_ql(ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, figsize=(10
 
     # plot K-Band radiometer
     plot_radiometer(
-        ds_kv_lev1["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)), axes[0]
+        hampdata["kv"]["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)), axes[0]
     )
 
     # plot V-Band radiometer
     plot_radiometer(
-        ds_kv_lev1["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[1]
+        hampdata["kv"]["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[1]
     )
 
     # plot 90 GHz radiometer
-    ds_11990_lev1["TBs"].sel(time=timeframe, frequency=90).plot.line(
+    hampdata["11990"]["TBs"].sel(time=timeframe, frequency=90).plot.line(
         ax=axes[2], x="time", color="k"
     )
     axes[2].legend(
@@ -200,11 +204,11 @@ def radiometer_ql(ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, figsize=(10
 
     # plot 119 GHz radiometer
     plot_radiometer(
-        ds_11990_lev1["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)), axes[3]
+        hampdata["11990"]["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)), axes[3]
     )
 
     # plot 183 GHz radiometer
-    plot_radiometer(ds_183_lev1["TBs"].sel(time=timeframe), axes[4])
+    plot_radiometer(hampdata["183"]["TBs"].sel(time=timeframe), axes[4])
 
     for ax in axes:
         ax.set_xlabel("")
@@ -212,5 +216,10 @@ def radiometer_ql(ds_11990_lev1, ds_183_lev1, ds_kv_lev1, timeframe, figsize=(10
         ax.spines[["top", "right"]].set_visible(False)
 
     fig.suptitle(f"HAMP {timeframe.start} - {timeframe.stop}", y=0.92)
+
+    if savefigparams[0]:
+        savename, dpi = savefigparams[1], savefigparams[2]
+        save_png_figure(fig, savename, dpi)
+
     return fig, axes
 
