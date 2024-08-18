@@ -6,7 +6,7 @@ import matplotlib.colors as mcolors
 import pandas as pd
 
 
-def plot_radiometer_timeseries(ds, ax):
+def plot_radiometer_timeseries(ds, ax, is_90=False):
     """
     Plot radiometer data for all frequencies in dataset.
 
@@ -18,17 +18,28 @@ def plot_radiometer_timeseries(ds, ax):
         Axes to plot on.
     """
 
-    frequencies = ds.frequency.values
-    norm = mcolors.Normalize(vmin=frequencies.min(), vmax=frequencies.max())
-    cmap = plt.colormaps.get_cmap("viridis")
-
-    for freq in frequencies:
-        color = cmap(norm(freq))
-        ds.sel(frequency=freq).plot.line(
-            ax=ax, x="time", color=color, label=f"{freq:.2f} GHz"
+    if is_90:
+        ds.plot.line(ax=ax, x="time", color="k")
+        ax.legend(
+            handles=ax.lines,
+            labels=["90 GHz"],
+            loc="center left",
+            bbox_to_anchor=(1, 0.5),
+            frameon=False,
         )
+    else:
+        frequencies = ds.frequency.values
+        norm = mcolors.Normalize(vmin=frequencies.min(), vmax=frequencies.max())
+        cmap = plt.colormaps.get_cmap("viridis")
+
+        for freq in frequencies:
+            color = cmap(norm(freq))
+            ds.sel(frequency=freq).plot.line(
+                ax=ax, x="time", color=color, label=f"{freq:.2f} GHz"
+            )
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False)
+
     ax.set_ylabel("TB / K")
-    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False)
 
 
 def plot_radar_timeseries(ds, fig, ax):
