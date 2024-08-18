@@ -5,7 +5,11 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import pandas as pd
 
-from .plot_functions import plot_radiometer_timeseries, plot_radar_timeseries
+from .plot_functions import (
+    plot_radiometer_timeseries,
+    plot_radar_timeseries,
+    plot_radar_histogram,
+)
 from .post_processed_hamp_data import PostProcessedHAMPData
 
 
@@ -56,7 +60,8 @@ def hamp_timeslice_quicklook(
 
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
-    plot_radar_timeseries(ds_radar_plot, fig, axes[0])
+    cax = fig.add_axes([0.84, 0.63, 0.02, 0.25])
+    plot_radar_timeseries(ds_radar_plot, fig, axes[0], cax)
     fig.subplots_adjust(right=0.8)
 
     # plot K-Band radiometer
@@ -208,7 +213,7 @@ def radar_quicklook(
     hampdata: PostProcessedHAMPData,
     timeframe,
     flight=None,
-    figsize=(14, 18),
+    figsize=(9, 5),
     savefigparams=[],
 ):
     """
@@ -235,18 +240,27 @@ def radar_quicklook(
         Figure and axes of the plot.
     """
 
-    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=figsize)
-
+    fig, axes = plt.subplots(
+        nrows=1, ncols=2, figsize=figsize, width_ratios=[4, 1], sharey=True
+    )
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
-    plot_radar_timeseries(ds_radar_plot, fig, axes[0])
 
+    plot_radar_timeseries(ds_radar_plot, fig, axes[0], None)
     axes[0].set_xlabel("")
     axes[0].set_title("Timeseries")
+
+    signal_range = [-40, 40]
+    plot_radar_histogram(ds_radar_plot, axes[1], signal_range=signal_range)
+    axes[1].set_ylabel("")
+    axes[1].set_title("Histogram")
+
     for ax in axes:
         ax.spines[["top", "right"]].set_visible(False)
 
-    fig.suptitle(f"Radar During HAMP {flight}", y=0.92)
+    fig.suptitle(f"Radar During Flight {flight}")
+
+    fig.tight_layout()
 
     if savefigparams[0]:
         savename, dpi = savefigparams[1], savefigparams[2]
