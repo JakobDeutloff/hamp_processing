@@ -168,5 +168,5 @@ cython_debug/
 /Radar_Data
 
 # other or unknown
-*/.DS_Store
-*/config.yaml
+**/.DS_Store
+**/config.yaml
