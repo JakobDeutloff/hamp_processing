@@ -1,66 +1,47 @@
-# %%
-import xarray as xr
+# %
 import pandas as pd
-from orcestra.postprocess.level0 import bahamas, radiometer, radar
-from orcestra.postprocess.level1 import (
-    filter_radiometer,
-    filter_radar,
-    correct_radar_height,
-)
-from src.plot_functions import produce_hourly_hamp_ql, hamp_ql
-from src.helper_functions import read_planet
+from src import plot_functions as plotfuncs
+from src import load_data_functions as loadfuncs
 
-# %% define data directories
+### ----------- USER PARAMETERS YOU MUST SET ----------- ###
+# flight name, date and letter (for data paths below)
 flight = "RF01_20240811"
-date = "240811"
-radar_file = "20240811_1215.nc"
+date = "20240811"
+flightletter="a"
 
-path_planet = "/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/planet_data/2024-08-16-TE03124060001-IWG1.csv"
-path_radiometer = f"/Volumes/Upload/HALO/Radiometer/{flight}"
-path_radar = f"/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Radar_Data/{flight}/{radar_file}"
+# paths to flight data (choose either planet or bahamas and set `is_planet` boolean accordingly)
+is_planet=False
 path_bahamas = (
-    f"/Volumes/ORCESTRA/HALO-20{date}a/bahamas/QL_HALO-20{date}a_BAHAMAS_V01.nc"
+    f"/Volumes/ORCESTRA/HALO-{date}{flightletter}/bahamas/QL_HALO-{date}{flightletter}_BAHAMAS_V01.nc"
 )
+# path_planet = "/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/planet_data/2024-08-16-TE03124060001-IWG1.csv"
+path_radiometer = f"/Volumes/ORCESTRA/HALO-{date}{flightletter}/radiometer"
+path_radar = f"/Users/yoctoyotta1024/Documents/c1_springsummer2024/orcestra/radar_data/{flight}/*.nc"
 
-# %% read data and do level0 processing
-ds_planet = read_planet(path_planet)
-ds_bahamas = xr.open_dataset(path_bahamas).pipe(bahamas)
-ds_radar_lev0 = xr.open_dataset(path_radar).pipe(radar)
-ds_183_lev0 = xr.open_dataset(f"{path_radiometer}/183/{date}.BRT.NC").pipe(radiometer)
-ds_11990_lev0 = xr.open_dataset(f"{path_radiometer}/11990/{date}.BRT.NC").pipe(
-    radiometer
-)
-ds_kv_lev0 = xr.open_dataset(f"{path_radiometer}/KV/{date}.BRT.NC").pipe(radiometer)
-# %% level1 processing
-ds_radar_lev1 = ds_radar_lev0.pipe(filter_radar, ds_bahamas["IRS_PHI"]).pipe(
-    correct_radar_height,
-    ds_bahamas["IRS_PHI"],
-    ds_bahamas["IRS_THE"],
-    ds_bahamas["IRS_ALT"],
-)
-ds_183_lev1 = ds_183_lev0.pipe(
-    filter_radiometer, ds_bahamas["IRS_ALT"], ds_bahamas["IRS_PHI"]
-)
-ds_11990_lev1 = ds_11990_lev0.pipe(
-    filter_radiometer, ds_bahamas["IRS_ALT"], ds_bahamas["IRS_PHI"]
-)
-ds_kv_lev1 = ds_kv_lev0.pipe(
-    filter_radiometer, ds_bahamas["IRS_ALT"], ds_bahamas["IRS_PHI"]
-)
+# path to directory to save quicklook .png and/or .pdf figures inside
+savedir = f"/Users/yoctoyotta1024/Documents/c1_springsummer2024/orcestra/hamp_processing/quicklooks/{flight}"
+### ---------------------------------------------------- ###
 
-# %% produce hamp quicklook
-fig, ax = hamp_ql(
-    ds_radar_lev1,
-    ds_11990_lev1,
-    ds_183_lev1,
-    ds_kv_lev1,
-    timeframe=slice(ds_183_lev1.time[0].values, ds_183_lev1.time[-1].values),
+# % create HAMP post-processed data
+hampdata = loadfuncs.do_post_processing(path_bahamas, path_radar, path_radiometer, date[2:], is_planet=is_planet)
+
+# % produce HAMP single quicklook between startime and endtime
+starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
+is_savefig = True
+savename = f"{savedir}/hamp_timesliceql_{flight}.png"
+dpi=500
+plotfuncs.hamp_timeslice_quicklook(
+    hampdata,
+    timeframe=slice(starttime, endtime),
     flight=flight,
-    figsize=(18, 18)
+    figsize=(18, 18),
+    savefigparams=[is_savefig, savename, dpi]
 )
-fig.savefig(f"quicklooks/hamp/{flight}/hamp_ql_{flight}.png", dpi=500)
 
-# %% produce hourly hamp quicklooks
-produce_hourly_hamp_ql(ds_radar_lev1, ds_11990_lev1, ds_183_lev1, ds_kv_lev1, flight)
+# % produce hourly HAMP quicklooks
+start_hour = pd.Timestamp(hampdata["183"].time[0].values).floor('h') # Round start time to full hour
+end_hour = pd.Timestamp(hampdata["183"].time[-1].values).ceil('h') # Round end time to full hour
+is_savepdf = True
+plotfuncs.hamp_hourly_quicklooks(hampdata, flight, start_hour, end_hour,
+                               savepdfparams=[is_savepdf, savedir])
 
-# %%
