@@ -43,9 +43,7 @@ track = sat.SattrackLoader(
     "EARTHCARE", (day - pd.Timedelta("1d")).strftime(format="%Y-%m-%d"), kind="PRE"
 ).get_track_for_day(day.strftime(format="%Y-%m-%d"))
 
-track = track.where(
-    track.time > (day + pd.Timedelta('1h')), drop=True
-)
+track = track.where(track.time > (day + pd.Timedelta("1h")), drop=True)
 
 # %% find time when earthcare crosses halo
 crossing_time = find_crossing_time(track, hampdata.flightdata)
@@ -61,7 +59,7 @@ fig, axes = plotql.hamp_timeslice_quicklook(
     figsize=(18, 18),
     savefigparams=[is_savefig, savename, dpi],
 )
-for ax in axes: 
+for ax in axes:
     ax.axvline(crossing_time, color="r", linestyle="-")
 fig.savefig(savename, dpi=dpi)
 
