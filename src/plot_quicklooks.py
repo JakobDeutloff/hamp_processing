@@ -13,14 +13,31 @@ from .plot_functions import (
 from .post_processed_hamp_data import PostProcessedHAMPData
 
 
-def save_png_figure(fig, savename, dpi):
-    fig.savefig(savename, dpi=dpi, bbox_inches="tight", facecolor="w", format="png")
-    print("figure saved as .png in: " + savename)
+def save_figure(fig, format, savename, dpi):
+    def save_png_figure(fig, savename, dpi):
+        fig.savefig(
+            savename, dpi=dpi, bbox_inches="tight", facecolor="w", format=format
+        )
+        print("figure saved as .png in: " + savename)
+
+    def save_pdf_figure(fig, savename):
+        fig.savefig(savename, bbox_inches="tight", format=format)
+        print("figure saved as .pdf in: " + savename)
+
+    if format == "png":
+        save_png_figure(fig, savename, dpi)
+    elif format == "pdf":
+        save_pdf_figure(fig, savename)
+    else:
+        raise ValueError("Figure format unknown, please choose 'pdf' or 'png'")
 
 
-def save_pdf_figure(fig, savename):
-    fig.savefig(savename, bbox_inches="tight", format="pdf")
-    print("figure saved as .pdf in: " + savename)
+def add_earthcare_underpass(ax, ec_under_time):
+    color = "r"
+    ax.axvline(ec_under_time, color=color, linestyle="--", linewidth=1.0)
+
+    x, y = ec_under_time, ax.get_ylim()[1]
+    ax.annotate("EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
 
 
 def hamp_timeslice_quicklook(
@@ -29,7 +46,7 @@ def hamp_timeslice_quicklook(
     flight=None,
     ec_under_time=None,
     figsize=(14, 18),
-    savefigparams=[],
+    savefigparams=[None, None, None],
 ):
     """
     Produces HAMP quicklook for given timeframe and saves as .png if requested.
@@ -42,6 +59,8 @@ def hamp_timeslice_quicklook(
         Timeframe to plot.
     flight : str, optional
         name of flight, e.g. "RF01_20240811"
+    ec_under_time: Time, Optional
+        time of earthcare underpass
     figsize : tuple, optional
         Figure size in inches, by default (10, 14)
     savefigparams : tuple, optional
@@ -97,19 +116,23 @@ def hamp_timeslice_quicklook(
         ax.set_title("")
         ax.spines[["top", "right"]].set_visible(False)
         if ec_under_time:
-            ax.axvline(ec_under_time, color="r", linestyle="-")
+            add_earthcare_underpass(ax, ec_under_time)
 
     fig.suptitle(f"HAMP {flight}", y=0.92)
 
     if savefigparams[0]:
-        savename, dpi = savefigparams[1], savefigparams[2]
-        save_png_figure(fig, savename, dpi)
+        format, savename, dpi = savefigparams[0:3]
+        save_figure(fig, format, savename, dpi)
 
     return fig, axes
 
 
 def hamp_hourly_quicklooks(
-    hampdata: PostProcessedHAMPData, flight, start_hour, end_hour, saveparams=[]
+    hampdata: PostProcessedHAMPData,
+    flight,
+    start_hour,
+    end_hour,
+    savefigparams=[None, None, None],
 ):
     """
     Produces hourly HAMP PDF quicklooks for given flight and saves them as pdfs if requested.
@@ -143,16 +166,17 @@ def hamp_hourly_quicklooks(
             savefigparams=[False],
         )
 
-        if saveparams[0]:
-            savename = f"{saveparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.pdf"
-            save_pdf_figure(fig, savename)
-        else:
-            savename = f"{saveparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.png"
-            save_png_figure(fig, savename, dpi=500)
+        if savefigparams[0]:
+            format, dpi = savefigparams[0], savefigparams[2]
+            savename = f"{savefigparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.{format}"
+            save_figure(fig, format, savename, dpi)
 
 
 def radiometer_quicklook(
-    hampdata: PostProcessedHAMPData, timeframe, figsize=(10, 14), savefigparams=[]
+    hampdata: PostProcessedHAMPData,
+    timeframe,
+    figsize=(10, 14),
+    savefigparams=[None, None, None],
 ):
     """
     Produces HAMP quicklook for given timeframe.
@@ -209,8 +233,8 @@ def radiometer_quicklook(
     fig.suptitle(f"HAMP {timeframe.start} - {timeframe.stop}", y=0.92)
 
     if savefigparams[0]:
-        savename, dpi = savefigparams[1], savefigparams[2]
-        save_png_figure(fig, savename, dpi)
+        format, savename, dpi = savefigparams[0:3]
+        save_figure(fig, format, savename, dpi)
 
     return fig, axes
 
@@ -219,8 +243,9 @@ def radar_quicklook(
     hampdata: PostProcessedHAMPData,
     timeframe,
     flight=None,
+    ec_under_time=None,
     figsize=(9, 5),
-    savefigparams=[],
+    savefigparams=[None, None, None],
 ):
     """
     Produces radar quicklook for given timeframe and saves as .png if requested.
@@ -233,6 +258,8 @@ def radar_quicklook(
         Timeframe to plot.
     flight : str, optional
         name of flight, e.g. "RF01_20240811"
+    ec_under_time: Time, Optional
+        time of earthcare underpass
     figsize : tuple, optional
         Figure size in inches, by default (10, 14)
     savefigparams : tuple, optional
@@ -255,6 +282,8 @@ def radar_quicklook(
     plot_radar_timeseries(ds_radar_plot, fig, axes[0], None)
     axes[0].set_xlabel("")
     axes[0].set_title("Timeseries")
+    if ec_under_time:
+        add_earthcare_underpass(axes[0], ec_under_time)
 
     signal_range = [-30, 30]
     plot_radar_histogram(ds_radar_plot, axes[1], signal_range=signal_range)
@@ -269,7 +298,7 @@ def radar_quicklook(
     fig.tight_layout()
 
     if savefigparams[0]:
-        savename, dpi = savefigparams[1], savefigparams[2]
-        save_png_figure(fig, savename, dpi)
+        format, savename, dpi = savefigparams[0:3]
+        save_figure(fig, format, savename, dpi)
 
     return fig, axes

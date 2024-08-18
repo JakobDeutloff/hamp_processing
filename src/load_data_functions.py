@@ -21,7 +21,12 @@ def do_level0_processing(
     else:  # bahamas
         ds_flightdata = xr.open_dataset(path_flightdata).pipe(bahamas)
 
+    print(f"Using radar data from: {path_radar}")
     ds_radar_lev0 = xr.open_mfdataset(path_radar).load().pipe(radar)
+
+    print(
+        f"Using radiometer data from: {path_radiometer}/[XXX]/{radiometer_date}.BRT.NC"
+    )
     ds_183_lev0 = xr.open_dataset(
         f"{path_radiometer}/183/{radiometer_date}.BRT.NC"
     ).pipe(radiometer)
