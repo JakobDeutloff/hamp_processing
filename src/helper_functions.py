@@ -22,3 +22,16 @@ def read_planet(path):
     ds.index.rename("time", inplace=True)
     ds = xr.Dataset.from_dataframe(ds)
     return ds
+
+
+def distance(lat_1, lon_1, lat_2, lon_2):
+    return ((lat_1 - lat_2) ** 2 + (lon_1 - lon_2) ** 2) ** 0.5
+
+
+def find_crossing_time(track, ds_bahamas):
+    lat_halo = ds_bahamas["IRS_LAT"]
+    lon_halo = ds_bahamas["IRS_LON"]
+    lat_ec = track.lat
+    lon_ec = track.lon
+    dist = distance(lat_halo, lon_halo, lat_ec, lon_ec)
+    return dist.idxmin().values
