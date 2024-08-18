@@ -29,3 +29,7 @@ def plot_radiometer(ds, ax):
         )
     ax.set_ylabel("TB / K")
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False)
+
+
+def plot_radar_composite(ds, ax):
+    """WIP 15:41 UTC"""
