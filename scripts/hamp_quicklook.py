@@ -1,4 +1,8 @@
 # %
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import pandas as pd
 from src import plot_quicklooks as plotql
 from src import load_data_functions as loadfuncs

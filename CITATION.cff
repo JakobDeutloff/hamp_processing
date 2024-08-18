@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Deutloff"
+  given-names: "Jakob"
+- family-names: "Bayley"
+  given-names: "Clara"
+  orcid: "https://orcid.org/0000-0002-4540-9382"
+title: "HAMP Post-Processing and QuickLooks for ORCESTRA"
+version: 0.0.0
+date-released: 18th August 2024
+url: "https://github.com/JakobDeutloff/hamp_processing.git"
