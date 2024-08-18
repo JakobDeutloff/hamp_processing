@@ -39,7 +39,7 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
     ax.set_ylabel("TB / K")
 
 
-def plot_radar_timeseries(ds, fig, ax, cax, cmap="plasma"):
+def plot_radar_timeseries(ds, fig, ax, cax, cmap="YlGnBu"):
     """WIP 15:41 UTC"""
 
     # check if radar data is available
@@ -62,15 +62,15 @@ def plot_radar_timeseries(ds, fig, ax, cax, cmap="plasma"):
             vmax=25,
         )
         if cax:
-            fig.colorbar(pcol, cax=cax, label="Reflectivity /dBZe", extend="max")
+            fig.colorbar(pcol, cax=cax, label="Z /dBZe", extend="max")
         else:
-            fig.colorbar(pcol, ax=ax, label="Reflectivity /dBZe", extend="max")
+            fig.colorbar(pcol, ax=ax, label="Z /dBZe", extend="max")
 
     ax.set_xlabel("Time")
     ax.set_ylabel("Height / km")
 
 
-def plot_radar_histogram(ds, ax, signal_range=[], height_range=[], cmap="magma_r"):
+def plot_radar_histogram(ds, ax, signal_range=[], height_range=[], cmap="Grays"):
     # get data in correct format for 2D histogram
     height = np.meshgrid(ds.height, ds.time)[0].flatten() / 1e3  # [km]
     signal = ds.dBZg.where(ds.dBZg > -25).values.flatten()  # [dBZ]
@@ -86,13 +86,16 @@ def plot_radar_histogram(ds, ax, signal_range=[], height_range=[], cmap="magma_r
         signal_range = [signal.min(), signal.max()]
 
     # plot 2D histogram
+    cmap = plt.cm.get_cmap(cmap)
+    cmap.set_under("white")
     ax.hist2d(
         signal,
         height,
         range=[signal_range, height_range],
         bins=[len(ds.height), 60],
         cmap=cmap,
+        vmin=signal[signal > 0].min(),
     )
 
-    ax.set_xlabel("reflectivity, Z /dBZe")
+    ax.set_xlabel("Z /dBZe")
     ax.set_ylabel("Height / km")

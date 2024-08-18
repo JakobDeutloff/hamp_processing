@@ -241,7 +241,7 @@ def radar_quicklook(
     """
 
     fig, axes = plt.subplots(
-        nrows=1, ncols=2, figsize=figsize, width_ratios=[4, 1], sharey=True
+        nrows=1, ncols=2, figsize=figsize, width_ratios=[3, 1], sharey=True
     )
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
@@ -250,7 +250,7 @@ def radar_quicklook(
     axes[0].set_xlabel("")
     axes[0].set_title("Timeseries")
 
-    signal_range = [-40, 40]
+    signal_range = [-30, 30]
     plot_radar_histogram(ds_radar_plot, axes[1], signal_range=signal_range)
     axes[1].set_ylabel("")
     axes[1].set_title("Histogram")
