@@ -1,4 +1,4 @@
-# %
+# %%
 import os
 import sys
 
@@ -8,6 +8,7 @@ import pandas as pd
 from src import plot_quicklooks as plotql
 from src import load_data_functions as loadfuncs
 
+# %%
 ### ----------- USER PARAMETERS YOU MUST SET ----------- ###
 # flight name, date and letter (for data paths below)
 flight = "RF01_20240811"
@@ -25,12 +26,12 @@ path_radar = f"/Users/yoctoyotta1024/Documents/c1_springsummer2024/orcestra/rada
 savedir = f"/Users/yoctoyotta1024/Documents/c1_springsummer2024/orcestra/hamp_processing/quicklooks/{flight}"
 ### ---------------------------------------------------- ###
 
-# % create HAMP post-processed data
+# %% create HAMP post-processed data
 hampdata = loadfuncs.do_post_processing(
     path_bahamas, path_radar, path_radiometer, date[2:], is_planet=is_planet
 )
 
-# % produce HAMP single quicklook between startime and endtime
+# %% produce HAMP single quicklook between startime and endtime
 starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
 is_savefig = True
 savename = f"{savedir}/hamp_timesliceql_{flight}.png"
@@ -43,7 +44,20 @@ plotql.hamp_timeslice_quicklook(
     savefigparams=[is_savefig, savename, dpi],
 )
 
-# % produce radiometer-only single quicklook between startime and endtime
+# %% produce radiometer-only single quicklook between startime and endtime
+starttime, endtime = hampdata.radar.time[0].values, hampdata.radar.time[-1].values
+is_savefig = True
+savename = f"{savedir}/radar_timesliceql_{flight}.png"
+dpi = 500
+plotql.radar_quicklook(
+    hampdata,
+    timeframe=slice(starttime, endtime),
+    flight=None,
+    figsize=(9, 6),
+    savefigparams=[is_savefig, savename, dpi],
+)
+
+# %% produce radiometer-only single quicklook between startime and endtime
 starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
 is_savefig = True
 savename = f"{savedir}/radiometers_timesliceql_{flight}.png"
@@ -55,7 +69,7 @@ plotql.radiometer_quicklook(
     savefigparams=[is_savefig, savename, dpi],
 )
 
-# % produce hourly HAMP quicklooks
+# %% produce hourly HAMP quicklooks
 start_hour = pd.Timestamp(hampdata["183"].time[0].values).floor(
     "h"
 )  # Round start time to full hour
