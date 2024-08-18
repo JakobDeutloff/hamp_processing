@@ -4,20 +4,28 @@ import xarray as xr
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import pandas as pd
- 
+
 from .plot_functions import plot_radiometer
 from .post_processed_hamp_data import PostProcessedHAMPData
 
+
 def save_png_figure(fig, savename, dpi):
     fig.savefig(savename, dpi=dpi, bbox_inches="tight", facecolor="w", format="png")
-    print("figure saved as .png in: "+savename)
+    print("figure saved as .png in: " + savename)
+
 
 def save_pdf_figure(fig, savename):
-    fig.savefig(savename, bbox_inches='tight', format="pdf")
-    print("figure saved as .pdf in: "+savename)
+    fig.savefig(savename, bbox_inches="tight", format="pdf")
+    print("figure saved as .pdf in: " + savename)
 
-def hamp_timeslice_quicklook(hampdata: PostProcessedHAMPData, timeframe, flight=None,
-                                      figsize=(14, 18), savefigparams=[]):
+
+def hamp_timeslice_quicklook(
+    hampdata: PostProcessedHAMPData,
+    timeframe,
+    flight=None,
+    figsize=(14, 18),
+    savefigparams=[],
+):
     """
     Produces HAMP quicklook for given timeframe and saves as .png if requested.
 
@@ -51,7 +59,14 @@ def hamp_timeslice_quicklook(hampdata: PostProcessedHAMPData, timeframe, flight=
 
     # check if radar data is available
     if ds_radar_plot.dBZg.size == 0:
-        axes[0].text(0.5, 0.5, "No radar data available", ha="center", va="center", transform=axes[0].transAxes)
+        axes[0].text(
+            0.5,
+            0.5,
+            "No radar data available",
+            ha="center",
+            va="center",
+            transform=axes[0].transAxes,
+        )
     else:
         pcol = axes[0].pcolormesh(
             ds_radar_plot.time,
@@ -67,10 +82,10 @@ def hamp_timeslice_quicklook(hampdata: PostProcessedHAMPData, timeframe, flight=
     axes[0].set_ylabel("Height / km")
     fig.subplots_adjust(right=0.8)
 
-
     # plot K-Band radiometer
     plot_radiometer(
-        hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)), axes[1]
+        hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)),
+        axes[1],
     )
 
     # plot V-Band radiometer
@@ -91,10 +106,10 @@ def hamp_timeslice_quicklook(hampdata: PostProcessedHAMPData, timeframe, flight=
     )
     axes[3].set_ylabel("TB / K")
 
-
     # plot 119 GHz radiometer
     plot_radiometer(
-        hampdata.radio11990["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)), axes[4]
+        hampdata.radio11990["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)),
+        axes[4],
     )
 
     # plot 183 GHz radiometer
@@ -113,8 +128,10 @@ def hamp_timeslice_quicklook(hampdata: PostProcessedHAMPData, timeframe, flight=
 
     return fig, axes
 
-def hamp_hourly_quicklooks(hampdata: PostProcessedHAMPData, flight, start_hour, end_hour,
-                               savepdfparams=[]):
+
+def hamp_hourly_quicklooks(
+    hampdata: PostProcessedHAMPData, flight, start_hour, end_hour, savepdfparams=[]
+):
     """
     Produces hourly HAMP PDF quicklooks for given flight and saves them as pdfs if requested.
 
@@ -135,24 +152,26 @@ def hamp_hourly_quicklooks(hampdata: PostProcessedHAMPData, flight, start_hour, 
     """
 
     # Generate hourly time slices
-    timeslices = pd.date_range(start=start_hour, end=end_hour, freq='h')
+    timeslices = pd.date_range(start=start_hour, end=end_hour, freq="h")
 
     # produce quicklook plot for each full hour (excludes last timeslice)
-    for i in range(0, len(timeslices)-1):
+    for i in range(0, len(timeslices) - 1):
         fig, _ = hamp_timeslice_quicklook(
-                    hampdata,
-                    timeframe=slice(timeslices[i], timeslices[i+1]),
-                    flight=flight,
-                    figsize=(18, 18),
-                    savefigparams=[False]
-                )
-        
+            hampdata,
+            timeframe=slice(timeslices[i], timeslices[i + 1]),
+            flight=flight,
+            figsize=(18, 18),
+            savefigparams=[False],
+        )
+
         if savepdfparams[0]:
             savename = f"{savepdfparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.pdf"
             save_pdf_figure(fig, savename)
 
-def radiometer_quicklook(hampdata: PostProcessedHAMPData, timeframe,
-                         figsize=(10, 14), savefigparams=[]):
+
+def radiometer_quicklook(
+    hampdata: PostProcessedHAMPData, timeframe, figsize=(10, 14), savefigparams=[]
+):
     """
     Produces HAMP quicklook for given timeframe.
 
@@ -174,9 +193,7 @@ def radiometer_quicklook(hampdata: PostProcessedHAMPData, timeframe,
         Figure and axes of the plot.
     """
 
-    fig, axes = plt.subplots(
-        5, 1, figsize=figsize, sharex="col"
-    )
+    fig, axes = plt.subplots(5, 1, figsize=figsize, sharex="col")
 
     # plot K-Band radiometer
     plot_radiometer(
@@ -201,10 +218,10 @@ def radiometer_quicklook(hampdata: PostProcessedHAMPData, timeframe,
     )
     axes[2].set_ylabel("TB / K")
 
-
     # plot 119 GHz radiometer
     plot_radiometer(
-        hampdata["11990"]["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)), axes[3]
+        hampdata["11990"]["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)),
+        axes[3],
     )
 
     # plot 183 GHz radiometer
@@ -222,4 +239,3 @@ def radiometer_quicklook(hampdata: PostProcessedHAMPData, timeframe,
         save_png_figure(fig, savename, dpi)
 
     return fig, axes
-

@@ -161,8 +161,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# directories 
-/quicklooks 
+# directories
+/quicklooks
 /planet_data
 /Radiometer_Data
 /Radar_Data
