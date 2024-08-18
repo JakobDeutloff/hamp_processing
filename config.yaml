@@ -1,4 +1,4 @@
-# Holds the path definitions for reading data and saving plots 
+# Holds the path definitions for reading data and saving plots
 # IMPORTANT: You need to adjust the paths to your radar data and quicklook folder
 
 flight: "RF03_20240816"
