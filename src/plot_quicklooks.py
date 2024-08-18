@@ -71,17 +71,11 @@ def hamp_timeslice_quicklook(
     )
 
     # plot 90 GHz radiometer
-    hampdata.radio11990["TBs"].sel(time=timeframe, frequency=90).plot.line(
-        ax=axes[3], x="time", color="k"
+    plot_radiometer_timeseries(
+        hampdata.radio11990["TBs"].sel(time=timeframe, frequency=90),
+        axes[3],
+        is_90=True,
     )
-    axes[3].legend(
-        handles=axes[3].lines,
-        labels=["90 GHz"],
-        loc="center left",
-        bbox_to_anchor=(1, 0.5),
-        frameon=False,
-    )
-    axes[3].set_ylabel("TB / K")
 
     # plot 119 GHz radiometer
     plot_radiometer_timeseries(
@@ -183,17 +177,9 @@ def radiometer_quicklook(
     )
 
     # plot 90 GHz radiometer
-    hampdata["11990"]["TBs"].sel(time=timeframe, frequency=90).plot.line(
-        ax=axes[2], x="time", color="k"
+    plot_radiometer_timeseries(
+        hampdata["11990"]["TBs"].sel(time=timeframe, frequency=90), axes[2], is_90=True
     )
-    axes[2].legend(
-        handles=axes[2].lines,
-        labels=["90 GHz"],
-        loc="center left",
-        bbox_to_anchor=(1, 0.5),
-        frameon=False,
-    )
-    axes[2].set_ylabel("TB / K")
 
     # plot 119 GHz radiometer
     plot_radiometer_timeseries(
@@ -210,6 +196,57 @@ def radiometer_quicklook(
         ax.spines[["top", "right"]].set_visible(False)
 
     fig.suptitle(f"HAMP {timeframe.start} - {timeframe.stop}", y=0.92)
+
+    if savefigparams[0]:
+        savename, dpi = savefigparams[1], savefigparams[2]
+        save_png_figure(fig, savename, dpi)
+
+    return fig, axes
+
+
+def radar_quicklook(
+    hampdata: PostProcessedHAMPData,
+    timeframe,
+    flight=None,
+    figsize=(14, 18),
+    savefigparams=[],
+):
+    """
+    Produces radar quicklook for given timeframe and saves as .png if requested.
+
+    Parameters
+    ----------
+    hampdata : PostProcessedHAMPData
+        Level 1 post-processed HAMP dataset
+    timeframe : slice
+        Timeframe to plot.
+    flight : str, optional
+        name of flight, e.g. "RF01_20240811"
+    figsize : tuple, optional
+        Figure size in inches, by default (10, 14)
+    savefigparams : tuple, optional
+        tuple for parameters to save figure as .png.
+        Parameters are: [boolean, string, int] for
+        [save figure if True, name to save figure, dpi of figure]
+
+    Returns
+    -------
+    fig, axes
+        Figure and axes of the plot.
+    """
+
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=figsize)
+
+    # plot radar
+    ds_radar_plot = hampdata.radar.sel(time=timeframe)
+    plot_radar_timeseries(ds_radar_plot, fig, axes[0])
+
+    axes[0].set_xlabel("")
+    axes[0].set_title("Timeseries")
+    for ax in axes:
+        ax.spines[["top", "right"]].set_visible(False)
+
+    fig.suptitle(f"Radar During HAMP {flight}", y=0.92)
 
     if savefigparams[0]:
         savename, dpi = savefigparams[1], savefigparams[2]
