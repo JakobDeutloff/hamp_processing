@@ -23,7 +23,9 @@ is_planet = config["is_planet"]
 
 # Format paths using the extracted parameters
 path_bahamas = config["paths"]["bahamas"].format(date=date, flightletter=flightletter)
-path_radiometer = config["paths"]["radiometer"].format(date=date, flightletter=flightletter)
+path_radiometer = config["paths"]["radiometer"].format(
+    date=date, flightletter=flightletter
+)
 path_radar = config["paths"]["radar"].format(flight=flight)
 savedir = config["savedir"].format(flight=flight)
 
