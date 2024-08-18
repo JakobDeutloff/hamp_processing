@@ -6,7 +6,7 @@ import matplotlib.colors as mcolors
 import pandas as pd
 
 
-def plot_radiometer(ds, ax):
+def plot_radiometer_timeseries(ds, ax):
     """
     Plot radiometer data for all frequencies in dataset.
 

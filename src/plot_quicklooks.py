@@ -5,7 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import pandas as pd
 
-from .plot_functions import plot_radiometer, plot_radar_timeseries
+from .plot_functions import plot_radiometer_timeseries, plot_radar_timeseries
 from .post_processed_hamp_data import PostProcessedHAMPData
 
 
@@ -60,13 +60,13 @@ def hamp_timeslice_quicklook(
     fig.subplots_adjust(right=0.8)
 
     # plot K-Band radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)),
         axes[1],
     )
 
     # plot V-Band radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[2]
     )
 
@@ -84,13 +84,13 @@ def hamp_timeslice_quicklook(
     axes[3].set_ylabel("TB / K")
 
     # plot 119 GHz radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata.radio11990["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)),
         axes[4],
     )
 
     # plot 183 GHz radiometer
-    plot_radiometer(hampdata.radio183["TBs"].sel(time=timeframe), axes[5])
+    plot_radiometer_timeseries(hampdata.radio183["TBs"].sel(time=timeframe), axes[5])
 
     for ax in axes:
         ax.set_xlabel("")
@@ -173,12 +173,12 @@ def radiometer_quicklook(
     fig, axes = plt.subplots(5, 1, figsize=figsize, sharex="col")
 
     # plot K-Band radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata["kv"]["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)), axes[0]
     )
 
     # plot V-Band radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata["kv"]["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[1]
     )
 
@@ -196,13 +196,13 @@ def radiometer_quicklook(
     axes[2].set_ylabel("TB / K")
 
     # plot 119 GHz radiometer
-    plot_radiometer(
+    plot_radiometer_timeseries(
         hampdata["11990"]["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)),
         axes[3],
     )
 
     # plot 183 GHz radiometer
-    plot_radiometer(hampdata["183"]["TBs"].sel(time=timeframe), axes[4])
+    plot_radiometer_timeseries(hampdata["183"]["TBs"].sel(time=timeframe), axes[4])
 
     for ax in axes:
         ax.set_xlabel("")
