@@ -168,4 +168,4 @@ cython_debug/
 /Radar_Data
 
 # other or unknown
-*.DS_Store
+*/.DS_Store
