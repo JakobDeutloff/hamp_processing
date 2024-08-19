@@ -1,9 +1,7 @@
-import os
 import matplotlib.pyplot as plt
-import xarray as xr
-import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import pandas as pd
+import numpy as np
 
 from .plot_functions import (
     plot_radiometer_timeseries,
