@@ -57,7 +57,7 @@ plotql.hamp_timeslice_quicklook(
     timeframe=slice(starttime, endtime),
     flight=flight,
     ec_under_time=ec_under_time,
-    figsize=(30, 21),
+    figsize=(28, 20),
     savefigparams=[is_savefig, savename, dpi],
 )
 

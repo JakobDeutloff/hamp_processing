@@ -55,42 +55,34 @@ plotql.hamp_timeslice_quicklook(
     savefigparams=[is_savefig, savename, dpi],
 )
 
-# %% produce radar-only single quicklook between startime and endtime
-starttime, endtime = hampdata.radar.time[0].values, hampdata.radar.time[-1].values
+plot_duration = pd.Timedelta("30m")
+ec_starttime, ec_endtime = (
+    ec_under_time - plot_duration / 2,
+    ec_under_time + plot_duration / 2,
+)
+
+# %% produce ec_under single quicklook
 is_savefig = "png"
-savename = f"{savedir}/hamp_radar_timesliceql_{flight}.png"
+savename = f"{savedir}/hamp_ec_under_{flight}.png"
+dpi = 72
+plotql.hamp_timeslice_quicklook(
+    hampdata,
+    timeframe=slice(ec_starttime, ec_endtime),
+    flight=flight,
+    ec_under_time=ec_under_time,
+    figsize=(28, 20),
+    savefigparams=[is_savefig, savename, dpi],
+)
+
+# %% produce radar-only ec_under single quicklook
+is_savefig = "png"
+savename = f"{savedir}/hamp_radar_ec_under_{flight}.png"
 dpi = 72
 plotql.radar_quicklook(
     hampdata,
-    timeframe=slice(starttime, endtime),
+    timeframe=slice(ec_starttime, ec_endtime),
     flight=flight,
     ec_under_time=ec_under_time,
-    figsize=(12, 6),
+    figsize=(15, 6),
     savefigparams=[is_savefig, savename, dpi],
-)
-
-# %% produce radiometer-only single quicklook between startime and endtime
-starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
-is_savefig = "png"
-savename = f"{savedir}/hamp_radiometers_timesliceql_{flight}.png"
-dpi = 72
-plotql.radiometer_quicklook(
-    hampdata,
-    timeframe=slice(starttime, endtime),
-    figsize=(10, 14),
-    savefigparams=[is_savefig, savename, dpi],
-)
-
-# %% produce hourly HAMP quicklooks
-start_hour = pd.Timestamp(hampdata["183"].time[0].values).floor(
-    "h"
-)  # Round start time to full hour
-end_hour = pd.Timestamp(hampdata["183"].time[-1].values).ceil(
-    "h"
-)  # Round end time to full hour
-is_savefig = "png"
-savename = f"{savedir}/hamp_timesliceql_{flight}.pdf"
-dpi = 72
-plotql.hamp_hourly_quicklooks(
-    hampdata, flight, start_hour, end_hour, savefigparams=[is_savefig, savedir, dpi]
 )
