@@ -1,6 +1,12 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+import pandas as pd
+import xarray as xr
+
+
+def filter_radar_signal(dBZg, threshold=-30):
+    return dBZg.where(dBZg >= threshold)  # [dBZ]
 
 
 def plot_radiometer_timeseries(ds, ax, is_90=False):
@@ -21,7 +27,7 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
             handles=ax.lines,
             labels=["90 GHz"],
             loc="center left",
-            bbox_to_anchor=(1, 0.5),
+            bbox_to_anchor=(1.05, 0.5),
             frameon=False,
         )
     else:
@@ -34,13 +40,12 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
             ds.sel(frequency=freq).plot.line(
                 ax=ax, x="time", color=color, label=f"{freq:.2f} GHz"
             )
-        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False)
+        ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5), frameon=False)
 
     ax.set_ylabel("TB / K")
 
 
-def plot_radar_timeseries(ds, fig, ax, cax, cmap="YlGnBu"):
-    """WIP 15:41 UTC"""
+def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
 
     # check if radar data is available
     if ds.dBZg.size == 0:
@@ -53,49 +58,91 @@ def plot_radar_timeseries(ds, fig, ax, cax, cmap="YlGnBu"):
             transform=ax.transAxes,
         )
     else:
+        time, height = ds.time, ds.height / 1e3  # [UTC], [km]
+        signal = filter_radar_signal(ds.dBZg, threshold=-30).T  # [dBZ]
         pcol = ax.pcolormesh(
-            ds.time,
-            ds.height / 1e3,
-            ds.dBZg.where(ds.dBZg > -25).T,
+            time,
+            height,
+            signal,
             cmap=cmap,
-            vmin=-25,
-            vmax=25,
+            vmin=-30,
+            vmax=30,
         )
+        clab, extend, shrink = "Z /dBZe", "max", 0.8
         if cax:
-            fig.colorbar(pcol, cax=cax, label="Z /dBZe", extend="max")
+            cax = fig.colorbar(pcol, cax=cax, label=clab, extend=extend, shrink=shrink)
         else:
-            fig.colorbar(pcol, ax=ax, label="Z /dBZe", extend="max")
+            cax = fig.colorbar(pcol, ax=ax, label=clab, extend=extend, shrink=shrink)
 
-    ax.set_xlabel("Time")
+    # get nicely formatting xticklabels
+    stride = len(time) // 4
+    xticks = time[::stride]
+    xticklabs = [f"{t.hour:02d}:{t.minute:02d}" for t in pd.to_datetime(xticks)]
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xticklabs)
+
+    ax.set_xlabel("UTC")
     ax.set_ylabel("Height / km")
 
+    return ax, cax, pcol
 
-def plot_radar_histogram(ds, ax, signal_range=[], height_range=[], cmap="Grays"):
+
+def plot_beautified_radar_histogram(ds_radar_plot, ax):
+    signal_range = [-30, 30]
+    signal_bins = 60
+    height_bins = 100
+    cmap = plt.get_cmap("Greys")
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        "Sampled_Greys", cmap(np.linspace(0.15, 1.0, signal_bins))
+    )
+    plot_radar_histogram(
+        ds_radar_plot,
+        ax,
+        signal_range=signal_range,
+        height_bins=height_bins,
+        signal_bins=signal_bins,
+        cmap=cmap,
+    )
+
+
+def plot_radar_histogram(
+    ds,
+    ax,
+    signal_range=[],
+    height_range=[],
+    height_bins=50,
+    signal_bins=60,
+    cmap="Grays",
+):
     # get data in correct format for 2D histogram
     height = np.meshgrid(ds.height, ds.time)[0].flatten() / 1e3  # [km]
-    signal = ds.dBZg.where(ds.dBZg > -25).values.flatten()  # [dBZ]
+    signal = filter_radar_signal(ds.dBZg, threshold=-30).values.flatten()  # [dBZ]
 
     # remove nan data
     height = height[~np.isnan(signal)]
     signal = signal[~np.isnan(signal)]
 
     # set histogram parameters
-    if height_range == []:
-        height_range = [0.0, height.max()]
+    bins = [signal_bins, height_bins]
     if signal_range == []:
         signal_range = [signal.min(), signal.max()]
+    if height_range == []:
+        height_range = [0.0, height.max()]
 
     # plot 2D histogram
     cmap = plt.cm.get_cmap(cmap)
     cmap.set_under("white")
-    ax.hist2d(
+    hist, xbins, ybins, im = ax.hist2d(
         signal,
         height,
         range=[signal_range, height_range],
-        bins=[len(ds.height), 60],
+        bins=bins,
         cmap=cmap,
         vmin=signal[signal > 0].min(),
     )
 
     ax.set_xlabel("Z /dBZe")
     ax.set_ylabel("Height / km")
+    ax.set_xticks
+
+    return ax, hist, xbins, ybins
