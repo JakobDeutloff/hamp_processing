@@ -1,6 +1,12 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+import pandas as pd
+import xarray as xr
+
+
+def filter_radar_signal(dBZg, threshold=-30):
+    return dBZg.where(dBZg >= threshold)  # [dBZ]
 
 
 def plot_radiometer_timeseries(ds, ax, is_90=False):
@@ -39,8 +45,7 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
     ax.set_ylabel("TB / K")
 
 
-def plot_radar_timeseries(ds, fig, ax, cax, cmap="YlGnBu"):
-    """WIP 15:41 UTC"""
+def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
 
     # check if radar data is available
     if ds.dBZg.size == 0:
@@ -53,20 +58,30 @@ def plot_radar_timeseries(ds, fig, ax, cax, cmap="YlGnBu"):
             transform=ax.transAxes,
         )
     else:
+        time, height = ds.time, ds.height / 1e3  # [UTC], [km]
+        signal = filter_radar_signal(ds.dBZg, threshold=-30).T  # [dBZ]
         pcol = ax.pcolormesh(
-            ds.time,
-            ds.height / 1e3,
-            ds.dBZg.where(ds.dBZg > -25).T,
+            time,
+            height,
+            signal,
             cmap=cmap,
-            vmin=-25,
-            vmax=25,
+            vmin=-30,
+            vmax=30,
         )
+        clab, extend, shrink = "Z /dBZe", "max", 0.8
         if cax:
-            cax = fig.colorbar(pcol, cax=cax, label="Z /dBZe", extend="max")
+            cax = fig.colorbar(pcol, cax=cax, label=clab, extend=extend, shrink=shrink)
         else:
-            cax = fig.colorbar(pcol, ax=ax, label="Z /dBZe", extend="max")
+            cax = fig.colorbar(pcol, ax=ax, label=clab, extend=extend, shrink=shrink)
 
-    ax.set_xlabel("Time")
+    # get nicely formatting xticklabels
+    stride = len(time) // 4
+    xticks = time[::stride]
+    xticklabs = [f"{t.hour:02d}:{t.minute:02d}" for t in pd.to_datetime(xticks)]
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xticklabs)
+
+    ax.set_xlabel("UTC")
     ax.set_ylabel("Height / km")
 
     return ax, cax, pcol
@@ -83,7 +98,7 @@ def plot_radar_histogram(
 ):
     # get data in correct format for 2D histogram
     height = np.meshgrid(ds.height, ds.time)[0].flatten() / 1e3  # [km]
-    signal = ds.dBZg.where(ds.dBZg > -25).values.flatten()  # [dBZ]
+    signal = filter_radar_signal(ds.dBZg, threshold=-30).values.flatten()  # [dBZ]
 
     # remove nan data
     height = height[~np.isnan(signal)]

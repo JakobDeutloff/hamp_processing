@@ -79,7 +79,7 @@ def hamp_timeslice_quicklook(
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
     cax = fig.add_axes([0.84, 0.63, 0.02, 0.25])
-    plot_radar_timeseries(ds_radar_plot, fig, axes[0], cax)
+    plot_radar_timeseries(ds_radar_plot, fig, axes[0], cax=cax)
     fig.subplots_adjust(right=0.8)
 
     # plot K-Band radiometer
@@ -272,26 +272,44 @@ def radar_quicklook(
     """
 
     fig, axes = plt.subplots(
-        nrows=1, ncols=2, figsize=figsize, width_ratios=[3, 1], sharey=True
+        nrows=1, ncols=2, figsize=figsize, width_ratios=[9, 4], sharey=True
     )
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
 
-    plot_radar_timeseries(ds_radar_plot, fig, axes[0], None)
-    axes[0].set_xlabel("")
-    axes[0].set_title("Timeseries")
+    cax = plot_radar_timeseries(ds_radar_plot, fig, axes[0])[1]
+    axes[0].set_title("Timeseries", fontsize=18)
     if ec_under_time:
         add_earthcare_underpass(axes[0], ec_under_time)
 
     signal_range = [-30, 30]
-    plot_radar_histogram(ds_radar_plot, axes[1], signal_range=signal_range)
+    signal_bins = 60
+    height_bins = 100
+    cmap = plt.get_cmap("Greys")
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        "Sampled_Greys", cmap(np.linspace(0.15, 1.0, signal_bins))
+    )
+    plot_radar_histogram(
+        ds_radar_plot,
+        axes[1],
+        signal_range=signal_range,
+        height_bins=height_bins,
+        signal_bins=signal_bins,
+        cmap=cmap,
+    )
     axes[1].set_ylabel("")
-    axes[1].set_title("Histogram")
+    axes[1].set_title("Histogram", fontsize=18)
 
     for ax in axes:
         ax.spines[["top", "right"]].set_visible(False)
+        ax.tick_params(axis="both", which="major", labelsize=12)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=15)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=15)
+    cax.ax.tick_params(axis="y", which="major", labelsize=12)
+    cax.ax.yaxis.label.set_size(15)
+    cax.ax.tick_params(labelsize=15)
 
-    fig.suptitle(f"Radar During Flight {flight}")
+    fig.suptitle(f"Radar During {flight}", fontsize=20)
 
     fig.tight_layout()
 
