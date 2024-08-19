@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 import pandas as pd
-import xarray as xr
 
 
 def filter_radar_signal(dBZg, threshold=-30):

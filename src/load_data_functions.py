@@ -1,4 +1,3 @@
-# %
 import xarray as xr
 from orcestra.postprocess.level0 import bahamas, radiometer, radar
 from orcestra.postprocess.level1 import (
