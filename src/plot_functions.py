@@ -45,7 +45,6 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
 
 
 def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
-
     # check if radar data is available
     if ds.dBZg.size == 0:
         ax.text(
