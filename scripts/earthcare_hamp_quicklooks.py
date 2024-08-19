@@ -51,13 +51,13 @@ starttime, endtime = (
 # %% produce ec_under single quicklook
 is_savefig = "png"
 savename = f"{savedir}/ec_under_{flight}.png"
-dpi = 500
+dpi = 250
 plotql.hamp_timeslice_quicklook(
     hampdata,
     timeframe=slice(starttime, endtime),
     flight=flight,
     ec_under_time=ec_under_time,
-    figsize=(18, 18),
+    figsize=(30, 21),
     savefigparams=[is_savefig, savename, dpi],
 )
 

@@ -2,11 +2,12 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import pandas as pd
 import numpy as np
+import matplotlib.gridspec as gridspec
 
 from .plot_functions import (
     plot_radiometer_timeseries,
     plot_radar_timeseries,
-    plot_radar_histogram,
+    plot_beautified_radar_histogram,
 )
 from .post_processed_hamp_data import PostProcessedHAMPData
 
@@ -36,6 +37,28 @@ def add_earthcare_underpass(ax, ec_under_time):
 
     x, y = ec_under_time, ax.get_ylim()[1]
     ax.annotate("EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
+
+
+def setup_hamp_timeslice_axes(fig):
+
+    # Create a gridspec with 6 rows and 2 columns
+    gs = gridspec.GridSpec(
+        nrows=6, ncols=3, width_ratios=[24, 0.3, 6], height_ratios=[3] + [1] * 5
+    )
+
+    # Top row for radar has two seperate plots
+    ax0a = fig.add_subplot(gs[0, 0])
+    cax0a = fig.add_subplot(gs[0, 1])
+    ax0b = fig.add_subplot(gs[0, 2])
+
+    # Remaining rows for radiometers have 1 plot
+    ax1 = fig.add_subplot(gs[1, 0])
+    ax2 = fig.add_subplot(gs[2, 0])
+    ax3 = fig.add_subplot(gs[3, 0])
+    ax4 = fig.add_subplot(gs[4, 0])
+    ax5 = fig.add_subplot(gs[5, 0])
+
+    return [[ax0a, cax0a, ax0b], ax1, ax2, ax3, ax4, ax5]
 
 
 def hamp_timeslice_quicklook(
@@ -72,15 +95,13 @@ def hamp_timeslice_quicklook(
         Figure and axes of the plot.
     """
 
-    fig, axes = plt.subplots(
-        6, 1, figsize=figsize, height_ratios=[3, 1, 1, 1, 1, 1], sharex="col"
-    )
+    fig = plt.figure(figsize=figsize)
+    axes = setup_hamp_timeslice_axes(fig)
 
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
-    cax = fig.add_axes([0.84, 0.63, 0.02, 0.25])
-    plot_radar_timeseries(ds_radar_plot, fig, axes[0], cax=cax)
-    fig.subplots_adjust(right=0.8)
+    plot_radar_timeseries(ds_radar_plot, fig, axes[0][0], cax=axes[0][1])
+    plot_beautified_radar_histogram(ds_radar_plot, axes[0][2])
 
     # plot K-Band radiometer
     plot_radiometer_timeseries(
@@ -109,12 +130,19 @@ def hamp_timeslice_quicklook(
     # plot 183 GHz radiometer
     plot_radiometer_timeseries(hampdata.radio183["TBs"].sel(time=timeframe), axes[5])
 
-    for ax in axes:
+    axes_timeseries_plots = [axes[0][0]] + axes[1:]
+    for ax in axes_timeseries_plots:
         ax.set_xlabel("")
         ax.set_title("")
         ax.spines[["top", "right"]].set_visible(False)
         if ec_under_time:
             add_earthcare_underpass(ax, ec_under_time)
+
+    axes[0][2].sharey(axes[0][0])
+    for ax in axes[1:]:
+        ax.sharex(axes[0][0])
+    axes[0][2].spines[["top", "right"]].set_visible(False)
+    axes[-1].set_xlabel("Hour:Min UTC")
 
     fig.suptitle(f"HAMP {flight}", y=0.92)
 
@@ -278,25 +306,11 @@ def radar_quicklook(
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
 
     cax = plot_radar_timeseries(ds_radar_plot, fig, axes[0])[1]
-    axes[0].set_title("Timeseries", fontsize=18)
     if ec_under_time:
         add_earthcare_underpass(axes[0], ec_under_time)
+    axes[0].set_title("Timeseries", fontsize=18)
 
-    signal_range = [-30, 30]
-    signal_bins = 60
-    height_bins = 100
-    cmap = plt.get_cmap("Greys")
-    cmap = mcolors.LinearSegmentedColormap.from_list(
-        "Sampled_Greys", cmap(np.linspace(0.15, 1.0, signal_bins))
-    )
-    plot_radar_histogram(
-        ds_radar_plot,
-        axes[1],
-        signal_range=signal_range,
-        height_bins=height_bins,
-        signal_bins=signal_bins,
-        cmap=cmap,
-    )
+    plot_beautified_radar_histogram(ds_radar_plot, axes[1])
     axes[1].set_ylabel("")
     axes[1].set_title("Histogram", fontsize=18)
 

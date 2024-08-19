@@ -27,7 +27,7 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
             handles=ax.lines,
             labels=["90 GHz"],
             loc="center left",
-            bbox_to_anchor=(1, 0.5),
+            bbox_to_anchor=(1.05, 0.5),
             frameon=False,
         )
     else:
@@ -40,7 +40,7 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
             ds.sel(frequency=freq).plot.line(
                 ax=ax, x="time", color=color, label=f"{freq:.2f} GHz"
             )
-        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False)
+        ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5), frameon=False)
 
     ax.set_ylabel("TB / K")
 
@@ -85,6 +85,24 @@ def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
     ax.set_ylabel("Height / km")
 
     return ax, cax, pcol
+
+
+def plot_beautified_radar_histogram(ds_radar_plot, ax):
+    signal_range = [-30, 30]
+    signal_bins = 60
+    height_bins = 100
+    cmap = plt.get_cmap("Greys")
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        "Sampled_Greys", cmap(np.linspace(0.15, 1.0, signal_bins))
+    )
+    plot_radar_histogram(
+        ds_radar_plot,
+        ax,
+        signal_range=signal_range,
+        height_bins=height_bins,
+        signal_bins=signal_bins,
+        cmap=cmap,
+    )
 
 
 def plot_radar_histogram(

@@ -45,13 +45,13 @@ ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
 starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
 is_savefig = "png"
 savename = f"{savedir}/hamp_timesliceql_{flight}.png"
-dpi = 500
+dpi = 250
 plotql.hamp_timeslice_quicklook(
     hampdata,
     timeframe=slice(starttime, endtime),
     flight=flight,
     ec_under_time=ec_under_time,
-    figsize=(18, 18),
+    figsize=(30, 21),
     savefigparams=[is_savefig, savename, dpi],
 )
 
