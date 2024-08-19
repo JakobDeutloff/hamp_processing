@@ -94,15 +94,3 @@ dpi = 72
 plotql.hamp_hourly_quicklooks(
     hampdata, flight, start_hour, end_hour, savefigparams=[is_savefig, savedir, dpi]
 )
-
-
-# %% get earthcare track forecasts
-ec_track = helpfuncs.get_earthcare_track(config["date"])
-
-# %% find time when earthcare crosses halo
-ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
-plot_duration = pd.Timedelta("30m")
-starttime, endtime = (
-    ec_under_time - plot_duration / 2,
-    ec_under_time + plot_duration / 2,
-)
