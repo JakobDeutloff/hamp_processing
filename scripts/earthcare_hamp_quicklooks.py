@@ -8,37 +8,31 @@ import pandas as pd
 from src import plot_quicklooks as plotql
 from src import load_data_functions as loadfuncs
 from src import helper_functions as helpfuncs
-import yaml
 
 # %%
-### ----------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML ----------- ###
-# Load configuration from YAML file
-with open("config.yaml", "r") as file:
-    config = yaml.safe_load(file)
-
-# Extract parameters from the configuration
-flight = config["flight"]
-date = config["date"]
-flightletter = config["flightletter"]
-is_planet = config["is_planet"]
-
-# Format paths using the extracted parameters
-path_bahamas = config["paths"]["bahamas"].format(date=date, flightletter=flightletter)
-path_radiometer = config["paths"]["radiometer"].format(
-    date=date, flightletter=flightletter
-)
-path_radar = config["paths"]["radar"].format(flight=flight)
-savedir = config["savedir"].format(flight=flight)
-
-### ---------------------------------------------------- ###
+### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
+configfile = "config.yaml"
+cfg = helpfuncs.extract_config_params(configfile)
+flight = cfg["flight"]
+savedir = cfg["savedir"]
+radiometer_date = cfg["radiometer_date"]
+### ------------------------------------------------------------- ###
 
 # %% create HAMP post-processed data
 hampdata = loadfuncs.do_post_processing(
-    path_bahamas, path_radar, path_radiometer, date[2:], is_planet=is_planet
+    cfg["path_bahamas"],
+    cfg["path_radar"],
+    cfg["path_radiometer"],
+    cfg["radiometer_date"],
+    is_planet=cfg["is_planet"],
+    do_radar=True,
+    do_183=True,
+    do_11990=True,
+    do_kv=True,
 )
 
 # %% get earthcare track forecasts
-ec_track = helpfuncs.get_earthcare_track(config["date"])
+ec_track = helpfuncs.get_earthcare_track(cfg["date"])
 
 # %% find time when earthcare crosses halo
 ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
@@ -50,7 +44,7 @@ starttime, endtime = (
 
 # %% produce ec_under single quicklook
 is_savefig = "png"
-savename = f"{savedir}/hamp_ec_under_{flight}.png"
+savename = savedir / f"ec_under_{flight}_hamp.png"
 dpi = 72
 plotql.hamp_timeslice_quicklook(
     hampdata,
@@ -63,7 +57,7 @@ plotql.hamp_timeslice_quicklook(
 
 # %% produce radar-only ec_under single quicklook
 is_savefig = "png"
-savename = f"{savedir}/hamp_radar_ec_under_{flight}.png"
+savename = savedir / f"ec_under_{flight}_radar.png"
 dpi = 72
 plotql.radar_quicklook(
     hampdata,
