@@ -272,7 +272,7 @@ def radar_quicklook(
     """
 
     fig, axes = plt.subplots(
-        nrows=1, ncols=2, figsize=figsize, width_ratios=[9, 4], sharey=True
+        nrows=1, ncols=2, figsize=figsize, width_ratios=[18, 7], sharey=True
     )
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
