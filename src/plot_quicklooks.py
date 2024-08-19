@@ -42,9 +42,7 @@ def add_earthcare_underpass(ax, ec_under_time):
 def setup_hamp_timeslice_axes(fig):
 
     # Create a gridspec with 6 rows and 2 columns
-    gs = gridspec.GridSpec(
-        nrows=6, ncols=3, width_ratios=[24, 0.3, 6], height_ratios=[3] + [1] * 5
-    )
+    gs = gridspec.GridSpec(nrows=6, ncols=3, width_ratios=[24, 0.3, 4])
 
     # Top row for radar has two seperate plots
     ax0a = fig.add_subplot(gs[0, 0])
