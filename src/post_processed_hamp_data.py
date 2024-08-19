@@ -20,7 +20,7 @@ class PostProcessedHAMPData:
             self.radio183 = data
         elif key == "radio11990" or key == "11990":
             self.radio11990 = data
-        elif key == "radiokv" or key == "kv":
+        elif key == "radiokv" or key == "kv" or key == "KV":
             self.radiokv = data
         elif key == "is_planet":
             self.is_planet = data
@@ -38,7 +38,7 @@ class PostProcessedHAMPData:
             return self.radio183
         elif key == "radio11990" or key == "11990":
             return self.radio11990
-        elif key == "radiokv" or key == "kv":
+        elif key == "radiokv" or key == "kv" or key == "KV":
             return self.radiokv
         elif key == "is_planet":
             return self.is_planet
