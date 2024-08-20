@@ -30,9 +30,9 @@ def do_level0_processing_radar(path_radar):
     return ds_radar_lev0
 
 
-def do_level0_processing_radiometer(path_radiometer):
-    print(f"Using radiometer data from: {path_radiometer}")
-    ds_radiometer_lev0 = xr.open_dataset(path_radiometer).pipe(radiometer)
+def do_level0_processing_radiometer(path_radio):
+    print(f"Using radiometer data from: {path_radio}")
+    ds_radiometer_lev0 = xr.open_dataset(path_radio).pipe(radiometer)
     return ds_radiometer_lev0
 
 
@@ -63,13 +63,16 @@ def do_level0_processing(
     do_183=True,
     do_11990=True,
     do_kv=True,
+    do_cwv=True,
 ) -> PostProcessedHAMPData:
-    """read data and do level0 processing. arg radiometer_date usually excludes first YY in year,
-    i.e. is format YYMMDD e.g. flight on YYYYMMDD 20240811 would have radiometer_date = 240811
+    """read data and do level0 processing. Assuming radiometer datasets from:
+    "{path_radiometer}/[XXX]/{radiometer_date}.BRT.NCArgument" where radiometer_date
+    usually excludes first YY in year, i.e. is format YYMMDD so e.g. flight on
+    YYYYMMDD=20240811 would have radiometer_date=240811
     """
 
     level0data = PostProcessedHAMPData(
-        None, None, None, None, None, is_planet=is_planet
+        None, None, None, None, None, None, is_planet=is_planet
     )
 
     level0data.flightdata = load_flightdata(path_flightdata, level0data.is_planet)
@@ -77,11 +80,10 @@ def do_level0_processing(
     if do_radar:
         level0data.radar = do_level0_processing_radar(path_radar)
 
-    print(f"Radiometer datasets from: {path_radiometer}/[XXX]/{radiometer_date}.BRT.NC")
     for radio, do_radio in zip(["183", "11990", "kv"], [do_183, do_11990, do_kv]):
         if do_radio:
-            path_radiometer = f"{path_radiometer}/{radio}/{radiometer_date}.BRT.NC"
-            level0data[radio] = do_level0_processing_radiometer(path_radiometer)
+            path_radio = get_radiometer_path(path_radiometer, radio, radiometer_date)
+            level0data[radio] = do_level0_processing_radiometer(path_radio)
 
     return level0data
 
@@ -90,7 +92,7 @@ def do_level1_processing(level0data: PostProcessedHAMPData) -> PostProcessedHAMP
     """do level1 processing on level0 data"""
 
     level1data = PostProcessedHAMPData(
-        level0data.flightdata, None, None, None, None, level0data.is_planet
+        level0data.flightdata, None, None, None, None, None, level0data.is_planet
     )
 
     if level1data.is_planet:
@@ -126,6 +128,7 @@ def do_post_processing(
     do_183=True,
     do_11990=True,
     do_kv=True,
+    do_cwv=True,
 ) -> PostProcessedHAMPData:
     """do level0 and level1 processing"""
 
@@ -140,6 +143,7 @@ def do_post_processing(
             do_183=do_183,
             do_11990=do_11990,
             do_kv=do_kv,
+            do_cwv=do_cwv,
         )
     )
 
