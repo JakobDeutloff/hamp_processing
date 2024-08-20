@@ -34,7 +34,9 @@ def extract_config_params(config_file):
     config["path_radar"] = Path(
         config["paths"]["radar"].format(flight=config["flight"])
     )
-    config["savedir"] = Path(config["savedir"].format(flight=config["flight"]))
+    config["path_saveplts"] = Path(
+        config["paths"]["saveplts"].format(flight=config["flight"])
+    )
 
     return config
 

@@ -14,7 +14,7 @@ from src import helper_functions as helpfuncs
 configfile = "config.yaml"
 cfg = helpfuncs.extract_config_params(configfile)
 flight = cfg["flight"]
-savedir = cfg["savedir"]
+path_saveplts = cfg["path_saveplts"]
 radiometer_date = cfg["radiometer_date"]
 ### ------------------------------------------------------------- ###
 
@@ -47,7 +47,7 @@ flight_starttime, flight_endtime = (
     hampdata["183"].time[-1].values,
 )
 is_savefig = "png"
-savename = savedir / f"hamp_timesliceql_{flight}.png"
+savename = path_saveplts / f"hamp_timesliceql_{flight}.png"
 dpi = 72
 plotql.hamp_timeslice_quicklook(
     hampdata,
@@ -60,7 +60,7 @@ plotql.hamp_timeslice_quicklook(
 
 # %% produce ec_under single quicklook
 is_savefig = "png"
-savename = savedir / f"hamp_ec_under_{flight}.png"
+savename = path_saveplts / f"hamp_ec_under_{flight}.png"
 dpi = 72
 plotql.hamp_timeslice_quicklook(
     hampdata,
@@ -73,7 +73,7 @@ plotql.hamp_timeslice_quicklook(
 
 # %% produce radar-only ec_under single quicklook
 is_savefig = "png"
-savename = savedir / f"hamp_radar_ec_under_{flight}.png"
+savename = path_saveplts / f"hamp_radar_ec_under_{flight}.png"
 dpi = 72
 plotql.radar_quicklook(
     hampdata,
