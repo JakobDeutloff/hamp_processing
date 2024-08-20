@@ -10,7 +10,14 @@ from .plot_functions import (
 from .post_processed_hamp_data import PostProcessedHAMPData
 
 
-def save_figure(fig, format, savename, dpi):
+def save_figure(fig, savefigparams):
+    """
+    savefigparams : tuple, optional
+        tuple for parameters to save figure as .png.
+        Parameters are: [str, str, int] for [format to save figure,
+        name to save figure, dpi of figure, used if format=="png"]
+    """
+
     def save_png_figure(fig, savename, dpi):
         fig.savefig(
             savename, dpi=dpi, bbox_inches="tight", facecolor="w", format=format
@@ -21,9 +28,12 @@ def save_figure(fig, format, savename, dpi):
         fig.savefig(savename, bbox_inches="tight", format=format)
         print("figure saved as .pdf in: " + savename)
 
+    format = savefigparams[0]
     if format == "png":
+        savename, dpi = savefigparams[1:3]
         save_png_figure(fig, savename, dpi)
     elif format == "pdf":
+        savename = savefigparams[1]
         save_pdf_figure(fig, savename)
     else:
         raise ValueError("Figure format unknown, please choose 'pdf' or 'png'")
@@ -142,8 +152,7 @@ def hamp_timeslice_quicklook(
     fig.suptitle(f"HAMP {flight}", y=0.92)
 
     if savefigparams != []:
-        format, savename, dpi = savefigparams[0:3]
-        save_figure(fig, format, savename, dpi)
+        save_figure(fig, savefigparams)
 
     return fig, axes
 
@@ -192,7 +201,8 @@ def hamp_hourly_quicklooks(
                 path_saveplts
                 / f"hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.{format}"
             )
-            save_figure(fig, format, savename, dpi)
+            savefigparams[1] = savename
+            save_figure(fig, savefigparams)
 
 
 def radiometer_quicklook(
@@ -256,8 +266,7 @@ def radiometer_quicklook(
     fig.suptitle(f"HAMP {timeframe.start} - {timeframe.stop}", y=0.92)
 
     if savefigparams != []:
-        format, savename, dpi = savefigparams
-        save_figure(fig, format, savename, dpi)
+        save_figure(fig, savefigparams)
 
     return fig, axes
 
@@ -325,7 +334,6 @@ def radar_quicklook(
     fig.tight_layout()
 
     if savefigparams != []:
-        format, savename, dpi = savefigparams[0:3]
-        save_figure(fig, format, savename, dpi)
+        save_figure(fig, savefigparams)
 
     return fig, axes
