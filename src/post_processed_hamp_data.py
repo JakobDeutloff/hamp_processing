@@ -1,12 +1,21 @@
 class PostProcessedHAMPData:
     def __init__(
-        self, flightdata, radar, radio183, radio11990, radiokv, is_planet=False
+        self,
+        flightdata,
+        radar,
+        radio183,
+        radio11990,
+        radiokv,
+        column_water_vapour,
+        is_planet=False,
     ):
         self.flightdata = flightdata
         self.radar = radar
         self.radio183 = radio183
         self.radio11990 = radio11990
         self.radiokv = radiokv
+        self.column_water_vapour = column_water_vapour
+
         self.is_planet = (
             is_planet  # False = using bahamas, True = using planet for flightdata
         )
@@ -22,6 +31,8 @@ class PostProcessedHAMPData:
             self.radio11990 = data
         elif key == "radiokv" or key == "kv" or key == "KV":
             self.radiokv = data
+        elif key == "column_water_vapour" or key == "cwv" or key == "CWV":
+            self.column_water_vapour = data
         elif key == "is_planet":
             self.is_planet = data
         elif key == "is_bahamas":
@@ -40,6 +51,8 @@ class PostProcessedHAMPData:
             return self.radio11990
         elif key == "radiokv" or key == "kv" or key == "KV":
             return self.radiokv
+        elif key == "column_water_vapour" or key == "cwv" or key == "CWV":
+            return self.column_water_vapour
         elif key == "is_planet":
             return self.is_planet
         elif key == "is_bahamas":
