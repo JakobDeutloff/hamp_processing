@@ -29,6 +29,7 @@ hampdata = loadfuncs.do_post_processing(
     do_183=True,
     do_11990=True,
     do_kv=True,
+    do_cwv=True,
 )
 
 # %% find time when earthcare crosses halo
