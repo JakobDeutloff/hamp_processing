@@ -44,7 +44,7 @@ starttime, endtime = (
 )
 
 # %% produce ec_under single quicklook
-is_savefig = "png"
+savefig_format = "png"
 savename = path_saveplts / f"ec_under_{flight}_hamp.png"
 dpi = 72
 plotql.hamp_timeslice_quicklook(
@@ -53,11 +53,11 @@ plotql.hamp_timeslice_quicklook(
     flight=flight,
     ec_under_time=ec_under_time,
     figsize=(28, 20),
-    savefigparams=[is_savefig, savename, dpi],
+    savefigparams=[savefig_format, savename, dpi],
 )
 
 # %% produce radar-only ec_under single quicklook
-is_savefig = "png"
+savefig_format = "png"
 savename = path_saveplts / f"ec_under_{flight}_radar.png"
 dpi = 72
 plotql.radar_quicklook(
@@ -66,5 +66,5 @@ plotql.radar_quicklook(
     flight=flight,
     ec_under_time=ec_under_time,
     figsize=(15, 6),
-    savefigparams=[is_savefig, savename, dpi],
+    savefigparams=[savefig_format, savename, dpi],
 )

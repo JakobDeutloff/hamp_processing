@@ -62,7 +62,7 @@ def hamp_timeslice_quicklook(
     flight=None,
     ec_under_time=None,
     figsize=(14, 18),
-    savefigparams=[None, None, None],
+    savefigparams=[],
 ):
     """
     Produces HAMP quicklook for given timeframe and saves as .png if requested.
@@ -81,8 +81,8 @@ def hamp_timeslice_quicklook(
         Figure size in inches, by default (10, 14)
     savefigparams : tuple, optional
         tuple for parameters to save figure as .png.
-        Parameters are: [boolean, string, int] for
-        [save figure if True, name to save figure, dpi of figure]
+        Parameters are: [str, str, int] for [format to save figure,
+        name to save figure, dpi of figure, used if format=="png"]
 
     Returns
     -------
@@ -141,7 +141,7 @@ def hamp_timeslice_quicklook(
 
     fig.suptitle(f"HAMP {flight}", y=0.92)
 
-    if savefigparams[0]:
+    if savefigparams != []:
         format, savename, dpi = savefigparams[0:3]
         save_figure(fig, format, savename, dpi)
 
@@ -153,7 +153,7 @@ def hamp_hourly_quicklooks(
     flight,
     start_hour,
     end_hour,
-    savefigparams=[None, None, None],
+    savefigparams=[],
 ):
     """
     Produces hourly HAMP PDF quicklooks for given flight and saves them as pdfs if requested.
@@ -169,9 +169,9 @@ def hamp_hourly_quicklooks(
     end_hour :  pandas.Timestamp
         final hour of quicklooks
     savefigparams : tuple, optional
-        tuple for parameters to save figures as .pdfs.
-        Parameters are: [boolean, string, int] for
-        [save pdf figures if True, directory to save .pdfs in]
+        tuple for parameters to save figure as .png.
+        Parameters are: [str, str, int] for [format to save figure,
+        directory to save figures in, dpi of figure, used if format=="png"]
     """
 
     # Generate hourly time slices
@@ -184,15 +184,10 @@ def hamp_hourly_quicklooks(
             timeframe=slice(timeslices[i], timeslices[i + 1]),
             flight=flight,
             figsize=(18, 18),
-            savefigparams=[False],
         )
 
-        if savefigparams[0]:
-            format, path_saveplts, dpi = (
-                savefigparams[0],
-                savefigparams[1],
-                savefigparams[2],
-            )
+        if savefigparams != []:
+            format, path_saveplts, dpi = savefigparams[0:3]
             savename = (
                 path_saveplts
                 / f"hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.{format}"
@@ -204,7 +199,7 @@ def radiometer_quicklook(
     hampdata: PostProcessedHAMPData,
     timeframe,
     figsize=(10, 14),
-    savefigparams=[None, None, None],
+    savefigparams=[],
 ):
     """
     Produces HAMP quicklook for given timeframe.
@@ -219,8 +214,8 @@ def radiometer_quicklook(
         Figure size in inches, by default (10, 14)
     savefigparams : tuple, optional
         tuple for parameters to save figure as .png.
-        Parameters are: [boolean, string, int] for
-        [save figure if True, name to save figure, dpi of figure]
+        Parameters are: [str, str, int] for [format to save figure,
+        name to save figure, dpi of figure, used if format=="png"]
     Returns
     -------
     fig, axes
@@ -260,8 +255,8 @@ def radiometer_quicklook(
 
     fig.suptitle(f"HAMP {timeframe.start} - {timeframe.stop}", y=0.92)
 
-    if savefigparams[0]:
-        format, savename, dpi = savefigparams[0:3]
+    if savefigparams != []:
+        format, savename, dpi = savefigparams
         save_figure(fig, format, savename, dpi)
 
     return fig, axes
@@ -273,7 +268,7 @@ def radar_quicklook(
     flight=None,
     ec_under_time=None,
     figsize=(9, 5),
-    savefigparams=[None, None, None],
+    savefigparams=[],
 ):
     """
     Produces radar quicklook for given timeframe and saves as .png if requested.
@@ -292,8 +287,8 @@ def radar_quicklook(
         Figure size in inches, by default (10, 14)
     savefigparams : tuple, optional
         tuple for parameters to save figure as .png.
-        Parameters are: [boolean, string, int] for
-        [save figure if True, name to save figure, dpi of figure]
+        Parameters are: [str, str, int] for [format to save figure,
+        name to save figure, dpi of figure, used if format=="png"]
 
     Returns
     -------
@@ -329,7 +324,7 @@ def radar_quicklook(
 
     fig.tight_layout()
 
-    if savefigparams[0]:
+    if savefigparams != []:
         format, savename, dpi = savefigparams[0:3]
         save_figure(fig, format, savename, dpi)
 
