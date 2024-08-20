@@ -38,7 +38,8 @@ def do_level0_processing_radiometer(path_radio):
 
 def do_level0_processing_column_water_vapour(path_radiokv):
     print(f"Using column water vapour retrieval from: {path_radiokv}")
-    print("TODO(CB): finish level0 cwv")
+    ds_radiokv_lev0 = xr.open_dataset(path_radiokv).pipe(radiometer)
+    return ds_radiokv_lev0
 
 
 def do_level1_processing_radar(ds_radar_lev0, flightdata, phi, the, alt):
@@ -58,8 +59,10 @@ def do_level1_processing_radiometer(ds_radiometer_lev0, flightdata, phi, alt):
     return ds_radiometer_lev1
 
 
-def do_level1_processing_column_water_vapour(ds_cwv_lev0, flightdata):
+def do_level1_processing_column_water_vapour(ds_cwv_lev0, flightdata, phi, alt):
     print("TODO(CB): finish level 1 processing cwv")
+    ds_cwv_lev1 = do_level1_processing_radiometer(ds_cwv_lev0, flightdata, phi, alt)
+    return ds_cwv_lev1
 
 
 def do_level0_processing(
@@ -130,7 +133,10 @@ def do_level1_processing(level0data: PostProcessedHAMPData) -> PostProcessedHAMP
 
     if level0data["cwv"]:
         level1data["cwv"] = do_level1_processing_column_water_vapour(
-            level0data["cwv"], level0data.flightdata
+            level0data["cwv"],
+            level0data.flightdata,
+            phi,
+            alt,
         )
 
     return level1data
