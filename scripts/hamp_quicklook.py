@@ -38,7 +38,7 @@ ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
 
 # %% produce HAMP single quicklook between startime and endtime
 starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
-is_savefig = "png"
+savefig_format = "png"
 savename = path_saveplts / f"timesliceql_{flight}_hamp.png"
 dpi = 72
 plotql.hamp_timeslice_quicklook(
@@ -47,12 +47,12 @@ plotql.hamp_timeslice_quicklook(
     flight=flight,
     ec_under_time=ec_under_time,
     figsize=(28, 20),
-    savefigparams=[is_savefig, savename, dpi],
+    savefigparams=[savefig_format, savename, dpi],
 )
 
 # %% produce radar-only single quicklook between startime and endtime
 starttime, endtime = hampdata.radar.time[0].values, hampdata.radar.time[-1].values
-is_savefig = "png"
+savefig_format = "png"
 savename = path_saveplts / f"timesliceql_{flight}_radar.png"
 dpi = 72
 plotql.radar_quicklook(
@@ -61,19 +61,19 @@ plotql.radar_quicklook(
     flight=flight,
     ec_under_time=ec_under_time,
     figsize=(12, 6),
-    savefigparams=[is_savefig, savename, dpi],
+    savefigparams=[savefig_format, savename, dpi],
 )
 
 # %% produce radiometer-only single quicklook between startime and endtime
 starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
-is_savefig = "png"
+savefig_format = "png"
 savename = path_saveplts / f"timesliceql_{flight}_radiometers.png"
 dpi = 72
 plotql.radiometer_quicklook(
     hampdata,
     timeframe=slice(starttime, endtime),
     figsize=(10, 14),
-    savefigparams=[is_savefig, savename, dpi],
+    savefigparams=[savefig_format, savename, dpi],
 )
 
 # %% produce hourly HAMP quicklooks
@@ -83,12 +83,12 @@ start_hour = pd.Timestamp(hampdata["183"].time[0].values).floor(
 end_hour = pd.Timestamp(hampdata["183"].time[-1].values).ceil(
     "h"
 )  # Round end time to full hour
-is_savefig = "png"
+savefig_format = "png"
 dpi = 72
 plotql.hamp_hourly_quicklooks(
     hampdata,
     flight,
     start_hour,
     end_hour,
-    savefigparams=[is_savefig, path_saveplts, dpi],
+    savefigparams=[savefig_format, path_saveplts, dpi],
 )
