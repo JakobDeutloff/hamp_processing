@@ -2,6 +2,7 @@ import xarray as xr
 import pandas as pd
 from orcestra import sat
 import yaml
+from pathlib import Path
 
 
 def extract_config_params(config_file):
@@ -20,14 +21,20 @@ def extract_config_params(config_file):
     config["is_planet"] = config_yaml["is_planet"]
 
     # Format paths using the extracted parameters
-    config["path_bahamas"] = config["paths"]["bahamas"].format(
-        date=config["date"], flightletter=config["flightletter"]
+    config["path_bahamas"] = Path(
+        config["paths"]["bahamas"].format(
+            date=config["date"], flightletter=config["flightletter"]
+        )
     )
-    config["path_radiometer"] = config["paths"]["radiometer"].format(
-        date=config["date"], flightletter=config["flightletter"]
+    config["path_radiometer"] = Path(
+        config["paths"]["radiometer"].format(
+            date=config["date"], flightletter=config["flightletter"]
+        )
     )
-    config["path_radar"] = config["paths"]["radar"].format(flight=config["flight"])
-    config["savedir"] = config["savedir"].format(flight=config["flight"])
+    config["path_radar"] = Path(
+        config["paths"]["radar"].format(flight=config["flight"])
+    )
+    config["savedir"] = Path(config["savedir"].format(flight=config["flight"]))
 
     return config
 

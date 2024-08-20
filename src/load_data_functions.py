@@ -1,4 +1,5 @@
 import xarray as xr
+from pathlib import Path
 from orcestra.postprocess.level0 import bahamas, radiometer, radar
 from orcestra.postprocess.level1 import (
     filter_radiometer,
@@ -7,6 +8,11 @@ from orcestra.postprocess.level1 import (
 )
 from .helper_functions import read_planet
 from .post_processed_hamp_data import PostProcessedHAMPData
+
+
+def get_radiometer_path(path_radiometer: Path, radio, radiometer_date) -> Path:
+    filename = f"{radiometer_date}.BRT.NC"
+    return path_radiometer / radio / filename
 
 
 def load_flightdata(path_flightdata, is_planet):

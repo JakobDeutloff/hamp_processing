@@ -188,8 +188,11 @@ def hamp_hourly_quicklooks(
         )
 
         if savefigparams[0]:
-            format, dpi = savefigparams[0], savefigparams[2]
-            savename = f"{savefigparams[1]}/hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.{format}"
+            format, savedir, dpi = savefigparams[0], savefigparams[1], savefigparams[2]
+            savename = (
+                savedir
+                / f"hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.{format}"
+            )
             save_figure(fig, format, savename, dpi)
 
 
