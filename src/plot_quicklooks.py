@@ -298,6 +298,7 @@ def radar_quicklook(
     ec_under_time=None,
     figsize=(9, 5),
     savefigparams=[],
+    ds_radar=False,
 ):
     """
     Produces radar quicklook for given timeframe and saves as .png if requested.
@@ -318,7 +319,8 @@ def radar_quicklook(
         tuple for parameters to save figure as .png.
         Parameters are: [str, str, int] for [format to save figure,
         name to save figure, dpi of figure, used if format=="png"]
-
+    ds_radar : Any, optional
+        If specified, use ds_radar for plotting rather than hampdata.radar
     Returns
     -------
     fig, axes
@@ -329,7 +331,10 @@ def radar_quicklook(
         nrows=1, ncols=2, figsize=figsize, width_ratios=[18, 7], sharey=True
     )
     # plot radar
-    ds_radar_plot = hampdata.radar.sel(time=timeframe)
+    if ds_radar:
+        ds_radar_plot = ds_radar.sel(time=timeframe)
+    else:
+        ds_radar_plot = hampdata.radar.sel(time=timeframe)
 
     cax = plot_radar_timeseries(ds_radar_plot, fig, axes[0])[1]
     if ec_under_time:
