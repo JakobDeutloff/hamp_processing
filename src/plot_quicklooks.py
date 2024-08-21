@@ -45,7 +45,7 @@ def add_earthcare_underpass(ax, ec_under_time, annotate=False):
     ax.axvline(ec_under_time, color=color, linestyle="--", linewidth=1.0)
 
     if annotate:
-        x, y = ec_under_time, ax.get_ylim()[1]
+        x, y = ec_under_time, ax.get_ylim()[1] * 0.99
         ax.annotate("EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
 
 
@@ -394,7 +394,7 @@ def plot_kvband_column_water_vapour_retrieval(
     plot_column_water_vapour_timeseries(
         hampdata["CWV"]["IWV"].sel(time=timeframe), axes[2], target_cwv=48
     )
-    axes[1].set_title("KV-Bands Column Water Vapour Retrieval")
+    axes[2].set_title("KV-Bands Column Water Vapour Retrieval")
 
     if ec_under_time:
         for ax in axes:
