@@ -143,7 +143,8 @@ def hamp_timeslice_quicklook(
         ax.set_title("")
         ax.spines[["top", "right"]].set_visible(False)
         if ec_under_time:
-            add_earthcare_underpass(ax, ec_under_time)
+            add_earthcare_underpass(ax, ec_under_time, annotate=False)
+            add_earthcare_underpass(axes[0][0], ec_under_time, annotate=True)
 
     axes[0][2].sharey(axes[0][0])
     for ax in axes[1:]:
@@ -315,8 +316,11 @@ def radar_quicklook(
 
     cax = plot_radar_timeseries(ds_radar_plot, fig, axes[0])[1]
     if ec_under_time:
-        add_earthcare_underpass(axes[0], ec_under_time)
-    axes[0].set_title("Timeseries", fontsize=18)
+        add_earthcare_underpass(axes[0], ec_under_time, annotate=False)
+        x, y = ec_under_time, axes[0].get_ylim()[1] * 0.925
+        axes[0].annotate(" EarthCARE", xy=(x, y), xytext=(x, y), fontsize=15, color="r")
+
+    axes[0].set_title("Timeseries", fontsize=18, pad=0.2)
 
     plot_beautified_radar_histogram(ds_radar_plot, axes[1])
     axes[1].set_ylabel("")
