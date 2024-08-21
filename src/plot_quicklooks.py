@@ -45,8 +45,8 @@ def add_earthcare_underpass(ax, ec_under_time, annotate=False):
     ax.axvline(ec_under_time, color=color, linestyle="--", linewidth=1.0)
 
     if annotate:
-        x, y = ec_under_time, ax.get_ylim()[1] * 0.99
-        ax.annotate("EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
+        x, y = ec_under_time, ax.get_ylim()[1] * 0.975
+        ax.annotate(" EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
 
 
 def setup_hamp_timeslice_axes(fig):
