@@ -53,7 +53,7 @@ sliced_level1radar.to_netcdf(ncfilename)
 sizemb_og = int(hampdata.radar.nbytes / 1024 / 1024)  # convert bytes to MB
 sizemb_slice = int(sliced_level1radar.nbytes / 1024 / 1024)  # convert bytes to MB
 print(
-    f"Radar data original size = {sizemb_og}MB\nTimeslice of radar data saved to: {ncfilename}\nsize = {sizemb_slice}MB"
+    f"Timeslice of radar data saved to: {ncfilename}\nRadar data original size = {sizemb_og}MB\nsize = {sizemb_slice}MB"
 )
 
 # %% produce radar-only single quicklook from sliced radardata .nc file
