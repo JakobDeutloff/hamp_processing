@@ -46,21 +46,14 @@ starttime, endtime = (
 )
 
 # %% Write timeslice of Level 1 post-processed radar data to .nc file
-ncfilename = cfg["path_writeradar"] / f"earthcare_level1_{window}_{flight}.nc"
-sliced_level1radar = hampdata.radar.sel(time=slice(starttime, endtime))
-sliced_level1radar.to_netcdf(ncfilename)
-
-sizemb_og = int(hampdata.radar.nbytes / 1024 / 1024)  # convert bytes to MB
-sizemb_slice = int(sliced_level1radar.nbytes / 1024 / 1024)  # convert bytes to MB
-print(
-    f"Timeslice of radar data saved to: {ncfilename}\nRadar data original size = {sizemb_og}MB\nsize = {sizemb_slice}MB"
-)
+ncfilename = cfg["path_writedata"] / f"earthcare_level1_{window}_{flight}.nc"
+helpfuncs.write_level1data_timeslice(hampdata, "radar", starttime, endtime, ncfilename)
 
 # %% produce radar-only single quicklook from sliced radardata .nc file
 ds_radar = xr.open_mfdataset(ncfilename)
 starttime, endtime = ds_radar.time[0].values, ds_radar.time[-1].values
 savefig_format = "png"
-savename = cfg["path_writeradar"] / f"earthcare_level1_{window}_{flight}.png"
+savename = cfg["path_writedata"] / f"earthcare_level1_{window}_{flight}.png"
 dpi = 64
 plotql.radar_quicklook(
     None,
