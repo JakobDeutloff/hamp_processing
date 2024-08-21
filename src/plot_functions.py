@@ -44,6 +44,41 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
     ax.set_ylabel("TB / K")
 
 
+def plot_column_water_vapour_timeseries(ds, ax, target_cwv=None):
+    """
+    Plot column water vapour retrieval data (from KV band radiometer)
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Level1 radiometer dataset for column water vapour retrieval
+    ax : matplotlib.axes.Axes
+        Axes to plot on.
+    target_cwv : float
+        value to CWV [mm] to mark on plot, e.g. 48mm contour
+    """
+
+    ds.plot.line(ax=ax, x="time", color="k")
+
+    if target_cwv:
+        # Plot where CWV equals the target value (within 0.01%)
+        target_indices = np.where(
+            np.isclose(ds.values, target_cwv, atol=1e-4 * target_cwv)
+        )
+        ds[target_indices].plot.scatter(ax=ax, x="time", color="dodgerblue", marker="x")
+
+        ax.axhline(
+            target_cwv,
+            color="dodgerblue",
+            linestyle="--",
+            linewidth=1.0,
+            label=f"CWV={target_cwv}mm",
+        )
+
+    ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5), frameon=False)
+    ax.set_ylabel("CWV / mm")
+
+
 def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
     # check if radar data is available
     if ds.dBZg.size == 0:
