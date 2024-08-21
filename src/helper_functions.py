@@ -34,9 +34,20 @@ def extract_config_params(config_file):
     config["path_radar"] = Path(
         config_yaml["paths"]["radar"].format(flight=config["flight"])
     )
-    config["path_saveplts"] = Path(
-        config_yaml["paths"]["saveplts"].format(flight=config["flight"])
-    )
+
+    try:
+        config["path_saveplts"] = Path(
+            config_yaml["paths"]["saveplts"].format(flight=config["flight"])
+        )
+    except KeyError as e:
+        print(f"{e}\nNo 'saveplts' path found in config.yaml")
+
+    try:
+        config["path_writeradar"] = Path(
+            config_yaml["paths"]["writeradar"].format(flight=config["flight"])
+        )
+    except KeyError as e:
+        print(f"{e}\nNo 'writeradar' path found in config.yaml")
 
     return config
 
