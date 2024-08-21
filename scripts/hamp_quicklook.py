@@ -76,6 +76,21 @@ plotql.radiometer_quicklook(
     savefigparams=[savefig_format, savename, dpi],
 )
 
+# %%
+starttime, endtime = hampdata["kv"].time[0].values, hampdata["kv"].time[-1].values
+timeframe = slice(starttime, endtime)
+savefig_format = "png"
+savename = path_saveplts / f"timesliceql_{flight}_columnwatervapour.png"
+dpi = 72
+fig, axes = plotql.plot_kvband_column_water_vapour_retrieval(
+    hampdata,
+    timeframe,
+    flight=flight,
+    ec_under_time=ec_under_time,
+    figsize=(9, 12),
+    savefigparams=[savefig_format, savename, dpi],
+)
+
 # %% produce hourly HAMP quicklooks
 start_hour = pd.Timestamp(hampdata["183"].time[0].values).floor(
     "h"
