@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 import pandas as pd
-import xarray as xr
 
 
 def filter_radar_signal(dBZg, threshold=-30):
@@ -46,7 +45,6 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
 
 
 def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
-
     # check if radar data is available
     if ds.dBZg.size == 0:
         ax.text(

@@ -1,6 +1,44 @@
 import xarray as xr
 import pandas as pd
 from orcestra import sat
+import yaml
+from pathlib import Path
+
+
+def extract_config_params(config_file):
+    """Load configuration from YAML file,
+    return dict with correctly formated configuration parameters"""
+
+    config = {}
+    with open(config_file, "r") as file:
+        config_yaml = yaml.safe_load(file)
+
+    # Extract parameters from the configuration
+    config["flight"] = config_yaml["flight"]
+    config["date"] = config_yaml["date"]  # YYYYMMDD
+    config["radiometer_date"] = config["date"][2:]  # YYMMDD
+    config["flightletter"] = config_yaml["flightletter"]
+    config["is_planet"] = config_yaml["is_planet"]
+
+    # Format paths using the extracted parameters
+    config["path_bahamas"] = Path(
+        config_yaml["paths"]["bahamas"].format(
+            date=config["date"], flightletter=config["flightletter"]
+        )
+    )
+    config["path_radiometer"] = Path(
+        config_yaml["paths"]["radiometer"].format(
+            date=config["date"], flightletter=config["flightletter"]
+        )
+    )
+    config["path_radar"] = Path(
+        config_yaml["paths"]["radar"].format(flight=config["flight"])
+    )
+    config["path_saveplts"] = Path(
+        config_yaml["paths"]["saveplts"].format(flight=config["flight"])
+    )
+
+    return config
 
 
 def read_planet(path):
