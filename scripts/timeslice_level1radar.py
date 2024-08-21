@@ -47,7 +47,9 @@ starttime, endtime = (
 
 # %% Write timeslice of Level 1 post-processed radar data to .nc file
 ncfilename = cfg["path_writedata"] / f"earthcare_level1_{window}_{flight}.nc"
-helpfuncs.write_level1data_timeslice(hampdata, "radar", starttime, endtime, ncfilename)
+helpfuncs.write_level1data_timeslice(
+    hampdata, "radar", slice(starttime, endtime), ncfilename
+)
 
 # %% produce radar-only single quicklook from sliced radardata .nc file
 ds_radar = xr.open_mfdataset(ncfilename)
