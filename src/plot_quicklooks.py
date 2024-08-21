@@ -22,11 +22,11 @@ def save_figure(fig, savefigparams):
         fig.savefig(
             savename, dpi=dpi, bbox_inches="tight", facecolor="w", format=format
         )
-        print("figure saved as .png in: " + savename)
+        print(f"figure saved as .png in: {savename}")
 
     def save_pdf_figure(fig, savename):
         fig.savefig(savename, bbox_inches="tight", format=format)
-        print("figure saved as .pdf in: " + savename)
+        print(f"figure saved as .pdf in: {savename}")
 
     format = savefigparams[0]
     if format == "png":
