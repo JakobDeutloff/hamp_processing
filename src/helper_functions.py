@@ -22,20 +22,20 @@ def extract_config_params(config_file):
 
     # Format paths using the extracted parameters
     config["path_bahamas"] = Path(
-        config["paths"]["bahamas"].format(
+        config_yaml["paths"]["bahamas"].format(
             date=config["date"], flightletter=config["flightletter"]
         )
     )
     config["path_radiometer"] = Path(
-        config["paths"]["radiometer"].format(
+        config_yaml["paths"]["radiometer"].format(
             date=config["date"], flightletter=config["flightletter"]
         )
     )
     config["path_radar"] = Path(
-        config["paths"]["radar"].format(flight=config["flight"])
+        config_yaml["paths"]["radar"].format(flight=config["flight"])
     )
     config["path_saveplts"] = Path(
-        config["paths"]["saveplts"].format(flight=config["flight"])
+        config_yaml["paths"]["saveplts"].format(flight=config["flight"])
     )
 
     return config

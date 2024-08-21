@@ -26,7 +26,7 @@ def load_flightdata(path_flightdata, is_planet):
 
 def do_level0_processing_radar(path_radar):
     print(f"Using radar data from: {path_radar}")
-    ds_radar_lev0 = xr.open_mfdataset(path_radar).load().pipe(radar)
+    ds_radar_lev0 = xr.open_mfdataset(str(path_radar)).load().pipe(radar)
     return ds_radar_lev0
 
 
