@@ -273,7 +273,7 @@ def radiometer_quicklook(
     # plot CWV retrieval
     target_cwv = 48  # [mm]
     plot_column_water_vapour_timeseries(
-        hampdata["CWV"]["IWV"].sel(time=timeframe), axes[6], target_cwv=target_cwv
+        hampdata["CWV"]["IWV"].sel(time=timeframe), axes[5], target_cwv=target_cwv
     )
 
     for ax in axes:
