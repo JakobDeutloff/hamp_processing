@@ -4,6 +4,8 @@ from orcestra import sat
 import yaml
 from pathlib import Path
 
+from .post_processed_hamp_data import PostProcessedHAMPData
+
 
 def extract_config_params(config_file):
     """Load configuration from YAML file,
@@ -11,6 +13,7 @@ def extract_config_params(config_file):
 
     config = {}
     with open(config_file, "r") as file:
+        print(f"Reading config YAML: '{config_file}'")
         config_yaml = yaml.safe_load(file)
 
     # Extract parameters from the configuration
@@ -43,11 +46,11 @@ def extract_config_params(config_file):
         print(f"{e}\nNo 'saveplts' path found in config.yaml")
 
     try:
-        config["path_writeradar"] = Path(
-            config_yaml["paths"]["writeradar"].format(flight=config["flight"])
+        config["path_writedata"] = Path(
+            config_yaml["paths"]["writedata"].format(flight=config["flight"])
         )
     except KeyError as e:
-        print(f"{e}\nNo 'writeradar' path found in config.yaml")
+        print(f"{e}\nNo 'writedata' path found in config.yaml")
 
     return config
 
@@ -95,3 +98,63 @@ def find_ec_under_time(track, ds_bahamas):
     lon_ec = track.lon
     dist = distance(lat_halo, lon_halo, lat_ec, lon_ec)
     return dist.idxmin().values
+
+
+def write_level1data_timeslice(
+    hampdata: PostProcessedHAMPData, var, timeframe, ncfilename
+):
+    """
+    writes slice of hampdata variable 'var' from starttime to endtime to a .nc file 'ncfilename'
+
+    Parameters
+    ----------
+    hampdata : PostProcessedHAMPData
+        Level 1 post-processed HAMP dataset
+    var : str
+        name of variable to slice
+    timeframe : slice(starttime, endtime)
+        Timeframe to plot.
+    ncfilename:
+        name of .nc file to write sliced data to
+    """
+    sliced_level1 = hampdata[var].sel(time=timeframe)
+    sliced_level1.to_netcdf(ncfilename)
+
+    sizemb_og = int(hampdata[var].nbytes / 1024 / 1024)  # convert bytes to MB
+    sizemb_slice = int(sliced_level1.nbytes / 1024 / 1024)  # convert bytes to MB
+    print(
+        f"Timeslice of {var} data saved to: {ncfilename}\nOriginal data size = {sizemb_og}MB\nSliced size = {sizemb_slice}MB"
+    )
+
+
+def timeslice_all_level1hampdata(
+    hampdata: PostProcessedHAMPData, timeframe, path_writedata
+):
+    """
+    writes slice of (Level 1 post-processed) hampdata variable 'var' from starttime
+    to endtime to a .nc file 'ncfilename'
+
+    Parameters
+    ----------
+    hampdata : PostProcessedHAMPData
+        Level 1 post-processed HAMP dataset
+    timeframe : slice
+        Timeframe to plot.
+    """
+    for var in ["flightdata", "radar", "183", "11990", "kv", "cwv"]:
+        ncfilename = path_writedata / f"{var}_slice.nc"
+        write_level1data_timeslice(hampdata, var, timeframe, ncfilename)
+
+
+def load_timeslice_all_level1hampdata(
+    path_slicedata, is_planet
+) -> PostProcessedHAMPData:
+    level1data = PostProcessedHAMPData(
+        None, None, None, None, None, None, is_planet=is_planet
+    )
+
+    for var in ["flightdata", "radar", "183", "11990", "kv", "cwv"]:
+        ncfilename = Path(path_slicedata) / f"{var}_slice.nc"
+        level1data[var] = xr.open_mfdataset(ncfilename)
+
+    return level1data
