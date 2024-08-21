@@ -4,6 +4,7 @@ import matplotlib.gridspec as gridspec
 
 from .plot_functions import (
     plot_radiometer_timeseries,
+    plot_column_water_vapour_timeseries,
     plot_radar_timeseries,
     plot_beautified_radar_histogram,
 )
@@ -39,17 +40,18 @@ def save_figure(fig, savefigparams):
         raise ValueError("Figure format unknown, please choose 'pdf' or 'png'")
 
 
-def add_earthcare_underpass(ax, ec_under_time):
+def add_earthcare_underpass(ax, ec_under_time, annotate=False):
     color = "r"
     ax.axvline(ec_under_time, color=color, linestyle="--", linewidth=1.0)
 
-    x, y = ec_under_time, ax.get_ylim()[1]
-    ax.annotate("EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
+    if annotate:
+        x, y = ec_under_time, ax.get_ylim()[1] * 0.975
+        ax.annotate(" EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
 
 
 def setup_hamp_timeslice_axes(fig):
     # Create a gridspec with 6 rows and 2 columns
-    gs = gridspec.GridSpec(nrows=6, ncols=3, width_ratios=[24, 0.3, 4])
+    gs = gridspec.GridSpec(nrows=7, ncols=3, width_ratios=[24, 0.3, 4])
 
     # Top row for radar has two seperate plots
     ax0a = fig.add_subplot(gs[0, 0])
@@ -62,8 +64,9 @@ def setup_hamp_timeslice_axes(fig):
     ax3 = fig.add_subplot(gs[3, 0])
     ax4 = fig.add_subplot(gs[4, 0])
     ax5 = fig.add_subplot(gs[5, 0])
+    ax6 = fig.add_subplot(gs[6, 0])
 
-    return [[ax0a, cax0a, ax0b], ax1, ax2, ax3, ax4, ax5]
+    return [[ax0a, cax0a, ax0b], ax1, ax2, ax3, ax4, ax5, ax6]
 
 
 def hamp_timeslice_quicklook(
@@ -135,13 +138,20 @@ def hamp_timeslice_quicklook(
     # plot 183 GHz radiometer
     plot_radiometer_timeseries(hampdata.radio183["TBs"].sel(time=timeframe), axes[5])
 
+    # plot CWV retrieval
+    target_cwv = 48  # [mm]
+    plot_column_water_vapour_timeseries(
+        hampdata["CWV"]["IWV"].sel(time=timeframe), axes[6], target_cwv=target_cwv
+    )
+
     axes_timeseries_plots = [axes[0][0]] + axes[1:]
     for ax in axes_timeseries_plots:
         ax.set_xlabel("")
         ax.set_title("")
         ax.spines[["top", "right"]].set_visible(False)
         if ec_under_time:
-            add_earthcare_underpass(ax, ec_under_time)
+            add_earthcare_underpass(ax, ec_under_time, annotate=False)
+            add_earthcare_underpass(axes[0][0], ec_under_time, annotate=True)
 
     axes[0][2].sharey(axes[0][0])
     for ax in axes[1:]:
@@ -149,7 +159,9 @@ def hamp_timeslice_quicklook(
     axes[0][2].spines[["top", "right"]].set_visible(False)
     axes[-1].set_xlabel("Hour:Min UTC")
 
-    fig.suptitle(f"HAMP {flight}", y=0.92)
+    fig.suptitle(f"HAMP {flight}")
+
+    fig.tight_layout()
 
     if savefigparams != []:
         save_figure(fig, savefigparams)
@@ -232,7 +244,7 @@ def radiometer_quicklook(
         Figure and axes of the plot.
     """
 
-    fig, axes = plt.subplots(5, 1, figsize=figsize, sharex="col")
+    fig, axes = plt.subplots(6, 1, figsize=figsize, sharex="col")
 
     # plot K-Band radiometer
     plot_radiometer_timeseries(
@@ -258,12 +270,20 @@ def radiometer_quicklook(
     # plot 183 GHz radiometer
     plot_radiometer_timeseries(hampdata["183"]["TBs"].sel(time=timeframe), axes[4])
 
+    # plot CWV retrieval
+    target_cwv = 48  # [mm]
+    plot_column_water_vapour_timeseries(
+        hampdata["CWV"]["IWV"].sel(time=timeframe), axes[5], target_cwv=target_cwv
+    )
+
     for ax in axes:
         ax.set_xlabel("")
         ax.set_title("")
         ax.spines[["top", "right"]].set_visible(False)
 
-    fig.suptitle(f"HAMP {timeframe.start} - {timeframe.stop}", y=0.92)
+    fig.suptitle(f"HAMP {timeframe.start} - {timeframe.stop}")
+
+    fig.tight_layout()
 
     if savefigparams != []:
         save_figure(fig, savefigparams)
@@ -313,8 +333,11 @@ def radar_quicklook(
 
     cax = plot_radar_timeseries(ds_radar_plot, fig, axes[0])[1]
     if ec_under_time:
-        add_earthcare_underpass(axes[0], ec_under_time)
-    axes[0].set_title("Timeseries", fontsize=18)
+        add_earthcare_underpass(axes[0], ec_under_time, annotate=False)
+        x, y = ec_under_time, axes[0].get_ylim()[1] * 0.92
+        axes[0].annotate(" EarthCARE", xy=(x, y), xytext=(x, y), fontsize=15, color="r")
+
+    axes[0].set_title("  Timeseries", fontsize=18, loc="left")
 
     plot_beautified_radar_histogram(ds_radar_plot, axes[1])
     axes[1].set_ylabel("")
@@ -330,6 +353,80 @@ def radar_quicklook(
     cax.ax.tick_params(labelsize=15)
 
     fig.suptitle(f"Radar During {flight}", fontsize=20)
+
+    fig.tight_layout()
+
+    if savefigparams != []:
+        save_figure(fig, savefigparams)
+
+    return fig, axes
+
+
+def plot_kvband_column_water_vapour_retrieval(
+    hampdata: PostProcessedHAMPData,
+    timeframe,
+    flight=None,
+    ec_under_time=None,
+    figsize=(5, 9),
+    savefigparams=[],
+):
+    """
+    Produces HAMP quicklook for column water vapour retireval
+    and saves as .png if requested.
+
+    Parameters
+    ----------
+    hampdata : PostProcessedHAMPData
+        Level 1 post-processed HAMP dataset
+    timeframe : slice
+        Timeframe to plot.
+    flight : str, optional
+        name of flight, e.g. "RF01_20240811"
+    ec_under_time: Time, Optional
+        time of earthcare underpass
+    figsize : tuple, optional
+        Figure size in inches, by default (10, 14)
+    savefigparams : tuple, optional
+        tuple for parameters to save figure as .png.
+        Parameters are: [str, str, int] for [format to save figure,
+        name to save figure, dpi of figure, used if format=="png"]
+
+    Returns
+    -------
+    fig, axes
+        Figure and axes of the plot.
+    """
+
+    fig, axes = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=figsize)
+
+    # plot K-Band radiometer
+    plot_radiometer_timeseries(
+        hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)),
+        axes[0],
+    )
+    axes[0].set_title("K-Band")
+
+    # plot V-Band radiometer
+    plot_radiometer_timeseries(
+        hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[1]
+    )
+    axes[1].set_title("V-Band")
+
+    plot_column_water_vapour_timeseries(
+        hampdata["CWV"]["IWV"].sel(time=timeframe), axes[2], target_cwv=48
+    )
+    axes[2].set_title("KV-Bands Column Water Vapour Retrieval")
+
+    if ec_under_time:
+        for ax in axes:
+            add_earthcare_underpass(ax, ec_under_time, annotate=False)
+        add_earthcare_underpass(axes[0], ec_under_time, annotate=True)
+
+    for ax in axes:
+        ax.spines[["top", "right"]].set_visible(False)
+
+    axes[-1].set_xlabel("Hour:Min UTC")
+    fig.suptitle(f"HAMP {flight}")
 
     fig.tight_layout()
 

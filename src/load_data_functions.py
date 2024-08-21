@@ -1,6 +1,6 @@
 import xarray as xr
 from pathlib import Path
-from orcestra.postprocess.level0 import bahamas, radiometer, radar
+from orcestra.postprocess.level0 import bahamas, radiometer, radar, _fix_radiometer_time
 from orcestra.postprocess.level1 import (
     filter_radiometer,
     filter_radar,
@@ -10,8 +10,8 @@ from .helper_functions import read_planet
 from .post_processed_hamp_data import PostProcessedHAMPData
 
 
-def get_radiometer_path(path_radiometer: Path, radio, radiometer_date) -> Path:
-    filename = f"{radiometer_date}.BRT.NC"
+def get_radiometer_path(path_radiometer: Path, radio, radiometer_date, var) -> Path:
+    filename = f"{radiometer_date}.{var}.NC"
     return path_radiometer / radio / filename
 
 
@@ -36,10 +36,10 @@ def do_level0_processing_radiometer(path_radio):
     return ds_radiometer_lev0
 
 
-def do_level0_processing_column_water_vapour(path_radiokv):
-    print(f"Using column water vapour retrieval from: {path_radiokv}")
-    ds_radiokv_lev0 = xr.open_dataset(path_radiokv).pipe(radiometer)
-    return ds_radiokv_lev0
+def do_level0_processing_column_water_vapour(path_cwv):
+    print(f"Using column water vapour retrieval from: {path_cwv}")
+    ds_cwv_lev0 = xr.open_dataset(path_cwv).pipe(_fix_radiometer_time)
+    return ds_cwv_lev0
 
 
 def do_level1_processing_radar(ds_radar_lev0, flightdata, phi, the, alt):
@@ -60,7 +60,6 @@ def do_level1_processing_radiometer(ds_radiometer_lev0, flightdata, phi, alt):
 
 
 def do_level1_processing_column_water_vapour(ds_cwv_lev0, flightdata, phi, alt):
-    print("TODO(CB): finish level 1 processing cwv")
     ds_cwv_lev1 = do_level1_processing_radiometer(ds_cwv_lev0, flightdata, phi, alt)
     return ds_cwv_lev1
 
@@ -94,12 +93,14 @@ def do_level0_processing(
 
     for radio, do_radio in zip(["183", "11990", "kv"], [do_183, do_11990, do_kv]):
         if do_radio:
-            path_radio = get_radiometer_path(path_radiometer, radio, radiometer_date)
+            path_radio = get_radiometer_path(
+                path_radiometer, radio, radiometer_date, "BRT"
+            )
             level0data[radio] = do_level0_processing_radiometer(path_radio)
 
     if do_cwv:
-        path_radiokv = get_radiometer_path(path_radiometer, "kv", radiometer_date)
-        level0data["cwv"] = do_level0_processing_column_water_vapour(path_radiokv)
+        path_cwv = get_radiometer_path(path_radiometer, "kv", radiometer_date, "IWV")
+        level0data["cwv"] = do_level0_processing_column_water_vapour(path_cwv)
 
     return level0data
 
