@@ -65,7 +65,10 @@ def plot_column_water_vapour_timeseries(ds, ax, target_cwv=None):
         target_indices = np.where(
             np.isclose(ds.values, target_cwv, atol=1e-4 * target_cwv)
         )
-        ds[target_indices].plot.scatter(ax=ax, x="time", color="dodgerblue", marker="x")
+        if ds[target_indices].any():
+            ds[target_indices].plot.scatter(
+                ax=ax, x="time", color="dodgerblue", marker="x"
+            )
 
         ax.axhline(
             target_cwv,
