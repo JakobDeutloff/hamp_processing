@@ -39,12 +39,13 @@ def save_figure(fig, savefigparams):
         raise ValueError("Figure format unknown, please choose 'pdf' or 'png'")
 
 
-def add_earthcare_underpass(ax, ec_under_time):
+def add_earthcare_underpass(ax, ec_under_time, annotate=False):
     color = "r"
     ax.axvline(ec_under_time, color=color, linestyle="--", linewidth=1.0)
 
-    x, y = ec_under_time, ax.get_ylim()[1]
-    ax.annotate("EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
+    if annotate:
+        x, y = ec_under_time, ax.get_ylim()[1]
+        ax.annotate("EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
 
 
 def setup_hamp_timeslice_axes(fig):
