@@ -60,7 +60,7 @@ print(
 ds_radar = xr.open_mfdataset(ncfilename)
 starttime, endtime = ds_radar.time[0].values, ds_radar.time[-1].values
 savefig_format = "png"
-savename = cfg["path_writeradar"] / f"earthcare_{window}_{flight}.png"
+savename = cfg["path_writeradar"] / f"earthcare_level1_{window}_{flight}.png"
 dpi = 64
 plotql.radar_quicklook(
     None,
