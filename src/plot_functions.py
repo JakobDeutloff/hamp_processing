@@ -5,14 +5,14 @@ import pandas as pd
 
 
 def beautify_axes(axes):
-    if not isinstance(type(axes), list):
-        axes = [axes]
-
-    for ax in axes:
+    def beautify_ax(ax):
         ax.spines[["top", "right"]].set_visible(False)
         ax.tick_params(axis="both", which="major", labelsize=12)
         ax.set_xlabel(ax.get_xlabel(), fontsize=15)
         ax.set_ylabel(ax.get_ylabel(), fontsize=15)
+
+    for ax in axes:
+        beautify_ax(ax)
 
 
 def beautify_colorbar_axes(cax, xaxis=False):
@@ -64,6 +64,8 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
 
     ax.set_ylabel("TB / K")
 
+    return ax
+
 
 def plot_column_water_vapour_timeseries(ds, ax, target_cwv=None):
     """
@@ -102,6 +104,8 @@ def plot_column_water_vapour_timeseries(ds, ax, target_cwv=None):
     ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5), frameon=False)
     ax.set_ylabel("CWV / mm")
 
+    return ax
+
 
 def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
     # check if radar data is available
@@ -117,7 +121,11 @@ def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
     else:
         time, height = ds.time, ds.height / 1e3  # [UTC], [km]
         signal = filter_radar_signal(ds.dBZg, threshold=-30).T  # [dBZ]
-        plot_radardata_timeseries(time, height, signal, fig, ax, cax=cax, cmap=cmap)
+        ax, cax = plot_radardata_timeseries(
+            time, height, signal, fig, ax, cax=cax, cmap=cmap
+        )
+
+    return ax, cax
 
 
 def plot_radardata_timeseries(time, height, signal, fig, ax, cax=None, cmap="YlGnBu"):
@@ -147,7 +155,7 @@ def plot_radardata_timeseries(time, height, signal, fig, ax, cax=None, cmap="YlG
     ax.set_xlabel("UTC")
     ax.set_ylabel("Height / km")
 
-    return ax, cax, pcol
+    return ax, cax
 
 
 def get_greys_histogram_colourmap(nbins):
@@ -184,7 +192,7 @@ def plot_radar_histogram(
     elif isinstance(cmap, str):
         cmap = plt.get_cmap(cmap)
 
-    plot_radardata_histogram(
+    ax = plot_radardata_histogram(
         time,
         height,
         signal,
@@ -195,6 +203,8 @@ def plot_radar_histogram(
         signal_bins,
         cmap,
     )
+
+    return ax
 
 
 def plot_radardata_histogram(
@@ -233,4 +243,4 @@ def plot_radardata_histogram(
     ax.set_xlabel("Z /dBZe")
     ax.set_ylabel("Height / km")
 
-    return ax, hist, xbins, ybins
+    return ax

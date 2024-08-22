@@ -136,7 +136,9 @@ for a in mask_values.keys():
     signal_plt = np.where(itcz_mask_signal == a, signal, np.nan)
 
     ax1.set_title(f"{mask_values[a]}", loc="left")
-    plotfuncs.plot_radardata_timeseries(time_radar, height_km, signal_plt.T, fig, ax0)
+    cax = plotfuncs.plot_radardata_timeseries(
+        time_radar, height_km, signal_plt.T, fig, ax0
+    )[1]
     ax0.set_xlabel("")
 
     signal_range = [-30, 30]
@@ -147,7 +149,7 @@ for a in mask_values.keys():
     plotfuncs.plot_radardata_histogram(
         time_radar,
         height_km,
-        signal,
+        signal_plt,
         ax1,
         signal_range,
         height_range,
@@ -160,6 +162,7 @@ for a in mask_values.keys():
 axs[2, 0].set_xlabel("UTC")
 axs[2, 1].set_xlabel("Z /dBZe")
 plotfuncs.beautify_axes(axs.flatten())
+plotfuncs.beautify_colorbar_axes(cax)
 
 fig.tight_layout()
 
