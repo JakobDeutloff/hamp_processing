@@ -335,7 +335,7 @@ def radar_quicklook(
 
     axes[0].set_title("  Timeseries", fontsize=18, loc="left")
 
-    plotfuncs.plot_beautified_radar_histogram(ds_radar_plot, axes[1])
+    plotfuncs.plot_radar_histogram(ds_radar_plot, axes[1])
     axes[1].set_ylabel("")
     axes[1].set_title("Histogram", fontsize=18)
 

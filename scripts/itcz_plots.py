@@ -4,7 +4,6 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import matplotlib.colors as mcolors
 import xarray as xr
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
@@ -40,7 +39,7 @@ def plot_radar_cwv_timeseries(
     cax = plotfuncs.plot_radar_timeseries(hampdata.radar, fig, axs[0, 0])[1]
     axs[0, 0].set_title("  Timeseries", fontsize=18, loc="left")
 
-    plotfuncs.plot_beautified_radar_histogram(hampdata.radar, axs[0, 1])
+    plotfuncs.plot_radar_histogram(hampdata.radar, axs[0, 1])
     axs[0, 1].set_ylabel("")
     axs[0, 1].set_title("Histogram", fontsize=18)
 
@@ -121,13 +120,13 @@ fig, axs = plt.subplots(
     nrows=3, ncols=2, figsize=(12, 6), width_ratios=[18, 7], sharey="row", sharex="col"
 )
 
-time = hampdata.radar.time
-height = hampdata.radar.height / 1e3  # [km]
+time_radar = hampdata.radar.time
+height_km = hampdata.radar.height / 1e3  # [km]
 signal = plotfuncs.filter_radar_signal(hampdata.radar.dBZg, threshold=-30)  # [dBZ]
 
-nrep = len(hampdata.radar.height)
+nrep = len(height_km)
 itcz_mask_signal = np.repeat(itcz_mask_2, nrep)
-itcz_mask_signal = np.reshape(itcz_mask_signal.values, [len(hampdata.radar.time), nrep])
+itcz_mask_signal = np.reshape(itcz_mask_signal.values, [len(time_radar), nrep])
 
 mask_values = {0: "Outside", 1: "Transition", 2: "Inside"}
 
@@ -137,33 +136,30 @@ for a in mask_values.keys():
     signal_plt = np.where(itcz_mask_signal == a, signal, np.nan)
 
     ax1.set_title(f"{mask_values[a]}", loc="left")
-    plotfuncs.plot_radardata_timeseries(time, height, signal_plt.T, fig, ax0)
+    plotfuncs.plot_radardata_timeseries(time_radar, height_km, signal_plt.T, fig, ax0)
     ax0.set_xlabel("")
 
-    yy = np.meshgrid(height, time)[0]
     signal_range = [-30, 30]
+    height_range = [0, np.nanmax(height_km)]
     signal_bins = 60
     height_bins = 100
-    h_cmap = plt.get_cmap("Greys")
-    h_cmap = mcolors.LinearSegmentedColormap.from_list(
-        "Sampled_Greys", h_cmap(np.linspace(0.15, 1.0, signal_bins))
-    )
-    h_cmap.set_under("white")
-    hist, xbins, ybins, im = axs[a, 1].hist2d(
-        signal_plt.flatten(),
-        yy.flatten(),
-        range=[signal_range, [0, np.nanmax(height)]],
-        bins=[signal_bins, height_bins],
-        cmap=h_cmap,
-        vmin=signal_plt[signal_plt > 0].min(),
+    cmap = plotfuncs.get_greys_histogram_colourmap(signal_bins)
+    plotfuncs.plot_radardata_histogram(
+        time_radar,
+        height_km,
+        signal,
+        ax1,
+        signal_range,
+        height_range,
+        height_bins,
+        signal_bins,
+        cmap,
     )
     axs[a, 1].set_ylabel("")
 
-for ax in axs.flatten():
-    ax.spines[["top", "right"]].set_visible(False)
-
 axs[2, 0].set_xlabel("UTC")
 axs[2, 1].set_xlabel("Z /dBZe")
+plotfuncs.beautify_axes(axs.flatten())
 
 fig.tight_layout()
 

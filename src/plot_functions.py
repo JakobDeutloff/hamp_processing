@@ -150,6 +150,16 @@ def plot_radardata_timeseries(time, height, signal, fig, ax, cax=None, cmap="YlG
     return ax, cax, pcol
 
 
+def get_greys_histogram_colourmap(nbins):
+    cmap = plt.get_cmap("Greys")
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        "Sampled_Greys", cmap(np.linspace(0.15, 1.0, nbins))
+    )
+    cmap.set_under("white")
+
+    return cmap
+
+
 def plot_radar_histogram(
     ds_radar,
     ax,
@@ -159,22 +169,25 @@ def plot_radar_histogram(
     height_bins=100,
     cmap=None,
 ):
+    time = ds_radar.time
+    height = ds_radar.height / 1e3  # [km]
+    signal = filter_radar_signal(ds_radar.dBZg, threshold=-30).values  # [dBZ]
+
     if height_range == []:
-        height_range = [0.0, ds_radar.height.max()]
+        height_range = [0.0, np.nanmax(height)]
 
     if not cmap:
-        cmap = plt.get_cmap("Greys")
-        cmap = mcolors.LinearSegmentedColormap.from_list(
-            "Sampled_Greys", cmap(np.linspace(0.15, 1.0, signal_bins))
-        )
-        cmap.set_under("white")
+        if isinstance(signal_bins, int):
+            cmap = get_greys_histogram_colourmap(signal_bins)
+        else:
+            cmap = get_greys_histogram_colourmap(len(signal_bins))
     elif isinstance(cmap, str):
         cmap = plt.get_cmap(cmap)
 
     plot_radardata_histogram(
-        ds_radar.time,
-        ds_radar.height,
-        ds_radar.dBZg,
+        time,
+        height,
+        signal,
         ax,
         signal_range,
         height_range,
@@ -195,11 +208,11 @@ def plot_radardata_histogram(
     signal_bins,
     cmap,
 ):
-    # get data in correct format for 2D histogram
-    height = np.meshgrid(height, time)[0].flatten() / 1e3  # [km]
-    signal = filter_radar_signal(signal, threshold=-30).values.flatten()  # [dBZ]
+    """you may want to filter_radar_signal before calling this function"""
 
-    # remove nan data
+    # get data in correct format for 2D histogram and remove nan data
+    signal = signal.flatten()
+    height = np.meshgrid(height, time)[0].flatten()
     height = height[~np.isnan(signal)]
     signal = signal[~np.isnan(signal)]
 
