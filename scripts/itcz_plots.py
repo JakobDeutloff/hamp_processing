@@ -120,29 +120,27 @@ dpi = 64
 fig, axs = plt.subplots(
     nrows=3, ncols=2, figsize=(12, 6), width_ratios=[18, 7], sharey="row", sharex="col"
 )
+
+time = hampdata.radar.time
+height = hampdata.radar.height / 1e3  # [km]
 signal = plotfuncs.filter_radar_signal(hampdata.radar.dBZg, threshold=-30)  # [dBZ]
-x = hampdata.radar.time
-y = hampdata.radar.height / 1e3  # [km]
+
 nrep = len(hampdata.radar.height)
 itcz_mask_signal = np.repeat(itcz_mask_2, nrep)
 itcz_mask_signal = np.reshape(itcz_mask_signal.values, [len(hampdata.radar.time), nrep])
-mask_names = ["Outside", "Transition", "Inside"]
-for a in [0, 1, 2]:
-    axs[a, 0].set_title(f"{mask_names[a]}", loc="left")
-    signal_plt = np.where(itcz_mask_signal == a, signal, np.nan)
-    pcol = axs[a, 0].pcolormesh(
-        x,
-        y,
-        signal_plt.T,
-        cmap="YlGnBu",
-        vmin=-30,
-        vmax=30,
-    )
-    clab, extend, shrink = "Z /dBZe", "max", 0.8
-    cax = fig.colorbar(pcol, ax=axs[a, 0], label=clab, extend=extend, shrink=shrink)
-    axs[a, 0].set_ylabel("Height / km")
 
-    yy = np.meshgrid(y, x)[0]
+mask_values = {0: "Outside", 1: "Transition", 2: "Inside"}
+
+for a in mask_values.keys():
+    ax0, ax1 = axs[a, 0], axs[a, 1]
+
+    signal_plt = np.where(itcz_mask_signal == a, signal, np.nan)
+
+    ax1.set_title(f"{mask_values[a]}", loc="left")
+    plotfuncs.plot_radardata_timeseries(time, height, signal_plt.T, fig, ax0)
+    ax0.set_xlabel("")
+
+    yy = np.meshgrid(height, time)[0]
     signal_range = [-30, 30]
     signal_bins = 60
     height_bins = 100
@@ -154,7 +152,7 @@ for a in [0, 1, 2]:
     hist, xbins, ybins, im = axs[a, 1].hist2d(
         signal_plt.flatten(),
         yy.flatten(),
-        range=[signal_range, [0, np.nanmax(y)]],
+        range=[signal_range, [0, np.nanmax(height)]],
         bins=[signal_bins, height_bins],
         cmap=h_cmap,
         vmin=signal_plt[signal_plt > 0].min(),

@@ -117,19 +117,25 @@ def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
     else:
         time, height = ds.time, ds.height / 1e3  # [UTC], [km]
         signal = filter_radar_signal(ds.dBZg, threshold=-30).T  # [dBZ]
-        pcol = ax.pcolormesh(
-            time,
-            height,
-            signal,
-            cmap=cmap,
-            vmin=-30,
-            vmax=30,
-        )
-        clab, extend, shrink = "Z /dBZe", "max", 0.8
-        if cax:
-            cax = fig.colorbar(pcol, cax=cax, label=clab, extend=extend, shrink=shrink)
-        else:
-            cax = fig.colorbar(pcol, ax=ax, label=clab, extend=extend, shrink=shrink)
+        plot_radardata_timeseries(time, height, signal, fig, ax, cax=cax, cmap=cmap)
+
+
+def plot_radardata_timeseries(time, height, signal, fig, ax, cax=None, cmap="YlGnBu"):
+    """you may want to filter_radar_signal before calling this function"""
+    pcol = ax.pcolormesh(
+        time,
+        height,
+        signal,
+        cmap=cmap,
+        vmin=-30,
+        vmax=30,
+    )
+
+    clab, extend, shrink = "Z /dBZe", "max", 0.8
+    if cax:
+        cax = fig.colorbar(pcol, cax=cax, label=clab, extend=extend, shrink=shrink)
+    else:
+        cax = fig.colorbar(pcol, ax=ax, label=clab, extend=extend, shrink=shrink)
 
     # get nicely formatting xticklabels
     stride = len(time) // 4
