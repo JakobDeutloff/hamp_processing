@@ -131,6 +131,7 @@ def plot_beautified_radar_histogram(ds_radar_plot, ax):
     cmap = mcolors.LinearSegmentedColormap.from_list(
         "Sampled_Greys", cmap(np.linspace(0.15, 1.0, signal_bins))
     )
+    cmap.set_under("white")
     plot_radar_histogram(
         ds_radar_plot,
         ax,
