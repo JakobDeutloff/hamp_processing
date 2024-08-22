@@ -9,7 +9,7 @@ import xarray as xr
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 from pathlib import Path
-from src import helper_functions as helpfuncs
+from src import readwrite_functions as rwfuncs
 import yaml
 import matplotlib.pyplot as plt
 from src import plot_functions as plotfuncs
@@ -22,7 +22,7 @@ with open(configyaml, "r") as file:
     print(f"Reading config YAML: '{configyaml}'")
     cfg = yaml.safe_load(file)
 path_hampdata = cfg["paths"]["hampdata"]
-hampdata = helpfuncs.load_timeslice_all_level1hampdata(path_hampdata, cfg["is_planet"])
+hampdata = rwfuncs.load_timeslice_all_level1hampdata(path_hampdata, cfg["is_planet"])
 ### ------------------------------------------------------------- ###
 
 

@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.gridspec as gridspec
 
 from . import plot_functions as plotfuncs
+from . import earthcare_functions as ecfuncs
 from .post_processed_hamp_data import PostProcessedHAMPData
 
 
@@ -33,15 +34,6 @@ def save_figure(fig, savefigparams):
         save_pdf_figure(fig, savename)
     else:
         raise ValueError("Figure format unknown, please choose 'pdf' or 'png'")
-
-
-def add_earthcare_underpass(ax, ec_under_time, annotate=False):
-    color = "r"
-    ax.axvline(ec_under_time, color=color, linestyle="--", linewidth=1.0)
-
-    if annotate:
-        x, y = ec_under_time, ax.get_ylim()[1] * 0.975
-        ax.annotate(" EarthCARE", xy=(x, y), xytext=(x, y), fontsize=10, color=color)
 
 
 def setup_hamp_timeslice_axes(fig):
@@ -147,8 +139,8 @@ def hamp_timeslice_quicklook(
         ax.set_title("")
         ax.spines[["top", "right"]].set_visible(False)
         if ec_under_time:
-            add_earthcare_underpass(ax, ec_under_time, annotate=False)
-            add_earthcare_underpass(axes[0][0], ec_under_time, annotate=True)
+            ecfuncs.add_earthcare_underpass(ax, ec_under_time, annotate=False)
+            ecfuncs.add_earthcare_underpass(axes[0][0], ec_under_time, annotate=True)
 
     axes[0][2].sharey(axes[0][0])
     for ax in axes[1:]:
@@ -337,7 +329,7 @@ def radar_quicklook(
 
     cax = plotfuncs.plot_radar_timeseries(ds_radar_plot, fig, axes[0])[1]
     if ec_under_time:
-        add_earthcare_underpass(axes[0], ec_under_time, annotate=False)
+        ecfuncs.add_earthcare_underpass(axes[0], ec_under_time, annotate=False)
         x, y = ec_under_time, axes[0].get_ylim()[1] * 0.92
         axes[0].annotate(" EarthCARE", xy=(x, y), xytext=(x, y), fontsize=15, color="r")
 
@@ -417,8 +409,8 @@ def plot_kvband_column_water_vapour_retrieval(
 
     if ec_under_time:
         for ax in axes:
-            add_earthcare_underpass(ax, ec_under_time, annotate=False)
-        add_earthcare_underpass(axes[0], ec_under_time, annotate=True)
+            ecfuncs.add_earthcare_underpass(ax, ec_under_time, annotate=False)
+        ecfuncs.add_earthcare_underpass(axes[0], ec_under_time, annotate=True)
 
     for ax in axes:
         ax.spines[["top", "right"]].set_visible(False)

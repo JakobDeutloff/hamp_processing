@@ -6,12 +6,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pandas as pd
 from src import load_data_functions as loadfuncs
-from src import helper_functions as helpfuncs
+from src import readwrite_functions as rwfuncs
 
 # %%
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
-cfg = helpfuncs.extract_config_params(configfile)
+cfg = rwfuncs.extract_config_params(configfile)
 flight = cfg["flight"]
 path_saveplts = cfg["path_saveplts"]
 radiometer_date = cfg["radiometer_date"]
@@ -34,13 +34,13 @@ hampdata = loadfuncs.do_post_processing(
 # %% write slice of HAMP post-processed data
 starttime = hampdata["radar"].time[0].values + pd.Timedelta("1H")
 endtime = starttime + pd.Timedelta("4H")
-helpfuncs.timeslice_all_level1hampdata(
+rwfuncs.timeslice_all_level1hampdata(
     hampdata, slice(starttime, endtime), cfg["path_writedata"]
 )
 
 # %% load HAMP post-processed data slice
 path_slicedata = cfg["path_writedata"]
-hampdata_slice = helpfuncs.load_timeslice_all_level1hampdata(
+hampdata_slice = rwfuncs.load_timeslice_all_level1hampdata(
     path_slicedata, cfg["is_planet"]
 )
 print(hampdata_slice)

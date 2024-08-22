@@ -8,12 +8,13 @@ import xarray as xr
 import pandas as pd
 from src import plot_quicklooks as plotql
 from src import load_data_functions as loadfuncs
-from src import helper_functions as helpfuncs
+from src import readwrite_functions as rwfuncs
+from src import earthcare_functions as ecfuncs
 
 # %%
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
-cfg = helpfuncs.extract_config_params(configfile)
+cfg = rwfuncs.extract_config_params(configfile)
 flight = cfg["flight"]
 path_saveplts = cfg["path_saveplts"]
 radiometer_date = cfg["radiometer_date"]
@@ -34,10 +35,10 @@ hampdata = loadfuncs.do_post_processing(
 )
 
 # %% get earthcare track forecasts
-ec_track = helpfuncs.get_earthcare_track(cfg["date"])
+ec_track = ecfuncs.get_earthcare_track(cfg["date"])
 
 # %% find time when earthcare crosses halo
-ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
+ec_under_time = ecfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
 window = "60min"
 plot_duration = pd.Timedelta(window)
 starttime, endtime = (
@@ -47,7 +48,7 @@ starttime, endtime = (
 
 # %% Write timeslice of Level 1 post-processed radar data to .nc file
 ncfilename = cfg["path_writedata"] / f"earthcare_level1_{window}_{flight}.nc"
-helpfuncs.write_level1data_timeslice(
+rwfuncs.write_level1data_timeslice(
     hampdata, "radar", slice(starttime, endtime), ncfilename
 )
 
