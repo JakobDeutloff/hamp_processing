@@ -13,6 +13,7 @@ from src import readwrite_functions as rwfuncs
 import yaml
 import matplotlib.pyplot as plt
 from src import plot_functions as plotfuncs
+from src import itcz_functions as itczfuncs
 from src.plot_quicklooks import save_figure
 
 # %%
@@ -59,30 +60,6 @@ def plot_radar_cwv_timeseries(
     return fig, axs
 
 
-def identify_itcz_crossings(cwv, thresholds=[45, 50]):
-    """
-    returns 'boolean-ish' type for whether CWV is inside/outside ITCZ:
-    CWV < outside_itcz_threshold, value = 0;
-    outside_itcz_threshold < CWV <= inside_itcz_threshold = 1;
-    CWV > inside_itcz_threshold = or 2.
-    """
-    # create mask
-    itcz_mask = np.where(cwv < thresholds[0], 0, 1)
-    itcz_mask = np.where(cwv > thresholds[1], 2, itcz_mask)
-    itcz_mask = np.where(np.isnan(cwv), np.nan, itcz_mask)
-
-    # return in dataset with time dimension
-    ds_mask1 = xr.Dataset(
-        {
-            "itcz_mask": xr.DataArray(
-                itcz_mask, dims=hampdata["CWV"].dims, coords=hampdata["CWV"].coords
-            )
-        }
-    )
-
-    return ds_mask1
-
-
 def add_itcz_mask(ax, xtime, itcz_mask, cbar=True):
     colors = ["red", "gold", "green"]  # Red, Green, Blue
     cmap = LinearSegmentedColormap.from_list("three_color_cmap", colors)
@@ -107,19 +84,39 @@ def add_itcz_mask(ax, xtime, itcz_mask, cbar=True):
         cbar.set_ticklabels(["Outside", "Transition", "Inside"])
 
 
-# %% plot with mask on CWV and radar
-fig, axes = plot_radar_cwv_timeseries(hampdata, figsize=(12, 6), savefigparams=[])
-axes[1, 0].legend(loc="upper right", frameon=False)
-ds_mask1 = identify_itcz_crossings(hampdata["CWV"]["IWV"])
-add_itcz_mask(axes[1, 0], hampdata["CWV"].time, ds_mask1.itcz_mask)
-ds_mask2 = ds_mask1.interp(time=hampdata.radar.time)
-add_itcz_mask(axes[0, 0], hampdata.radar.time, ds_mask2.itcz_mask, cbar=False)
+def interpolate_radiometer_mask_to_radar_mask(itcz_mask, hampdata):
+    """returns mask for radar time dimension interpolated
+    from mask with radiometer (CWV) time dimension"""
+    ds_mask1 = xr.Dataset(
+        {
+            "itcz_mask": xr.DataArray(
+                itcz_mask, dims=hampdata["CWV"].dims, coords=hampdata["CWV"].coords
+            )
+        }
+    )
+    ds_mask2 = ds_mask1.interp(time=hampdata.radar.time)
+
+    return ds_mask2.itcz_mask
+
+
+# %% Plot CWV and radar with ITCZ mask
 savefig_format = "png"
 savename = Path(cfg["paths"]["saveplts"]) / "radar_column_water_path.png"
 dpi = 64
+
+fig, axes = plot_radar_cwv_timeseries(hampdata, figsize=(12, 6), savefigparams=[])
+axes[1, 0].legend(loc="upper right", frameon=False)
+itcz_mask_1 = itczfuncs.identify_itcz_crossings(hampdata["CWV"]["IWV"])
+add_itcz_mask(axes[1, 0], hampdata["CWV"].time, itcz_mask_1)
+itcz_mask_2 = interpolate_radiometer_mask_to_radar_mask(itcz_mask_1, hampdata)
+add_itcz_mask(axes[0, 0], hampdata.radar.time, itcz_mask_2, cbar=False)
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
-# %%
+# %% Plot radar timeseries and histogram for ecah masked area
+savefig_format = "png"
+savename = Path(cfg["paths"]["saveplts"]) / "radar_selected.png"
+dpi = 64
+
 fig, axs = plt.subplots(
     nrows=3, ncols=2, figsize=(12, 6), width_ratios=[18, 7], sharey="row", sharex="col"
 )
@@ -127,7 +124,7 @@ signal = plotfuncs.filter_radar_signal(hampdata.radar.dBZg, threshold=-30)  # [d
 x = hampdata.radar.time
 y = hampdata.radar.height / 1e3  # [km]
 nrep = len(hampdata.radar.height)
-itcz_mask_signal = np.repeat(ds_mask2.itcz_mask, nrep)
+itcz_mask_signal = np.repeat(itcz_mask_2, nrep)
 itcz_mask_signal = np.reshape(itcz_mask_signal.values, [len(hampdata.radar.time), nrep])
 mask_names = ["Outside", "Transition", "Inside"]
 for a in [0, 1, 2]:
@@ -171,7 +168,5 @@ axs[2, 0].set_xlabel("UTC")
 axs[2, 1].set_xlabel("Z /dBZe")
 
 fig.tight_layout()
-savefig_format = "png"
-savename = Path(cfg["paths"]["saveplts"]) / "radar_selected.png"
-dpi = 64
+
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
