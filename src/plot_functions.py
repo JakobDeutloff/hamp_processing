@@ -150,37 +150,54 @@ def plot_radardata_timeseries(time, height, signal, fig, ax, cax=None, cmap="YlG
     return ax, cax, pcol
 
 
-def plot_beautified_radar_histogram(ds_radar_plot, ax):
-    signal_range = [-30, 30]
-    signal_bins = 60
-    height_bins = 100
-    cmap = plt.get_cmap("Greys")
-    cmap = mcolors.LinearSegmentedColormap.from_list(
-        "Sampled_Greys", cmap(np.linspace(0.15, 1.0, signal_bins))
-    )
-    cmap.set_under("white")
-    plot_radar_histogram(
-        ds_radar_plot,
-        ax,
-        signal_range=signal_range,
-        height_bins=height_bins,
-        signal_bins=signal_bins,
-        cmap=cmap,
-    )
-
-
 def plot_radar_histogram(
-    ds,
+    ds_radar,
     ax,
-    signal_range=[],
+    signal_range=[-30, 30],
     height_range=[],
-    height_bins=50,
     signal_bins=60,
-    cmap="Grays",
+    height_bins=100,
+    cmap=None,
+):
+    if height_range == []:
+        height_range = [0.0, ds_radar.height.max()]
+
+    if not cmap:
+        cmap = plt.get_cmap("Greys")
+        cmap = mcolors.LinearSegmentedColormap.from_list(
+            "Sampled_Greys", cmap(np.linspace(0.15, 1.0, signal_bins))
+        )
+        cmap.set_under("white")
+    elif isinstance(cmap, str):
+        cmap = plt.get_cmap(cmap)
+
+    plot_radardata_histogram(
+        ds_radar.time,
+        ds_radar.height,
+        ds_radar.dBZg,
+        ax,
+        signal_range,
+        height_range,
+        height_bins,
+        signal_bins,
+        cmap,
+    )
+
+
+def plot_radardata_histogram(
+    time,
+    height,
+    signal,
+    ax,
+    signal_range,
+    height_range,
+    height_bins,
+    signal_bins,
+    cmap,
 ):
     # get data in correct format for 2D histogram
-    height = np.meshgrid(ds.height, ds.time)[0].flatten() / 1e3  # [km]
-    signal = filter_radar_signal(ds.dBZg, threshold=-30).values.flatten()  # [dBZ]
+    height = np.meshgrid(height, time)[0].flatten() / 1e3  # [km]
+    signal = filter_radar_signal(signal, threshold=-30).values.flatten()  # [dBZ]
 
     # remove nan data
     height = height[~np.isnan(signal)]
@@ -188,14 +205,9 @@ def plot_radar_histogram(
 
     # set histogram parameters
     bins = [signal_bins, height_bins]
-    if signal_range == []:
-        signal_range = [signal.min(), signal.max()]
-    if height_range == []:
-        height_range = [0.0, height.max()]
+    cmap.set_under("white")
 
     # plot 2D histogram
-    cmap = plt.cm.get_cmap(cmap)
-    cmap.set_under("white")
     hist, xbins, ybins, im = ax.hist2d(
         signal,
         height,

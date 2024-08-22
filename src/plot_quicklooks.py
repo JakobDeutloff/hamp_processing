@@ -96,7 +96,7 @@ def hamp_timeslice_quicklook(
     # plot radar
     ds_radar_plot = hampdata.radar.sel(time=timeframe)
     plotfuncs.plot_radar_timeseries(ds_radar_plot, fig, axes[0][0], cax=axes[0][1])
-    plotfuncs.plot_beautified_radar_histogram(ds_radar_plot, axes[0][2])
+    plotfuncs.plot_radar_histogram(ds_radar_plot, axes[0][2])
 
     # plot K-Band radiometer
     plotfuncs.plot_radiometer_timeseries(
