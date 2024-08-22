@@ -179,6 +179,5 @@ def plot_radar_histogram(
 
     ax.set_xlabel("Z /dBZe")
     ax.set_ylabel("Height / km")
-    ax.set_xticks
 
     return ax, hist, xbins, ybins
