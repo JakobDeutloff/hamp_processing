@@ -47,14 +47,8 @@ def plot_radar_cwv_timeseries(
         hampdata["CWV"]["IWV"], axs[1, 0], target_cwv=48
     )
 
-    for ax in axs.flatten():
-        ax.spines[["top", "right"]].set_visible(False)
-        ax.tick_params(axis="both", which="major", labelsize=12)
-        ax.set_xlabel(ax.get_xlabel(), fontsize=15)
-        ax.set_ylabel(ax.get_ylabel(), fontsize=15)
-    cax.ax.tick_params(axis="y", which="major", labelsize=12)
-    cax.ax.yaxis.label.set_size(15)
-    cax.ax.tick_params(labelsize=15)
+    plotfuncs.beautify_axes(axs.flatten())
+    plotfuncs.beautify_colorbar_axes(cax)
     axs[1, 1].remove()
 
     fig.tight_layout()

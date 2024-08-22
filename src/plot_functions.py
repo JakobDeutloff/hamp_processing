@@ -4,6 +4,27 @@ import numpy as np
 import pandas as pd
 
 
+def beautify_axes(axes):
+    if not isinstance(type(axes), list):
+        axes = [axes]
+
+    for ax in axes:
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.tick_params(axis="both", which="major", labelsize=12)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=15)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=15)
+
+
+def beautify_colorbar_axes(cax, xaxis=False):
+    if xaxis:
+        cax.ax.tick_params(axis="x", which="major", labelsize=12)
+        cax.ax.xaxis.label.set_size(15)
+    else:
+        cax.ax.tick_params(axis="y", which="major", labelsize=12)
+        cax.ax.yaxis.label.set_size(15)
+    cax.ax.tick_params(labelsize=15)
+
+
 def filter_radar_signal(dBZg, threshold=-30):
     return dBZg.where(dBZg >= threshold)  # [dBZ]
 
