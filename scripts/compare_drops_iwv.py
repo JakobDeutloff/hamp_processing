@@ -6,7 +6,7 @@ from orcestra.postprocess.level0 import bahamas
 from orcestra.postprocess.level1 import filter_radiometer
 
 # %% load radiometer and bahamas data
-date = "240811"
+date = "240818"
 ds_bahamas = (
     xr.open_mfdataset(f"/Volumes/ORCESTRA/HALO-20{date}a/bahamas/*.nc")
     .load()
@@ -38,6 +38,7 @@ ax.set_ylabel("IWV / kg m$^{-2}$")
 ax.spines[["top", "right"]].set_visible(False)
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
 ax.set_title(f"20{date[:2]}-{date[2:4]}-{date[4:]}")
+ax.legend()
 
 plt.show()
 # %%
