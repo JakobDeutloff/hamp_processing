@@ -1,11 +1,66 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
-import pandas as pd
+from matplotlib.ticker import MaxNLocator
 
 
 def filter_radar_signal(dBZg, threshold=-30):
     return dBZg.where(dBZg >= threshold)  # [dBZ]
+
+
+def beautify_axes(axes):
+    def beautify_ax(ax):
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.tick_params(axis="both", which="major", labelsize=12)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=15)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=15)
+
+    for ax in axes:
+        beautify_ax(ax)
+
+
+def beautify_colorbar_axes(cax, xaxis=False):
+    if xaxis:
+        cax.ax.tick_params(axis="x", which="major", labelsize=12)
+        cax.ax.xaxis.label.set_size(15)
+    else:
+        cax.ax.tick_params(axis="y", which="major", labelsize=12)
+        cax.ax.yaxis.label.set_size(15)
+    cax.ax.tick_params(labelsize=15)
+
+
+def add_lat_lon_axes(hampdata, timeframe, ax_time, set_time_ticks=False):
+    """add latitude and longitude axes beneath a time axis
+    with nticks between time[0] and time[-1]"""
+
+    def label_axis(ax, pos, ticklabs, lab):
+        ax.spines["bottom"].set_position(("outward", pos))
+        ax.set_xticklabels(ticklabs)
+        ax.set_xlabel(lab)
+
+    ax_lat, ax_lon = ax_time.twiny(), ax_time.twiny()
+    nticks = 5
+    time_slice = hampdata.radar.time.sel(time=timeframe)
+    idxs = np.linspace(0, len(time_slice.time) - 1, nticks, dtype=int)
+    xticks0 = time_slice.isel(time=idxs)
+    xticks = hampdata.flightdata.time.sel(time=xticks0.values, method="nearest")
+
+    for ax in [ax_lat, ax_lon]:
+        ax.set_xlim(ax_time.get_xlim())
+        ax.xaxis.set_label_position("bottom")
+        ax.xaxis.set_ticks_position("bottom")
+        ax.set_xticks(xticks)
+        ax.spines[["top", "right", "left"]].set_visible(False)
+
+    lat_labels = hampdata.flightdata.IRS_LAT.sel(time=xticks.values).round(1).values
+    label_axis(ax_lat, 45, lat_labels, "Latitude /$\u00B0$")
+
+    lon_labels = hampdata.flightdata.IRS_LON.sel(time=xticks.values).round(1).values
+    label_axis(ax_lon, 85, lon_labels, "Longitude /$\u00B0$")
+
+    if set_time_ticks:
+        ax_time.set_xticks(xticks0)
+        ax_time.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%H:%M"))
 
 
 def plot_radiometer_timeseries(ds, ax, is_90=False):
@@ -42,6 +97,8 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
         ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5), frameon=False)
 
     ax.set_ylabel("TB / K")
+
+    return ax
 
 
 def plot_column_water_vapour_timeseries(ds, ax, target_cwv=None):
@@ -81,6 +138,8 @@ def plot_column_water_vapour_timeseries(ds, ax, target_cwv=None):
     ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5), frameon=False)
     ax.set_ylabel("CWV / mm")
 
+    return ax
+
 
 def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
     # check if radar data is available
@@ -96,78 +155,113 @@ def plot_radar_timeseries(ds, fig, ax, cax=None, cmap="YlGnBu"):
     else:
         time, height = ds.time, ds.height / 1e3  # [UTC], [km]
         signal = filter_radar_signal(ds.dBZg, threshold=-30).T  # [dBZ]
-        pcol = ax.pcolormesh(
-            time,
-            height,
-            signal,
-            cmap=cmap,
-            vmin=-30,
-            vmax=30,
+        ax, cax = plot_radardata_timeseries(
+            time, height, signal, fig, ax, cax=cax, cmap=cmap
         )
-        clab, extend, shrink = "Z /dBZe", "max", 0.8
-        if cax:
-            cax = fig.colorbar(pcol, cax=cax, label=clab, extend=extend, shrink=shrink)
-        else:
-            cax = fig.colorbar(pcol, ax=ax, label=clab, extend=extend, shrink=shrink)
+
+    return ax, cax
+
+
+def plot_radardata_timeseries(time, height, signal, fig, ax, cax=None, cmap="YlGnBu"):
+    """you may want to filter_radar_signal before calling this function"""
+    pcol = ax.pcolormesh(
+        time,
+        height,
+        signal,
+        cmap=cmap,
+        vmin=-30,
+        vmax=30,
+    )
+
+    clab, extend, shrink = "Z /dBZe", "max", 0.8
+    if cax:
+        cax = fig.colorbar(pcol, cax=cax, label=clab, extend=extend, shrink=shrink)
+    else:
+        cax = fig.colorbar(pcol, ax=ax, label=clab, extend=extend, shrink=shrink)
 
     # get nicely formatting xticklabels
-    stride = len(time) // 4
-    xticks = time[::stride]
-    xticklabs = [f"{t.hour:02d}:{t.minute:02d}" for t in pd.to_datetime(xticks)]
-    ax.set_xticks(xticks)
-    ax.set_xticklabels(xticklabs)
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=5))
+    ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%H:%M"))
 
     ax.set_xlabel("UTC")
     ax.set_ylabel("Height / km")
 
-    return ax, cax, pcol
+    return ax, cax
 
 
-def plot_beautified_radar_histogram(ds_radar_plot, ax):
-    signal_range = [-30, 30]
-    signal_bins = 60
-    height_bins = 100
+def get_greys_histogram_colourmap(nbins):
     cmap = plt.get_cmap("Greys")
     cmap = mcolors.LinearSegmentedColormap.from_list(
-        "Sampled_Greys", cmap(np.linspace(0.15, 1.0, signal_bins))
+        "Sampled_Greys", cmap(np.linspace(0.15, 1.0, nbins))
     )
-    plot_radar_histogram(
-        ds_radar_plot,
-        ax,
-        signal_range=signal_range,
-        height_bins=height_bins,
-        signal_bins=signal_bins,
-        cmap=cmap,
-    )
+    cmap.set_under("white")
+
+    return cmap
 
 
 def plot_radar_histogram(
-    ds,
+    ds_radar,
     ax,
-    signal_range=[],
+    signal_range=[-30, 30],
     height_range=[],
-    height_bins=50,
     signal_bins=60,
-    cmap="Grays",
+    height_bins=100,
+    cmap=None,
 ):
-    # get data in correct format for 2D histogram
-    height = np.meshgrid(ds.height, ds.time)[0].flatten() / 1e3  # [km]
-    signal = filter_radar_signal(ds.dBZg, threshold=-30).values.flatten()  # [dBZ]
+    time = ds_radar.time
+    height = ds_radar.height / 1e3  # [km]
+    signal = filter_radar_signal(ds_radar.dBZg, threshold=-30).values  # [dBZ]
 
-    # remove nan data
+    if height_range == []:
+        height_range = [0.0, np.nanmax(height)]
+
+    if not cmap:
+        if isinstance(signal_bins, int):
+            cmap = get_greys_histogram_colourmap(signal_bins)
+        else:
+            cmap = get_greys_histogram_colourmap(len(signal_bins))
+    elif isinstance(cmap, str):
+        cmap = plt.get_cmap(cmap)
+
+    ax = plot_radardata_histogram(
+        time,
+        height,
+        signal,
+        ax,
+        signal_range,
+        height_range,
+        height_bins,
+        signal_bins,
+        cmap,
+    )
+
+    return ax
+
+
+def plot_radardata_histogram(
+    time,
+    height,
+    signal,
+    ax,
+    signal_range,
+    height_range,
+    height_bins,
+    signal_bins,
+    cmap,
+):
+    """you may want to filter_radar_signal before calling this function"""
+
+    # get data in correct format for 2D histogram and remove nan data
+    signal = signal.flatten()
+    height = np.meshgrid(height, time)[0].flatten()
     height = height[~np.isnan(signal)]
     signal = signal[~np.isnan(signal)]
 
     # set histogram parameters
     bins = [signal_bins, height_bins]
-    if signal_range == []:
-        signal_range = [signal.min(), signal.max()]
-    if height_range == []:
-        height_range = [0.0, height.max()]
+    cmap.set_under("white")
 
     # plot 2D histogram
-    cmap = plt.cm.get_cmap(cmap)
-    cmap.set_under("white")
     hist, xbins, ybins, im = ax.hist2d(
         signal,
         height,
@@ -179,6 +273,5 @@ def plot_radar_histogram(
 
     ax.set_xlabel("Z /dBZe")
     ax.set_ylabel("Height / km")
-    ax.set_xticks
 
-    return ax, hist, xbins, ybins
+    return ax

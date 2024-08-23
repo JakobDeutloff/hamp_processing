@@ -7,12 +7,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pandas as pd
 from src import plot_quicklooks as plotql
 from src import load_data_functions as loadfuncs
-from src import helper_functions as helpfuncs
+from src import readwrite_functions as rwfuncs
+from src import earthcare_functions as ecfuncs
 
 # %%
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
-cfg = helpfuncs.extract_config_params(configfile)
+cfg = rwfuncs.extract_config_params(configfile)
 flight = cfg["flight"]
 path_saveplts = cfg["path_saveplts"]
 radiometer_date = cfg["radiometer_date"]
@@ -33,8 +34,8 @@ hampdata = loadfuncs.do_post_processing(
 )
 
 # %% find time when earthcare crosses halo
-ec_track = helpfuncs.get_earthcare_track(cfg["date"])
-ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
+ec_track = ecfuncs.get_earthcare_track(cfg["date"])
+ec_under_time = ecfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
 
 # %% produce HAMP single quicklook between startime and endtime
 starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
@@ -61,6 +62,7 @@ plotql.radar_quicklook(
     flight=flight,
     ec_under_time=ec_under_time,
     figsize=(12, 6),
+    is_latllonaxes=True,
     savefigparams=[savefig_format, savename, dpi],
 )
 
