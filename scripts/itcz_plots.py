@@ -162,7 +162,7 @@ itcz_mask_2 = itczfuncs.interpolate_radiometer_mask_to_radar_mask(itcz_mask_1, h
 itczfuncs.add_itcz_mask(fig, axes[0, 0], hampdata.radar.time, itcz_mask_2, cbar=False)
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
-# %% Plot radar timeseries and histogram for ecah masked area
+# %% Plot radar timeseries and histogram for each masked area
 savefig_format = "png"
 savename = path_saveplts / "itcz_mask_radar_composite.png"
 dpi = 64
