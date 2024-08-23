@@ -66,4 +66,5 @@ plotql.radar_quicklook(
     figsize=(12, 6),
     savefigparams=[savefig_format, savename, dpi],
     ds_radar=ds_radar,
+    is_latllonaxes=False,
 )

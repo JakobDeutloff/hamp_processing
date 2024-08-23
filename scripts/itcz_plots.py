@@ -159,7 +159,8 @@ for a in mask_values.keys():
     )
     axs[a, 1].set_ylabel("")
 
-plotfuncs.add_lat_lon_axes(hampdata, axs[2, 0])
+timeframe = slice(hampdata.radar.time[0], hampdata.radar.time[-1])
+plotfuncs.add_lat_lon_axes(hampdata, timeframe, axs[2, 0])
 axs[2, 0].set_xlabel("UTC")
 axs[2, 1].set_xlabel("Z /dBZe")
 plotfuncs.beautify_axes(axs.flatten())

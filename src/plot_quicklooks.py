@@ -290,6 +290,7 @@ def radar_quicklook(
     figsize=(9, 5),
     savefigparams=[],
     ds_radar=False,
+    is_latllonaxes=True,
 ):
     """
     Produces radar quicklook for given timeframe and saves as .png if requested.
@@ -312,6 +313,9 @@ def radar_quicklook(
         name to save figure, dpi of figure, used if format=="png"]
     ds_radar : Any, optional
         If specified, use ds_radar for plotting rather than hampdata.radar
+    is_latlonaxes : Bool, optional
+        If True, add latitude and longitude axes to plot
+        (requires hampdata with fligthdata as well as radar)
     Returns
     -------
     fig, axes
@@ -327,11 +331,14 @@ def radar_quicklook(
     else:
         ds_radar_plot = hampdata.radar.sel(time=timeframe)
 
-    cax = plotfuncs.plot_radar_timeseries(ds_radar_plot, fig, axes[0])[1]
+    ax, cax = plotfuncs.plot_radar_timeseries(ds_radar_plot, fig, axes[0])
     if ec_under_time:
         ecfuncs.add_earthcare_underpass(axes[0], ec_under_time, annotate=False)
         x, y = ec_under_time, axes[0].get_ylim()[1] * 0.92
         axes[0].annotate(" EarthCARE", xy=(x, y), xytext=(x, y), fontsize=15, color="r")
+
+    if is_latllonaxes:
+        plotfuncs.add_lat_lon_axes(hampdata, timeframe, ax, set_time_ticks=True)
 
     axes[0].set_title("  Timeseries", fontsize=18, loc="left")
 

@@ -66,6 +66,7 @@ plotql.radar_quicklook(
     timeframe=slice(starttime, endtime),
     flight=flight,
     ec_under_time=ec_under_time,
-    figsize=(15, 6),
+    figsize=(15, 7),
+    is_latllonaxes=True,
     savefigparams=[savefig_format, savename, dpi],
 )
