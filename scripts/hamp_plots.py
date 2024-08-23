@@ -36,46 +36,6 @@ hampdata = loadfuncs.do_post_processing(
 ec_track = helpfuncs.get_earthcare_track(cfg["date"])
 ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
 
-# %% produce HAMP single quicklook between startime and endtime
-starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
-savefig_format = "png"
-savename = path_saveplts / f"timesliceql_{flight}_hamp.png"
-dpi = 72
-plotql.hamp_timeslice_quicklook(
-    hampdata,
-    timeframe=slice(starttime, endtime),
-    flight=flight,
-    ec_under_time=ec_under_time,
-    figsize=(28, 20),
-    savefigparams=[savefig_format, savename, dpi],
-)
-
-# %% produce radar-only single quicklook between startime and endtime
-starttime, endtime = hampdata.radar.time[0].values, hampdata.radar.time[-1].values
-savefig_format = "png"
-savename = path_saveplts / f"timesliceql_{flight}_radar.png"
-dpi = 72
-plotql.radar_quicklook(
-    hampdata,
-    timeframe=slice(starttime, endtime),
-    flight=flight,
-    ec_under_time=ec_under_time,
-    figsize=(12, 6),
-    savefigparams=[savefig_format, savename, dpi],
-)
-
-# %% produce radiometer-only single quicklook between startime and endtime
-starttime, endtime = hampdata["183"].time[0].values, hampdata["183"].time[-1].values
-savefig_format = "png"
-savename = path_saveplts / f"timesliceql_{flight}_radiometers.png"
-dpi = 72
-plotql.radiometer_quicklook(
-    hampdata,
-    timeframe=slice(starttime, endtime),
-    figsize=(10, 14),
-    savefigparams=[savefig_format, savename, dpi],
-)
-
 # %%
 starttime, endtime = hampdata["kv"].time[0].values, hampdata["kv"].time[-1].values
 timeframe = slice(starttime, endtime)
