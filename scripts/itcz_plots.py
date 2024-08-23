@@ -36,7 +36,7 @@ def plot_radar_cwv_timeseries(
         nrows=2, ncols=2, figsize=figsize, width_ratios=[18, 7], sharey="row"
     )
 
-    cax = plotfuncs.plot_radar_timeseries(hampdata.radar, fig, axs[0, 0])[1]
+    ax, cax = plotfuncs.plot_radar_timeseries(hampdata.radar, fig, axs[0, 0])
     axs[0, 0].set_title("  Timeseries", fontsize=18, loc="left")
 
     plotfuncs.plot_radar_histogram(hampdata.radar, axs[0, 1])
@@ -117,7 +117,7 @@ savename = Path(cfg["paths"]["saveplts"]) / "radar_selected.png"
 dpi = 64
 
 fig, axs = plt.subplots(
-    nrows=3, ncols=2, figsize=(12, 6), width_ratios=[18, 7], sharey="row", sharex="col"
+    nrows=3, ncols=2, figsize=(12, 9), width_ratios=[18, 7], sharey="row", sharex="col"
 )
 
 time_radar = hampdata.radar.time
@@ -159,6 +159,7 @@ for a in mask_values.keys():
     )
     axs[a, 1].set_ylabel("")
 
+plotfuncs.add_lat_lon_axes(hampdata, axs[2, 0])
 axs[2, 0].set_xlabel("UTC")
 axs[2, 1].set_xlabel("Z /dBZe")
 plotfuncs.beautify_axes(axs.flatten())

@@ -1,7 +1,11 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
-import pandas as pd
+from matplotlib.ticker import MaxNLocator
+
+
+def filter_radar_signal(dBZg, threshold=-30):
+    return dBZg.where(dBZg >= threshold)  # [dBZ]
 
 
 def beautify_axes(axes):
@@ -25,8 +29,38 @@ def beautify_colorbar_axes(cax, xaxis=False):
     cax.ax.tick_params(labelsize=15)
 
 
-def filter_radar_signal(dBZg, threshold=-30):
-    return dBZg.where(dBZg >= threshold)  # [dBZ]
+def add_lat_lon_axes(hampdata, ax_time, set_time_ticks=False):
+    """add latitude and longitude axes beneath a time axis
+    with nticks between time[0] and time[-1]"""
+
+    def label_axis(ax, pos, ticklabs, lab):
+        ax.spines["bottom"].set_position(("outward", pos))
+        ax.set_xticklabels(ticklabs)
+        ax.set_xlabel(lab)
+
+    ax_lat, ax_lon = ax_time.twiny(), ax_time.twiny()
+
+    nticks = 5
+    idxs = np.linspace(0, len(hampdata.radar.time) - 1, nticks, dtype=int)
+    xticks0 = hampdata.radar.time.isel(time=idxs)
+    xticks = hampdata.flightdata.time.sel(time=xticks0.values, method="nearest")
+
+    for ax in [ax_lat, ax_lon]:
+        ax.set_xlim(ax_time.get_xlim())
+        ax.xaxis.set_label_position("bottom")
+        ax.xaxis.set_ticks_position("bottom")
+        ax.set_xticks(xticks)
+        ax.spines[["top", "right", "left"]].set_visible(False)
+
+    lat_labels = hampdata.flightdata.IRS_LAT.sel(time=xticks.values).round(1).values
+    label_axis(ax_lat, 40, lat_labels, "Latitude /$\u00B0$")
+
+    lon_labels = hampdata.flightdata.IRS_LON.sel(time=xticks.values).round(1).values
+    label_axis(ax_lon, 80, lon_labels, "Longitude /$\u00B0$")
+
+    if set_time_ticks:
+        ax_time.set_xticks(xticks0)
+        ax_time.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%H:%M"))
 
 
 def plot_radiometer_timeseries(ds, ax, is_90=False):
@@ -146,11 +180,8 @@ def plot_radardata_timeseries(time, height, signal, fig, ax, cax=None, cmap="YlG
         cax = fig.colorbar(pcol, ax=ax, label=clab, extend=extend, shrink=shrink)
 
     # get nicely formatting xticklabels
-    stride = len(time) // 4
-    xticks = time[::stride]
-    xticklabs = [f"{t.hour:02d}:{t.minute:02d}" for t in pd.to_datetime(xticks)]
-    ax.set_xticks(xticks)
-    ax.set_xticklabels(xticklabs)
+    ax.xaxis.set_major_locator(MaxNLocator(nbins=5))
+    ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%H:%M"))
 
     ax.set_xlabel("UTC")
     ax.set_ylabel("Height / km")
