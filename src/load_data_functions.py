@@ -173,3 +173,9 @@ def do_post_processing(
     )
 
     return level1data
+
+
+def load_dropsonde_data(path_dropsonde):
+    print(f"Using dropsondes from: {path_dropsonde}")
+    ds_dropsonde = xr.open_dataset(path_dropsonde)
+    return ds_dropsonde
