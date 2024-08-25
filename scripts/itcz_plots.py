@@ -190,7 +190,7 @@ plot_itcz_masked_radar_timeseries_and_composite(
 
 # %% Plot CWV and radar with ITCZ mask
 savefig_format = "png"
-savename = path_saveplts / "itcz_radar_integrated.png"
+savename = path_saveplts / f"itcz_radar_integrated_{flightname}.png"
 dpi = 72
 fig, axes = plt.subplots(
     nrows=2, ncols=2, figsize=(15, 12), width_ratios=[42, 1], sharex="col"
