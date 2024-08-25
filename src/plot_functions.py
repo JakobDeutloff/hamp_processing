@@ -280,14 +280,11 @@ def plot_radardata_histogram(
 
 # %% fuunctions for plotting HAMP post-processed data slice
 def plot_radar_cwv_timeseries(
+    fig,
+    axs,
     hampdata,
-    figsize=(9, 5),
 ):
-    fig, axs = plt.subplots(
-        nrows=2, ncols=2, figsize=figsize, width_ratios=[18, 7], sharey="row"
-    )
-
-    ax, cax = plot_radar_timeseries(hampdata.radar, fig, axs[0, 0])
+    cax = plot_radar_timeseries(hampdata.radar, fig, axs[0, 0])[1]
     axs[0, 0].set_title("  Timeseries", fontsize=18, loc="left")
 
     plot_radar_histogram(hampdata.radar, axs[0, 1])

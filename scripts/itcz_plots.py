@@ -108,7 +108,10 @@ hampdata = rwfuncs.load_timeslice_all_level1hampdata(
 savefig_format = "png"
 savename = path_saveplts / f"itcz_mask_radar_column_water_path_{flightname}.png"
 dpi = 64
-fig, axes = plotfuncs.plot_radar_cwv_timeseries(hampdata, figsize=(12, 6))
+fig, axes = plt.subplots(
+    nrows=2, ncols=2, figsize=(12, 6), width_ratios=[18, 7], sharey="row"
+)
+fig, axes = plotfuncs.plot_radar_cwv_timeseries(fig, axes, hampdata)
 axes[1, 0].legend(loc="upper right", frameon=False)
 itcz_mask_1 = itczfuncs.identify_itcz_crossings(hampdata["CWV"]["IWV"])
 itczfuncs.add_itcz_mask(fig, axes[1, 0], hampdata["CWV"].time, itcz_mask_1)
