@@ -66,7 +66,7 @@ def optional_config_params(config, config_yaml):
 
     config["path_saveplts"] = get_optional_path("saveplts")
     config["path_writedata"] = get_optional_path("writedata")
-    config["path_dropsondes"] = get_optional_path("dropsondes")
+    config["path_dropsondes_level3"] = get_optional_path("dropsondes_level3")
     config["path_hampdata"] = get_optional_path("hampdata")
 
     return config

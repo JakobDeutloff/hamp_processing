@@ -1,16 +1,15 @@
 # Holds the path definitions for reading data and saving plots
 # IMPORTANT: You need to adjust the paths / variables with "[...]"
 
-flight_01: &flight_01 [ENTER FLIGHT ID, e.g. RF01_20240811]
-flt_date_01: &flt_date_01 [ENTER FLIGHT DATE, e.g. "20240811"]
+date_01: &date_01 [ENTER FLIGHT DATE, e.g. "20240811"]
 
-flight: *flight_01
-date: *flt_date_01
+date: *date_01
 flightletter: a
 is_planet: false
 paths:
-  bahamas: /Volumes/ORCESTRA/HALO-{date}{flightletter}/bahamas/QL_HALO-{date}{flightletter}_BAHAMAS_V01.nc
-  radiometer: /Volumes/ORCESTRA/HALO-{date}{flightletter}/radiometer
-  radar: [ENTER PATH TO YOUR RADAR DATA]/*.nc
+  bahamas: /Volumes/ORCESTRA/HALO-{date}{flightletter}/bahamas/QL_HALO-{date}{flightletter}_BAHAMAS_V01.nc [valid path or None]
+  radiometer: /Volumes/ORCESTRA/HALO-{date}{flightletter}/radiometer [valid path or None]
+  radar: [ENTER PATH TO YOUR RADAR DATA]/HALO-{date}{flightletter}/radar/*.nc [valid path or None]
+  dropsondes_level3: /Volumes/ORCESTRA/HALO-{date}{flightletter}/dropsondes/Level_3_interim/PERCUSION_{date}_Level_3.nc [(optional)]
   saveplts: [ENTER PATH WHERE YOU WANT TO SAVE YOUR PLOTS (optional)]
   writedata: [ENTER PATH WHERE YOU WANT TO WRITE DATA (optional)]
