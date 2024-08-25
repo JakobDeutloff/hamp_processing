@@ -15,8 +15,7 @@ def extract_config_params(config_file):
         print(f"Reading config YAML: '{config_file}'")
         config_yaml = yaml.safe_load(file)
 
-    config = required_config_params(config, config_yaml)
-    config = optional_config_params(config, config_yaml)
+    config = get_config_params(config, config_yaml)
 
     return config
 
@@ -31,29 +30,8 @@ def formatted_data_path(config_yaml, pathname):
     return Path(path_str)
 
 
-def required_config_params(config, config_yaml):
-    def get_required_path(pathname):
-        try:
-            return formatted_data_path(config_yaml, pathname)
-        except KeyError:
-            return Path(config_yaml["paths"][pathname])
-
-    # Extract REQUIRED parameters from the configuration
-    dt, flght = config_yaml["date"], config_yaml["flightletter"]
-    config["flightname"] = f"HALO-{dt}{flght}"
-    config["date"] = config_yaml["date"]  # YYYYMMDD
-    config["radiometer_date"] = config["date"][2:]  # YYMMDD
-    config["is_planet"] = config_yaml["is_planet"]
-
-    config["path_bahamas"] = get_required_path("bahamas")
-    config["path_radiometer"] = get_required_path("radiometer")
-    config["path_radar"] = get_required_path("radar")
-
-    return config
-
-
-def optional_config_params(config, config_yaml):
-    def get_optional_path(pathname):
+def get_config_params(config, config_yaml):
+    def get_formatted_path(pathname):
         if pathname in config_yaml["paths"]:
             try:
                 path = formatted_data_path(config_yaml, pathname)
@@ -64,10 +42,21 @@ def optional_config_params(config, config_yaml):
             path = None
         return path
 
-    config["path_saveplts"] = get_optional_path("saveplts")
-    config["path_writedata"] = get_optional_path("writedata")
-    config["path_dropsondes_level3"] = get_optional_path("dropsondes_level3")
-    config["path_hampdata"] = get_optional_path("hampdata")
+    # Extract REQUIRED parameters from the configuration
+    dt, flght = config_yaml["date"], config_yaml["flightletter"]
+    config["flightname"] = f"HALO-{dt}{flght}"
+    config["date"] = config_yaml["date"]  # YYYYMMDD
+    config["radiometer_date"] = config["date"][2:]  # YYMMDD
+    config["is_planet"] = config_yaml["is_planet"]
+
+    config["path_bahamas"] = get_formatted_path("bahamas")
+    config["path_radiometer"] = get_formatted_path("radiometer")
+    config["path_radar"] = get_formatted_path("radar")
+
+    config["path_saveplts"] = get_formatted_path("saveplts")
+    config["path_writedata"] = get_formatted_path("writedata")
+    config["path_dropsondes_level3"] = get_formatted_path("dropsondes_level3")
+    config["path_hampdata"] = get_formatted_path("hampdata")
 
     return config
 
