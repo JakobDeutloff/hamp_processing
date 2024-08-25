@@ -17,7 +17,7 @@ def identify_itcz_crossings(cwv, thresholds=[45, 50]):
     return itcz_mask
 
 
-def add_itcz_mask(fig, ax, xtime, itcz_mask, cbar=True):
+def add_itcz_mask(fig, ax, xtime, itcz_mask, alpha=0.2, cbar=True, cax=False):
     colors = ["red", "gold", "green"]  # Red, Green, Blue
     cmap = LinearSegmentedColormap.from_list("three_color_cmap", colors)
     levels = [-0.5, 0.5, 1.5, 2.5]
@@ -32,11 +32,14 @@ def add_itcz_mask(fig, ax, xtime, itcz_mask, cbar=True):
         z,
         levels=levels,
         cmap=cmap,
-        alpha=0.2,
+        alpha=alpha,
     )
     clab = "ITCZ Mask"
     if cbar:
-        cbar = fig.colorbar(cont, ax=ax, label=clab, shrink=0.8)
+        if cax:
+            cbar = fig.colorbar(cont, cax=cax, label=clab, shrink=0.8)
+        else:
+            cbar = fig.colorbar(cont, ax=ax, label=clab, shrink=0.8)
         cbar.set_ticks([0, 1, 2])
         cbar.set_ticklabels(["Outside", "Transition", "Inside"])
 
