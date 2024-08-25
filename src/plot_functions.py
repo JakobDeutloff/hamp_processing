@@ -278,6 +278,35 @@ def plot_radardata_histogram(
     return ax
 
 
+# %% fuunctions for plotting HAMP post-processed data slice
+def plot_radar_cwv_timeseries(
+    hampdata,
+    figsize=(9, 5),
+):
+    fig, axs = plt.subplots(
+        nrows=2, ncols=2, figsize=figsize, width_ratios=[18, 7], sharey="row"
+    )
+
+    ax, cax = plot_radar_timeseries(hampdata.radar, fig, axs[0, 0])
+    axs[0, 0].set_title("  Timeseries", fontsize=18, loc="left")
+
+    plot_radar_histogram(hampdata.radar, axs[0, 1])
+    axs[0, 1].set_ylabel("")
+    axs[0, 1].set_title("Histogram", fontsize=18)
+
+    plot_column_water_vapour_timeseries(
+        hampdata["CWV"]["IWV"], axs[1, 0], target_cwv=48
+    )
+
+    beautify_axes(axs.flatten())
+    beautify_colorbar_axes(cax)
+    axs[1, 1].remove()
+
+    fig.tight_layout()
+
+    return fig, axs
+
+
 def plot_dropsonde_iwv_comparison(ds_iwv, ds_dropsonde, bias, date, ax):
     """
     Plot IWV from radiometer and dropsondes for a given date.
