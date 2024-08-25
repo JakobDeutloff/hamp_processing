@@ -86,7 +86,8 @@ cfg = rwfuncs.extract_config_params(configfile)
 path_saveplts = cfg["path_saveplts"]
 flightname = cfg["flightname"]
 ### ------------------------------------------------------------- ###
-# hampdata = src.load_data_functions.do_post_processing(
+# from src import load_data_functions as loadfuncs
+# hampdata = loadfuncs.do_post_processing(
 #     cfg["path_bahamas"],
 #     cfg["path_radar"],
 #     cfg["path_radiometer"],
