@@ -59,7 +59,7 @@ def setup_hamp_timeslice_axes(fig):
 def hamp_timeslice_quicklook(
     hampdata: PostProcessedHAMPData,
     timeframe,
-    flight=None,
+    flightname,
     ec_under_time=None,
     figsize=(14, 18),
     savefigparams=[],
@@ -73,8 +73,8 @@ def hamp_timeslice_quicklook(
         Level 1 post-processed HAMP dataset
     timeframe : slice
         Timeframe to plot.
-    flight : str, optional
-        name of flight, e.g. "RF01_20240811"
+    flightname : str
+        name of flight, e.g. "HALO-20240811a"
     ec_under_time: Time, Optional
         time of earthcare underpass
     figsize : tuple, optional
@@ -148,7 +148,7 @@ def hamp_timeslice_quicklook(
     axes[0][2].spines[["top", "right"]].set_visible(False)
     axes[-1].set_xlabel("Hour:Min UTC")
 
-    fig.suptitle(f"HAMP {flight}")
+    fig.suptitle(f"HAMP {flightname}")
 
     fig.tight_layout()
 
@@ -160,7 +160,7 @@ def hamp_timeslice_quicklook(
 
 def hamp_hourly_quicklooks(
     hampdata: PostProcessedHAMPData,
-    flight,
+    flightname,
     start_hour,
     end_hour,
     savefigparams=[],
@@ -172,8 +172,8 @@ def hamp_hourly_quicklooks(
     ----------
     hampdata : PostProcessedHAMPData
         Level 1 post-processed HAMP dataset
-    flight : str
-        Name of the flight.
+    flightname : str
+        Name of flight, e.g. "HALO-20240811a"
     start_hour :  pandas.Timestamp
         start hour of quicklooks
     end_hour :  pandas.Timestamp
@@ -189,10 +189,11 @@ def hamp_hourly_quicklooks(
 
     # produce quicklook plot for each full hour (excludes last timeslice)
     for i in range(0, len(timeslices) - 1):
+        timeframe = slice(timeslices[i], timeslices[i + 1])
         fig, _ = hamp_timeslice_quicklook(
             hampdata,
-            timeframe=slice(timeslices[i], timeslices[i + 1]),
-            flight=flight,
+            timeframe,
+            flightname,
             figsize=(18, 18),
         )
 
@@ -285,7 +286,7 @@ def radiometer_quicklook(
 def radar_quicklook(
     hampdata: PostProcessedHAMPData,
     timeframe,
-    flight=None,
+    flightname,
     ec_under_time=None,
     figsize=(9, 5),
     savefigparams=[],
@@ -301,8 +302,8 @@ def radar_quicklook(
         Level 1 post-processed HAMP dataset
     timeframe : slice
         Timeframe to plot.
-    flight : str, optional
-        name of flight, e.g. "RF01_20240811"
+    flightname : str
+        name of flight, e.g. "HALO-20240811a"
     ec_under_time: Time, Optional
         time of earthcare underpass
     figsize : tuple, optional
@@ -349,7 +350,7 @@ def radar_quicklook(
     plotfuncs.beautify_axes(axes)
     plotfuncs.beautify_colorbar_axes(cax)
 
-    fig.suptitle(f"Radar During {flight}", fontsize=20)
+    fig.suptitle(f"Radar During {flightname}", fontsize=20)
 
     fig.tight_layout()
 
@@ -362,7 +363,7 @@ def radar_quicklook(
 def plot_kvband_column_water_vapour_retrieval(
     hampdata: PostProcessedHAMPData,
     timeframe,
-    flight=None,
+    flightname,
     ec_under_time=None,
     figsize=(5, 9),
     savefigparams=[],
@@ -377,8 +378,8 @@ def plot_kvband_column_water_vapour_retrieval(
         Level 1 post-processed HAMP dataset
     timeframe : slice
         Timeframe to plot.
-    flight : str, optional
-        name of flight, e.g. "RF01_20240811"
+    flightname : str, optional
+        name of flight, e.g. "HALO-20240811a"
     ec_under_time: Time, Optional
         time of earthcare underpass
     figsize : tuple, optional
@@ -423,7 +424,7 @@ def plot_kvband_column_water_vapour_retrieval(
         ax.spines[["top", "right"]].set_visible(False)
 
     axes[-1].set_xlabel("Hour:Min UTC")
-    fig.suptitle(f"HAMP {flight}")
+    fig.suptitle(f"Radiometers during {flightname}")
 
     fig.tight_layout()
 

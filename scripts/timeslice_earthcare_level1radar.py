@@ -15,9 +15,8 @@ from src import earthcare_functions as ecfuncs
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
 cfg = rwfuncs.extract_config_params(configfile)
-flight = cfg["flight"]
+flightname = cfg["flightname"]
 path_saveplts = cfg["path_saveplts"]
-radiometer_date = cfg["radiometer_date"]
 ### ------------------------------------------------------------- ###
 
 # %% create HAMP post-processed data
@@ -47,7 +46,7 @@ starttime, endtime = (
 )
 
 # %% Write timeslice of Level 1 post-processed radar data to .nc file
-ncfilename = cfg["path_writedata"] / f"earthcare_level1_{window}_{flight}.nc"
+ncfilename = cfg["path_writedata"] / f"earthcare_level1_{window}_{flightname}.nc"
 rwfuncs.write_level1data_timeslice(
     hampdata, "radar", slice(starttime, endtime), ncfilename
 )
@@ -56,12 +55,13 @@ rwfuncs.write_level1data_timeslice(
 ds_radar = xr.open_mfdataset(ncfilename)
 starttime, endtime = ds_radar.time[0].values, ds_radar.time[-1].values
 savefig_format = "png"
-savename = cfg["path_writedata"] / f"earthcare_level1_{window}_{flight}.png"
+savename = cfg["path_writedata"] / f"earthcare_level1_{window}_{flightname}.png"
 dpi = 64
+timeframe = slice(starttime, endtime)
 plotql.radar_quicklook(
     None,
-    timeframe=slice(starttime, endtime),
-    flight=flight,
+    timeframe,
+    flightname,
     ec_under_time=ec_under_time,
     figsize=(12, 6),
     savefigparams=[savefig_format, savename, dpi],

@@ -12,9 +12,7 @@ from src import readwrite_functions as rwfuncs
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
 cfg = rwfuncs.extract_config_params(configfile)
-flight = cfg["flight"]
 path_saveplts = cfg["path_saveplts"]
-radiometer_date = cfg["radiometer_date"]
 ### ------------------------------------------------------------- ###
 
 # %% create HAMP post-processed data

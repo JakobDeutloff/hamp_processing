@@ -13,9 +13,8 @@ from src import helper_functions as helpfuncs
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
 cfg = helpfuncs.extract_config_params(configfile)
-flight = cfg["flight"]
+flightname = cfg["flightname"]
 path_saveplts = cfg["path_saveplts"]
-radiometer_date = cfg["radiometer_date"]
 ### ------------------------------------------------------------- ###
 
 # %% create HAMP post-processed data
@@ -40,12 +39,12 @@ ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
 starttime, endtime = hampdata["kv"].time[0].values, hampdata["kv"].time[-1].values
 timeframe = slice(starttime, endtime)
 savefig_format = "png"
-savename = path_saveplts / f"timesliceql_{flight}_columnwatervapour.png"
+savename = path_saveplts / f"timesliceql_{flightname}_columnwatervapour.png"
 dpi = 72
 fig, axes = plotql.plot_kvband_column_water_vapour_retrieval(
     hampdata,
     timeframe,
-    flight=flight,
+    flightname,
     ec_under_time=ec_under_time,
     figsize=(9, 12),
     savefigparams=[savefig_format, savename, dpi],
@@ -62,7 +61,7 @@ savefig_format = "png"
 dpi = 72
 plotql.hamp_hourly_quicklooks(
     hampdata,
-    flight,
+    flightname,
     start_hour,
     end_hour,
     savefigparams=[savefig_format, path_saveplts, dpi],

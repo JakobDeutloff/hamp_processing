@@ -79,82 +79,35 @@ def plot_itcz_masked_radar_timeseries_and_composite(
         save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
 
-# # %%
-# ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
-# import yaml
-# from pathlib import Path
-# configyaml = sys.argv[1]
-# with open(configyaml, "r") as file:
-#     print(f"Reading config YAML: '{configyaml}'")
-#     cfg = yaml.safe_load(file)
-# path_hampdata = cfg["paths"]["hampdata"]
-# hampdata = rwfuncs.load_timeslice_all_level1hampdata(path_hampdata, cfg["is_planet"])
-# path_saveplts = Path(cfg["paths"]["saveplts"])
-# ### ------------------------------------------------------------- ###
-
 # %% load config and create HAMP post-processed data
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
-configfile = "config.yaml"
+configfile = sys.argv[1]
 cfg = rwfuncs.extract_config_params(configfile)
-flight = cfg["flight"]
 path_saveplts = cfg["path_saveplts"]
-radiometer_date = cfg["radiometer_date"]
+flightname = cfg["flightname"]
 ### ------------------------------------------------------------- ###
-from src import load_data_functions as loadfuncs
-
-hampdata = loadfuncs.do_post_processing(
-    cfg["path_bahamas"],
-    cfg["path_radar"],
-    cfg["path_radiometer"],
-    cfg["radiometer_date"],
-    is_planet=cfg["is_planet"],
-    do_radar=True,
-    do_183=True,
-    do_11990=True,
-    do_kv=True,
-    do_cwv=True,
+# hampdata = src.load_data_functions.do_post_processing(
+#     cfg["path_bahamas"],
+#     cfg["path_radar"],
+#     cfg["path_radiometer"],
+#     cfg["radiometer_date"],
+#     is_planet=cfg["is_planet"],
+#     do_radar=True,
+#     do_183=True,
+#     do_11990=True,
+#     do_kv=True,
+#     do_cwv=True,
+# )
+hampdata = rwfuncs.load_timeslice_all_level1hampdata(
+    cfg["path_hampdata"], cfg["is_planet"]
 )
-
-
-# %% fuunctions for plotting HAMP post-processed data slice
-def plot_radar_cwv_timeseries(
-    hampdata,
-    figsize=(9, 5),
-    savefigparams=[],
-):
-    fig, axs = plt.subplots(
-        nrows=2, ncols=2, figsize=figsize, width_ratios=[18, 7], sharey="row"
-    )
-
-    ax, cax = plotfuncs.plot_radar_timeseries(hampdata.radar, fig, axs[0, 0])
-    axs[0, 0].set_title("  Timeseries", fontsize=18, loc="left")
-
-    plotfuncs.plot_radar_histogram(hampdata.radar, axs[0, 1])
-    axs[0, 1].set_ylabel("")
-    axs[0, 1].set_title("Histogram", fontsize=18)
-
-    plotfuncs.plot_column_water_vapour_timeseries(
-        hampdata["CWV"]["IWV"], axs[1, 0], target_cwv=48
-    )
-
-    plotfuncs.beautify_axes(axs.flatten())
-    plotfuncs.beautify_colorbar_axes(cax)
-    axs[1, 1].remove()
-
-    fig.tight_layout()
-
-    if savefigparams != []:
-        save_figure(fig, savefigparams)
-
-    return fig, axs
 
 
 # %% Plot CWV and radar with ITCZ mask
 savefig_format = "png"
-savename = path_saveplts / "itcz_mask_radar_column_water_path.png"
+savename = path_saveplts / f"itcz_mask_radar_column_water_path_{flightname}.png"
 dpi = 64
-
-fig, axes = plot_radar_cwv_timeseries(hampdata, figsize=(12, 6), savefigparams=[])
+fig, axes = plotfuncs.plot_radar_cwv_timeseries(hampdata, figsize=(12, 6))
 axes[1, 0].legend(loc="upper right", frameon=False)
 itcz_mask_1 = itczfuncs.identify_itcz_crossings(hampdata["CWV"]["IWV"])
 itczfuncs.add_itcz_mask(fig, axes[1, 0], hampdata["CWV"].time, itcz_mask_1)
@@ -164,7 +117,7 @@ save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
 # %% Plot radar timeseries and histogram for each masked area
 savefig_format = "png"
-savename = path_saveplts / "itcz_mask_radar_composite.png"
+savename = path_saveplts / f"itcz_mask_radar_composite_{flightname}.png"
 dpi = 64
 plot_itcz_masked_radar_timeseries_and_composite(
     hampdata, itcz_mask_2, savefigparams=[savefig_format, savename, dpi]
