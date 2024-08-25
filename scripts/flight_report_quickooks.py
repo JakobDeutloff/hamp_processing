@@ -14,9 +14,8 @@ from src import earthcare_functions as ecfuncs
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
 cfg = rwfuncs.extract_config_params(configfile)
-flight = cfg["flight"]
 path_saveplts = cfg["path_saveplts"]
-radiometer_date = cfg["radiometer_date"]
+flightname = cfg["flightname"]
 ### ------------------------------------------------------------- ###
 
 # %% create HAMP post-processed data
@@ -49,12 +48,13 @@ flight_starttime, flight_endtime = (
     hampdata["183"].time[-1].values,
 )
 savefig_format = "png"
-savename = path_saveplts / f"hamp_timesliceql_{flight}.png"
+savename = path_saveplts / f"hamp_fullflight_{flightname}.png"
 dpi = 40
+timeframe = slice(flight_starttime, flight_endtime)
 plotql.hamp_timeslice_quicklook(
     hampdata,
-    timeframe=slice(flight_starttime, flight_endtime),
-    flight=flight,
+    timeframe,
+    flightname,
     ec_under_time=ec_under_time,
     figsize=(28, 20),
     savefigparams=[savefig_format, savename, dpi],
@@ -62,12 +62,13 @@ plotql.hamp_timeslice_quicklook(
 
 # %% produce ec_under single quicklook
 savefig_format = "png"
-savename = path_saveplts / f"hamp_ec_under_{flight}.png"
+savename = path_saveplts / f"hamp_ec_under_{flightname}.png"
 dpi = 40
+timeframe = slice(ec_starttime, ec_endtime)
 plotql.hamp_timeslice_quicklook(
     hampdata,
-    timeframe=slice(ec_starttime, ec_endtime),
-    flight=flight,
+    timeframe,
+    flightname,
     ec_under_time=ec_under_time,
     figsize=(28, 20),
     savefigparams=[savefig_format, savename, dpi],
@@ -75,12 +76,13 @@ plotql.hamp_timeslice_quicklook(
 
 # %% produce radar-only ec_under single quicklook
 savefig_format = "png"
-savename = path_saveplts / f"hamp_radar_ec_under_{flight}.png"
+savename = path_saveplts / f"hamp_radar_ec_under_{flightname}.png"
 dpi = 54
+timeframe = slice(ec_starttime, ec_endtime)
 plotql.radar_quicklook(
     hampdata,
-    timeframe=slice(ec_starttime, ec_endtime),
-    flight=flight,
+    timeframe,
+    flightname,
     ec_under_time=ec_under_time,
     figsize=(15, 7),
     is_latllonaxes=True,

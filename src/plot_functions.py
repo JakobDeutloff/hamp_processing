@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 from matplotlib.ticker import MaxNLocator
+import matplotlib.dates as mdates
 
 
 def filter_radar_signal(dBZg, threshold=-30):
@@ -273,5 +274,74 @@ def plot_radardata_histogram(
 
     ax.set_xlabel("Z /dBZe")
     ax.set_ylabel("Height / km")
+
+    return ax
+
+
+# %% fuunctions for plotting HAMP post-processed data slice
+def plot_radar_cwv_timeseries(
+    fig,
+    axs,
+    hampdata,
+):
+    cax = plot_radar_timeseries(hampdata.radar, fig, axs[0, 0])[1]
+    axs[0, 0].set_title("  Timeseries", fontsize=18, loc="left")
+
+    plot_radar_histogram(hampdata.radar, axs[0, 1])
+    axs[0, 1].set_ylabel("")
+    axs[0, 1].set_title("Histogram", fontsize=18)
+
+    plot_column_water_vapour_timeseries(
+        hampdata["CWV"]["IWV"], axs[1, 0], target_cwv=48
+    )
+
+    beautify_axes(axs.flatten())
+    beautify_colorbar_axes(cax)
+    axs[1, 1].remove()
+
+    fig.tight_layout()
+
+    return fig, axs
+
+
+def plot_dropsonde_iwv_comparison(ds_iwv, ds_dropsonde, bias, date, ax):
+    """
+    Plot IWV from radiometer and dropsondes for a given date.
+
+    Parameters
+    ----------
+    ds_iwv : xr.Dataset
+        Level1 radiometer dataset for column water vapour retrieval
+    ds_dropsonde : xr.Dataset
+        Level1 dropsonde dataset
+    date : str
+        Date in format YYMMDD
+    ax : matplotlib.axes.Axes
+        Axes to plot on.
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        Axes with plot.
+    """
+
+    ax.plot(ds_iwv.time, ds_iwv.IWV, label="KV Radiometer", color="dodgerblue")
+    ax.scatter(
+        ds_dropsonde.launch_time,
+        ds_dropsonde.iwv,
+        label="Dropsondes",
+        marker="*",
+        c="#FF5349",
+    )
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax.set_title(f"20{date[:2]}-{date[2:4]}-{date[4:]}")
+    ax.annotate(
+        f"Bias: {bias:.3f} kg m$^{-2}$",
+        (0.8, 0.05),
+        xycoords="axes fraction",
+        ha="center",
+        va="center",
+    )
 
     return ax

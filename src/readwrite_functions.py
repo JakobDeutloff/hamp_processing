@@ -15,41 +15,48 @@ def extract_config_params(config_file):
         print(f"Reading config YAML: '{config_file}'")
         config_yaml = yaml.safe_load(file)
 
-    # Extract parameters from the configuration
-    config["flight"] = config_yaml["flight"]
+    config = get_config_params(config, config_yaml)
+
+    return config
+
+
+def formatted_data_path(config_yaml, pathname):
+    """return formatted data path from reading a string which follows the
+    HALO naming convention where flight date and flight letter are replaced with the
+    keys from config"""
+    path_str = config_yaml["paths"][pathname].format(
+        date=config_yaml["date"], flightletter=config_yaml["flightletter"]
+    )
+    return Path(path_str)
+
+
+def get_config_params(config, config_yaml):
+    def get_formatted_path(pathname):
+        if pathname in config_yaml["paths"]:
+            try:
+                path = formatted_data_path(config_yaml, pathname)
+            except KeyError:
+                path = Path(config_yaml["paths"][pathname])
+        else:
+            print(f"No '{pathname}' path found in config.yaml, path set to None")
+            path = None
+        return path
+
+    # Extract REQUIRED parameters from the configuration
+    dt, flght = config_yaml["date"], config_yaml["flightletter"]
+    config["flightname"] = f"HALO-{dt}{flght}"
     config["date"] = config_yaml["date"]  # YYYYMMDD
     config["radiometer_date"] = config["date"][2:]  # YYMMDD
-    config["flightletter"] = config_yaml["flightletter"]
     config["is_planet"] = config_yaml["is_planet"]
 
-    # Format paths using the extracted parameters
-    config["path_bahamas"] = Path(
-        config_yaml["paths"]["bahamas"].format(
-            date=config["date"], flightletter=config["flightletter"]
-        )
-    )
-    config["path_radiometer"] = Path(
-        config_yaml["paths"]["radiometer"].format(
-            date=config["date"], flightletter=config["flightletter"]
-        )
-    )
-    config["path_radar"] = Path(
-        config_yaml["paths"]["radar"].format(flight=config["flight"])
-    )
+    config["path_bahamas"] = get_formatted_path("bahamas")
+    config["path_radiometer"] = get_formatted_path("radiometer")
+    config["path_radar"] = get_formatted_path("radar")
+    config["path_dropsondes_level3"] = get_formatted_path("dropsondes_level3")
 
-    try:
-        config["path_saveplts"] = Path(
-            config_yaml["paths"]["saveplts"].format(flight=config["flight"])
-        )
-    except KeyError as e:
-        print(f"{e}\nNo 'saveplts' path found in config.yaml")
-
-    try:
-        config["path_writedata"] = Path(
-            config_yaml["paths"]["writedata"].format(flight=config["flight"])
-        )
-    except KeyError as e:
-        print(f"{e}\nNo 'writedata' path found in config.yaml")
+    config["path_saveplts"] = get_formatted_path("saveplts")
+    config["path_writedata"] = get_formatted_path("writedata")
+    config["path_hampdata"] = get_formatted_path("hampdata")
 
     return config
 
