@@ -10,6 +10,7 @@ from src import readwrite_functions as rwfuncs
 from src import plot_functions as plotfuncs
 from src import itcz_functions as itczfuncs
 from src.plot_quicklooks import save_figure
+import xarray as xr
 
 
 def plot_itcz_masked_radar_timeseries_and_composite(
@@ -77,6 +78,66 @@ def plot_itcz_masked_radar_timeseries_and_composite(
 
     if savefigparams != []:
         save_figure(fig, savefigparams=[savefig_format, savename, dpi])
+
+
+def plot_integrated_radar(ds, ax):
+    def calc_integrated_signal(signal_slice):
+        integrated_signal = signal_slice.fillna(0).integrate("height")  # [dBz m]
+        integrated_signal = xr.where(integrated_signal == 0, np.nan, integrated_signal)
+        integrated_signal = integrated_signal / 1000  # [dBz km]
+
+        return integrated_signal
+
+    def plot_running_mean(integrated_signal, window, c, label):
+        running_integrated_signal = integrated_signal.rolling(
+            time=window, center=True
+        ).mean()
+        ax.plot(
+            ds.time,
+            running_integrated_signal,
+            linestyle="-",
+            linewidth=1.0,
+            color=c,
+            label=label,
+        )
+
+        return running_integrated_signal
+
+    window = 300  # running mean window, window=1 is 1 second (expressed as nanoseconds)
+    signal = plotfuncs.filter_radar_signal(ds.dBZg, threshold=-30).T  # [dBZ]
+
+    # plot raw integrated signal
+    integrated_signal = calc_integrated_signal(signal)
+    ax.plot(
+        ds.time,
+        integrated_signal,
+        linewidth=0.8,
+        linestyle=":",
+        color="lightgrey",
+        label="raw",
+    )
+
+    # plot running mean(s)
+    delta_t = (ds.time[window] - ds.time[0]) / np.timedelta64(1, "s") / 60  # mintues
+    label = f"{delta_t:.0f}min mean"
+    plot_running_mean(integrated_signal, window, "slategrey", label)
+
+    hframe = slice(0, 2500)
+    integrated_signal = calc_integrated_signal(signal.sel(height=hframe))
+    plot_running_mean(integrated_signal, window, "violet", "<2.5km")
+
+    hframe = slice(2500, 7500)
+    integrated_signal = calc_integrated_signal(signal.sel(height=hframe))
+    plot_running_mean(integrated_signal, window, "darkviolet", "(2.5<h<7.5)km")
+
+    hframe = slice(7500, np.nanmax(ds.height))
+    integrated_signal = calc_integrated_signal(signal.sel(height=hframe))
+    plot_running_mean(integrated_signal, window, "indigo", ">7.5km")
+
+    ax.legend(frameon=False)
+    ax.set_ylabel("integrated Z\n/ dBZ km")
+
+    return ax
 
 
 # %% load config and create HAMP post-processed data
