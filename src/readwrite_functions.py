@@ -52,10 +52,10 @@ def get_config_params(config, config_yaml):
     config["path_bahamas"] = get_formatted_path("bahamas")
     config["path_radiometer"] = get_formatted_path("radiometer")
     config["path_radar"] = get_formatted_path("radar")
+    config["path_dropsondes_level3"] = get_formatted_path("dropsondes_level3")
 
     config["path_saveplts"] = get_formatted_path("saveplts")
     config["path_writedata"] = get_formatted_path("writedata")
-    config["path_dropsondes_level3"] = get_formatted_path("dropsondes_level3")
     config["path_hampdata"] = get_formatted_path("hampdata")
 
     return config
