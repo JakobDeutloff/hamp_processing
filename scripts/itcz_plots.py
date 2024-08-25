@@ -187,3 +187,34 @@ dpi = 64
 plot_itcz_masked_radar_timeseries_and_composite(
     hampdata, itcz_mask_2, savefigparams=[savefig_format, savename, dpi]
 )
+
+# %% Plot CWV and radar with ITCZ mask
+savefig_format = "png"
+savename = path_saveplts / "itcz_radar_integrated.png"
+dpi = 72
+fig, axes = plt.subplots(
+    nrows=2, ncols=2, figsize=(15, 12), width_ratios=[42, 1], sharex="col"
+)
+ax, cax = plotfuncs.plot_radar_timeseries(
+    hampdata.radar, fig, axes[0, 0], cax=axes[0, 1]
+)
+itcz_mask_1 = itczfuncs.identify_itcz_crossings(hampdata["CWV"]["IWV"])
+itcz_mask_2 = itczfuncs.interpolate_radiometer_mask_to_radar_mask(itcz_mask_1, hampdata)
+# itczfuncs.add_itcz_mask(fig, axes[0, 0], hampdata.radar.time, itcz_mask_2, cbar=False)
+
+axes[0, 0].set_xlabel("")
+axes[1, 0].set_xlabel("UTC")
+plotfuncs.beautify_axes(axes.flatten())
+
+plot_integrated_radar(hampdata.radar, axes[1, 0])
+itczfuncs.add_itcz_mask(
+    fig,
+    axes[1, 0],
+    hampdata.radar.time,
+    itcz_mask_2,
+    alpha=0.1,
+    cbar=True,
+    cax=axes[1, 1],
+)
+axes[1, 0].set_ylim([-70, 150])
+save_figure(fig, savefigparams=[savefig_format, savename, dpi])
