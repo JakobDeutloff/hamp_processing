@@ -10,7 +10,7 @@ paths:
   bahamas: /Volumes/ORCESTRA/HALO-{date}{flightletter}/bahamas/QL_HALO-{date}{flightletter}_BAHAMAS_V01.nc [valid path or None]
   radiometer: /Volumes/ORCESTRA/HALO-{date}{flightletter}/radiometer [valid path or None]
   radar: [ENTER PATH TO YOUR RADAR DATA]/HALO-{date}{flightletter}/radar/*.nc [valid path or None]
-  dropsonde_level3: /Volumes/ORCESTRA/HALO-{date}{flightletter}/dropsondes/Level_3_interim/PERCUSION_{date}_Level_3.nc [(optional)]
+  dropsonde_level3: /Volumes/ORCESTRA/HALO-{date}{flightletter}/dropsondes/Level_3_interim/PERCUSION_HALO{date}_Level_3.nc [(optional)]
   hampdata: [ENTER PATH TO YOUR (LEVEL 1 PROCESSED) HAMP DATA]/HALO-{date}{flightletter}
   saveplts: [ENTER PATH WHERE YOU WANT TO SAVE YOUR PLOTS (optional)]
   writedata: [ENTER PATH WHERE YOU WANT TO WRITE DATA (optional)]
