@@ -32,6 +32,9 @@ hampdata = loadfuncs.do_post_processing(
     do_cwv=True,
 )
 
+# %% mask points in 90 GHz radiometer with unrealistic values
+hampdata.radio11990 = hampdata.radio11990.where(hampdata.radio11990.TBs < 300)
+
 # %% find time when earthcare crosses halo
 ec_track = ecfuncs.get_earthcare_track(cfg["date"])
 ec_under_time = ecfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
@@ -49,7 +52,7 @@ flight_starttime, flight_endtime = (
 )
 savefig_format = "png"
 savename = path_saveplts / f"hamp_fullflight_{flightname}.png"
-dpi = 40
+dpi = 72
 timeframe = slice(flight_starttime, flight_endtime)
 plotql.hamp_timeslice_quicklook(
     hampdata,
@@ -63,7 +66,7 @@ plotql.hamp_timeslice_quicklook(
 # %% produce ec_under single quicklook
 savefig_format = "png"
 savename = path_saveplts / f"hamp_ec_under_{flightname}.png"
-dpi = 40
+dpi = 72
 timeframe = slice(ec_starttime, ec_endtime)
 plotql.hamp_timeslice_quicklook(
     hampdata,
@@ -77,7 +80,7 @@ plotql.hamp_timeslice_quicklook(
 # %% produce radar-only ec_under single quicklook
 savefig_format = "png"
 savename = path_saveplts / f"hamp_radar_ec_under_{flightname}.png"
-dpi = 54
+dpi = 72
 timeframe = slice(ec_starttime, ec_endtime)
 plotql.radar_quicklook(
     hampdata,
@@ -88,3 +91,5 @@ plotql.radar_quicklook(
     is_latllonaxes=True,
     savefigparams=[savefig_format, savename, dpi],
 )
+
+# %%
