@@ -1,3 +1,4 @@
+import pandas as pd
 import xarray as xr
 from pathlib import Path
 from orcestra.postprocess.level0 import bahamas, radiometer, radar, _fix_radiometer_time
@@ -179,3 +180,14 @@ def load_dropsonde_data(path_dropsonde):
     print(f"Using dropsondes from: {path_dropsonde}")
     ds_dropsonde = xr.open_dataset(path_dropsonde)
     return ds_dropsonde
+
+
+def load_dropsonde_data_for_date(path_dropsonde, date):
+    date_start = pd.to_datetime(date)
+    date_end = pd.to_datetime(date) + pd.Timedelta("24h")
+
+    ds = load_dropsonde_data(path_dropsonde)
+    ds = ds.where(
+        ds["launch_time_(UTC)"].astype("datetime64") >= date_start, drop=True
+    ).where(ds["launch_time_(UTC)"].astype("datetime64") < date_end, drop=True)
+    return ds
