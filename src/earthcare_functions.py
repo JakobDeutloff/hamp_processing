@@ -1,5 +1,6 @@
 import pandas as pd
 from orcestra import sat
+import pyproj
 
 
 def get_earthcare_track(date):
@@ -13,16 +14,23 @@ def get_earthcare_track(date):
     return track
 
 
-def find_ec_under_time(track, ds_bahamas):
-    def distance(lat_1, lon_1, lat_2, lon_2):
-        return ((lat_1 - lat_2) ** 2 + (lon_1 - lon_2) ** 2) ** 0.5
+def find_ec_under_time(ec_track, ds_bahamas):
+    """
+    Returns time at closet overpass of HALO (from ds_bahamas) and EarthCARE track.
+    Assumes HALO ds_bahamas has higher rate of temporal data.
+    """
+    geod = pyproj.Geod(ellps="WGS84")
+
+    ec_track = ec_track.interp(time=ds_bahamas.time)
 
     lat_halo = ds_bahamas["IRS_LAT"]
     lon_halo = ds_bahamas["IRS_LON"]
-    lat_ec = track.lat
-    lon_ec = track.lon
-    dist = distance(lat_halo, lon_halo, lat_ec, lon_ec)
-    return dist.idxmin().values
+    lat_ec = ec_track["lat"]
+    lon_ec = ec_track["lon"]
+
+    dist = geod.inv(lon_ec, lat_ec, lon_halo, lat_halo)[2]
+
+    return ds_bahamas.time[dist.argmin()].values
 
 
 def add_earthcare_underpass(ax, ec_under_time, annotate=False):
