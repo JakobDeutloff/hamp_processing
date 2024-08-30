@@ -41,7 +41,7 @@ def plot_dropsonde_wind_vertical_profiles(
     eastward = ds_dropsonde.u.values.flatten()
     northward = ds_dropsonde.v.values.flatten()
     direction = horizontal_wind_direction(eastward, northward)
-    magnitude = np.sqrt(eastward * eastward, northward * northward)
+    magnitude = np.sqrt(eastward * eastward + northward * northward)
 
     norm = mcolors.Normalize(vmin=colorby.min(), vmax=colorby.max())
     cmap = plt.get_cmap(cmap)
