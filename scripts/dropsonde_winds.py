@@ -16,17 +16,20 @@ from src.plot_quicklooks import save_figure
 
 
 # %% function definitions
-def horizontal_wind_direction(eastward, northward, bearing=False):
-    """returns horizontal wind dircetion in degrees in range
-    -180 <= direction <=180 relative to vector from (0,0) to (1,0)].
-    If bearing is true (False by default), direction is convered to a
-    bearing before return, i.e. the direction relative to the
-    vector from (0,0) to (0,1) is returned instead."""
-    direction = np.arctan2(eastward, northward) * 180 / np.pi
+def horizontal_wind_direction(northward, eastward, bearing=False):
+    """returns horizontal wind direction in degrees in range
+    -180 <= direction <=180 relative to westerly winds (i.e. the vector
+    from (0,0) to (1,0)]). If bearing is true (False by default), direction
+    is convered to a bearing before return, i.e. the direction relative
+    to the vector from (0,0) to (0,1) is returned instead."""
     if bearing:
+        direction = np.arctan2(eastward, northward) * 180 / np.pi
         direction = np.where(
             direction < 0, direction + 360, direction
         )  # [bearing from north]
+    else:
+        direction = np.arctan2(northward, eastward) * 180 / np.pi
+
     return direction
 
 
