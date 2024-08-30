@@ -1,17 +1,11 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
--   repo: https://github.com/psf/black
-    rev: 22.10.0
-    hooks:
-    -   id: black
--   repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.3.0
-    hooks:
-    -   id: black-jupyter
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
+    -   id: check-yaml
+        name: Check YAML file formatting
     -   id: check-added-large-files
         name: No large Files
         description: Checks that you did not unconsciously upload some enormous file
@@ -23,14 +17,26 @@ repos:
         description: Checks file ends on newline
     -   id: no-commit-to-branch
         name: No direct commit to main
+        args: ['--branch', 'main']
         description: Do not commit to main directly
     -   id: trailing-whitespace
-        name: Trim trailing Whitespaces
+        name: Trim trailing whitespaces
         description: Trailing whitespaces are trimmed
-    -   id: check-yaml
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.4 # Ruff version.
-  hooks:
-    - id: ruff # Run the linter for Python.
-      args: ["--ignore=E402"]  # Ignore E402 error "Module level import not at top of file"
-    - id: ruff-format # Run the formatter for Python.
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.4
+    hooks:
+    -   id: ruff
+        args: ["--ignore=E402"]  # Ignore E402 error "Module level import not at top of file"
+        description: python linter
+    -   id: ruff-format
+        description: python formatter
+-   repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 24.3.0
+    hooks:
+    -   id: black-jupyter
+        description: formating ipynb notebook
+-   repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.4.0
+    hooks:
+    -   id: conventional-pre-commit
+        stages: [commit-msg]
