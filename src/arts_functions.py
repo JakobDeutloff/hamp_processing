@@ -1,5 +1,8 @@
 import numpy as np
 import pyarts
+from scipy.optimize import curve_fit
+import xarray as xr
+import pandas as pd
 
 
 def setup_workspace(verbosity=0):
@@ -64,7 +67,7 @@ def run_arts(
     O2=0.21,
     CO2=400e-6,
     CH4=1.8e-6,
-    O3=0.0,
+    O3=1e-6,
     zenith_angle=180,
     height=1e4,
     surface_altitude=0.0,
@@ -102,7 +105,7 @@ def run_arts(
     ws.surface_rtprop_agendaSet(option="Specular_NoPol_ReflFix_SurfTFromt_surface")
 
     # Emissivity of sea surface
-    ws.surface_emission = [[0.5]]
+    ws.surface_emission = [[0]]
 
     # No sensor properties
     ws.sensorOff()
@@ -160,4 +163,83 @@ def run_arts(
         ws.f_grid.value[:].copy(),
         ws.y.value[:].copy(),
         ws.y_aux.value[0][:].copy(),
+    )
+
+
+def exponential(x, a, b):
+    return a * np.exp(b * x)
+
+
+def linear(x, a, b):
+    return a * x + b
+
+
+def fit_exponential(x, y, p0):
+    valid_idx = (~np.isnan(y)) & (~np.isnan(x))
+    x = x[valid_idx]
+    y = y[valid_idx]
+    popt, pcov = curve_fit(exponential, x, y, p0=p0)
+    return popt
+
+
+def fit_linear(x, y):
+    valid_idx = (~np.isnan(y)) & (~np.isnan(x))
+    x = x[valid_idx]
+    y = y[valid_idx]
+    popt, pcov = curve_fit(linear, x, y)
+    return popt
+
+
+def fill_upper_levels(x, y, popt, func):
+    offset = y.dropna("gpsalt").values[-1]
+    nan_vals = np.isnan(y)
+    idx_nan = np.where(nan_vals)[0]
+    nan_vals[idx_nan - 1] = True  # get overlap of one
+    filled = np.zeros_like(y)
+    filled[~nan_vals] = y[~nan_vals]
+    new_vals = func(x[nan_vals], *popt)
+    filled[nan_vals] = new_vals - new_vals[0] + offset
+    return filled
+
+
+def get_profiles(sonde_id, ds_dropsonde, hampdata):
+    ds_dropsonde_loc = ds_dropsonde.isel(sonde_id=sonde_id)
+    drop_time = ds_dropsonde_loc["interpolated_time"].dropna("gpsalt").min().values
+    hampdata_loc = hampdata.sel(timeslice=drop_time, method="nearest")
+    height = float(hampdata_loc.flightdata["IRS_ALT"].values)
+    return ds_dropsonde_loc, hampdata_loc, height, pd.to_datetime(drop_time)
+
+
+def extrapolate_dropsonde(ds_dropsonde, height):
+    ds_dropsonde = ds_dropsonde.where(ds_dropsonde["gpsalt"] < height, drop=True)
+    # drop nans at lower levels
+    bool = (ds_dropsonde["p"].isnull()) & (ds_dropsonde["gpsalt"] < 100)
+    ds_dropsonde = ds_dropsonde.where(~bool, drop=True)
+    popt_p = fit_exponential(
+        ds_dropsonde["gpsalt"].values, ds_dropsonde["p"].values, p0=[1e5, -0.0001]
+    )
+    popt_ta = fit_linear(ds_dropsonde["gpsalt"].values, ds_dropsonde["ta"].values)
+
+    p_extrap = fill_upper_levels(
+        ds_dropsonde["gpsalt"].values,
+        ds_dropsonde["p"].interpolate_na("gpsalt"),
+        popt_p,
+        exponential,
+    )
+    ta_extrap = fill_upper_levels(
+        ds_dropsonde["gpsalt"].values,
+        ds_dropsonde["ta"].interpolate_na("gpsalt"),
+        popt_ta,
+        linear,
+    )
+    q_extrap = ds_dropsonde["q"].interpolate_na("gpsalt").values
+    q_extrap[np.isnan(q_extrap)] = q_extrap[~np.isnan(q_extrap)][-1]
+
+    return xr.Dataset(
+        {
+            "p": (("gpsalt"), p_extrap),
+            "ta": (("gpsalt"), ta_extrap),
+            "q": (("gpsalt"), q_extrap),
+        },
+        coords={"gpsalt": ds_dropsonde["gpsalt"].values},
     )
