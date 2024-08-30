@@ -13,7 +13,8 @@ from src.arts_functions import (
     extrapolate_dropsonde,
     get_profiles,
 )
-from src.plot_functions import plot_arts_flux
+from src.plot_functions import plot_arts_flux, get_hamp_TBs
+from src.dropsonde_processing import get_all_clouds_flags_dropsondes
 import pyarts
 import numpy as np
 import typhon
@@ -54,30 +55,66 @@ width_183 = [0.6, 1.5, 2.5, 3.5, 5.0, 7.5]
 
 all_freqs = freq_k + freq_v + freq_90 + freq_119 + freq_183
 
-# %% find hamp data at dropsonde location
-drop_id = 29
-ds_dropsonde_loc, hampdata_loc, height, drop_time = get_profiles(
-    drop_id, ds_dropsonde, hampdata
+# %% check if dropsondes are cloud free
+ds_dropsonde = get_all_clouds_flags_dropsondes(ds_dropsonde)
+cloud_free_idxs = (
+    ds_dropsonde["sonde_id"].where(ds_dropsonde["cloud_flag"] == 0, drop=True).values
 )
-
-# %% extrapolate dropsonde data
-ds_dropsonde_extrap = extrapolate_dropsonde(ds_dropsonde_loc, height)
 
 # %% setup workspace
 ws = setup_workspace()
 
-# %% run arts
-run_arts(
-    pressure_profile=ds_dropsonde_extrap["p"].values,
-    temperature_profile=ds_dropsonde_extrap["ta"].values,
-    h2o_profile=typhon.physics.mixing_ratio2vmr(ds_dropsonde_extrap["q"].values),
-    ws=ws,
-    frequencies=np.array(all_freqs) * 1e9,
-    zenith_angle=180,
-    height=height,
+# %% loop over cloud free sondes
+TBs_arts = np.zeros((len(cloud_free_idxs), len(all_freqs)))
+TBs_hamp = np.zeros((len(cloud_free_idxs), len(all_freqs)))
+dropsondes_extrap = []
+
+for i, sonde_id in enumerate(cloud_free_idxs):
+    # get profiles
+    ds_dropsonde_loc, hampdata_loc, height, drop_time = get_profiles(
+        sonde_id, ds_dropsonde, hampdata
+    )
+    # extrapolate dropsonde data
+    ds_dropsonde_extrap = extrapolate_dropsonde(ds_dropsonde_loc, height)
+    dropsondes_extrap.append(ds_dropsonde_extrap)
+    # run arts
+    run_arts(
+        pressure_profile=ds_dropsonde_extrap["p"].values,
+        temperature_profile=ds_dropsonde_extrap["ta"].values,
+        h2o_profile=typhon.physics.mixing_ratio2vmr(ds_dropsonde_extrap["q"].values),
+        ws=ws,
+        frequencies=np.array(all_freqs) * 1e9,
+        zenith_angle=180,
+        height=height,
+    )
+    TBs_arts[i, :] = np.array(ws.y.value)
+    TBs_hamp[i, :] = get_hamp_TBs(hampdata_loc, freqs=all_freqs)
+    #  compare to hamp radiometers
+    fig, ax = plot_arts_flux(ws, TBs_hamp[i, :], dropsonde_id=sonde_id, time=drop_time)
+    if not os.path.exists(f"quicklooks/{cfg['flightname']}/arts_calibration"):
+        os.makedirs(f"quicklooks/{cfg['flightname']}/arts_calibration")
+    fig.savefig(
+        f'quicklooks/{cfg["flightname"]}/arts_calibration/TBs_{drop_time.strftime("%Y%m%d_%H%M")}.png',
+        dpi=100,
+    )
+
+# %% concatenate datasets and save to netcdf
+BTs_arts = xr.DataArray(
+    np.array(list(TBs_arts.values())),
+    dims=["sonde_id", "frequencies"],
+    coords={"frequencies": all_freqs, "sonde_id": cloud_free_idxs},
+)
+BTs_arts.to_netcdf(f"arts_calibration_data/{cfg['flightname']}_arts_BTs.nc")
+BTs_hamp = xr.DataArray(
+    np.array(list(TBs_hamp.values())),
+    dims=["sonde_id", "frequencies"],
+    coords={"frequencies": all_freqs, "sonde_id": cloud_free_idxs},
+)
+BTs_hamp.to_netcdf(f"arts_calibration_data/{cfg['flightname']}_hamp_BTs.nc")
+dropsondes_extrap = xr.concat(dropsondes_extrap, dim="sonde_id")
+dropsondes_extrap.to_netcdf(
+    f"arts_calibration_data/{cfg['flightname']}_dropsondes_extrap.nc"
 )
 
-# %% compare to hamp radiometers
-plot_arts_flux(ws, hampdata_loc, dropsonde_id=drop_id, time=drop_time)
-
-# %%
+# %% calculate mean BTs and differences
+mean_BT_arts = BTs_arts.mean("sonde_id")

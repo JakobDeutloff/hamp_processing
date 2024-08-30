@@ -203,7 +203,7 @@ def fill_upper_levels(x, y, popt, func):
 
 
 def get_profiles(sonde_id, ds_dropsonde, hampdata):
-    ds_dropsonde_loc = ds_dropsonde.isel(sonde_id=sonde_id)
+    ds_dropsonde_loc = ds_dropsonde.sel(sonde_id=sonde_id)
     drop_time = ds_dropsonde_loc["interpolated_time"].dropna("gpsalt").min().values
     hampdata_loc = hampdata.sel(timeslice=drop_time, method="nearest")
     height = float(hampdata_loc.flightdata["IRS_ALT"].values)
