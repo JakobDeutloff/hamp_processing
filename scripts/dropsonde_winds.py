@@ -14,8 +14,8 @@ from src import dropsonde_wind_analyses as dropfuncs
 from src.plot_quicklooks import save_figure
 
 
-# %% function definitions
-def plot_mean_wind_quiver_between_heights(
+# %% helper function definitions
+def mean_wind_quivers_plot(
     ds_dropsonde, heights, figsize=(15, 9), lonmin=-35, lonmax=-15, latmin=0, latmax=20
 ):
     nrows = 2
@@ -48,7 +48,7 @@ def plot_mean_wind_quiver_between_heights(
     return fig, axes
 
 
-def plot_mean_wind_seperate_east_north_quiver(
+def mean_winds_seperate_east_north_scatter(
     ds_dropsonde,
     height_min,
     height_max,
@@ -67,21 +67,17 @@ def plot_mean_wind_seperate_east_north_quiver(
     fig.delaxes(axes[0])
     axes[0] = fig.add_subplot(131, projection=ccrs.PlateCarree())
 
-    ht_min, ht_max, ds2mean = dropfuncs.get_dropsondes_within_heights(
-        ds_dropsonde, height_min, height_max
-    )
-    mean_lon = ds2mean.lon.mean(dim="gpsalt")
-    mean_lat = ds2mean.lat.mean(dim="gpsalt")
-    mean_eastward = ds2mean.u.mean(dim="gpsalt")
-    mean_northward = ds2mean.v.mean(dim="gpsalt")
-
-    dropfuncs.plot_wind_quiver_on_projection(
-        axes[0],
+    (
+        ax,
         mean_lon,
         mean_lat,
         mean_eastward,
         mean_northward,
-        axtitle=None,
+    ) = dropfuncs.plot_mean_wind_quiver_on_projection(
+        axes[0],
+        ds_dropsonde,
+        height_min,
+        height_max,
         lonmin=lonmin,
         lonmax=lonmax,
         latmin=latmin,
@@ -101,9 +97,6 @@ def plot_mean_wind_seperate_east_north_quiver(
         ax.set_yticks(yticks)
         ax.set_yticklabels(yticks)
     plotfuncs.beautify_axes(axes)
-
-    title = f"{ht_min/1000}km <= GPS Altitude < {ht_max/1000}km"
-    fig.suptitle(title, fontsize=15)
 
     return fig, axes
 
@@ -129,7 +122,7 @@ ds = loadfuncs.load_dropsonde_data_for_date(cfg["path_dropsonde_level3"], cfg["d
 #     do_cwv=True,
 # )
 
-# %% Plot Various Vertical Wind Profiles
+# %% Plot Vertical Wind Profiles Coloured by Latitude
 latmax = 15
 ds_dropsonde = ds.where(ds.lat < latmax, drop=True)
 
@@ -147,6 +140,7 @@ savename = (
 dpi = 64
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
+# %% Plot Vertical Wind Profiles Coloured by RelH
 fig, axes = dropfuncs.plot_dropsonde_wind_vertical_profiles(
     ds_dropsonde,
     ds_dropsonde.rh,
@@ -161,19 +155,18 @@ savename = (
 dpi = 64
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
-# %% Plot Various Mean Winds Between Heights
+# %% Plot Mean Winds Between Heights
 heights = [0, 2000, 4000, 6000, 8000, 10000, 12000]
-fig, axes = plot_mean_wind_quiver_between_heights(
-    ds_dropsonde, heights, figsize=(15, 9)
-)
+fig, axes = mean_wind_quivers_plot(ds_dropsonde, heights, figsize=(15, 9))
 savefig_format = "png"
 savename = path_saveplts / f"dropsonde_wind_slices_{flightname}_colorrelh.png"
 dpi = 64
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
+# %% Plot Mean Winds Between Height with scatter for components
 for h in range(1, len(heights)):
     height_min, height_max = heights[h - 1], heights[h]
-    fig, axes = plot_mean_wind_seperate_east_north_quiver(
+    fig, axes = mean_winds_seperate_east_north_scatter(
         ds_dropsonde,
         height_min,
         height_max,
