@@ -155,4 +155,4 @@ def plot_mean_wind_quiver_on_projection(
         latmax=latmax,
     )
 
-    return ax, mean_eastward, mean_northward
+    return ax, mean_lon, mean_lat, mean_eastward, mean_northward
