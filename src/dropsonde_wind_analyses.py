@@ -120,3 +120,39 @@ def plot_wind_quiver_on_projection(
     ax.set_yticks(yticks, crs=ccrs.PlateCarree())
 
     return ax
+
+
+def plot_mean_wind_quiver_on_projection(
+    ax,
+    ds_dropsonde,
+    height_min,
+    height_max,
+    lonmin=-35,
+    lonmax=-15,
+    latmin=0,
+    latmax=20,
+):
+    """plot wind quivers on projection but for mean wind between height_min and height_max"""
+    ht_min, ht_max, ds2mean = get_dropsondes_within_heights(
+        ds_dropsonde, height_min, height_max
+    )
+    mean_lon = ds2mean.lon.mean(dim="gpsalt")
+    mean_lat = ds2mean.lat.mean(dim="gpsalt")
+    mean_eastward = ds2mean.u.mean(dim="gpsalt")
+    mean_northward = ds2mean.v.mean(dim="gpsalt")
+
+    axtitle = f"{ht_min/1000}km <= GPS Altitude < {ht_max/1000}km"
+    plot_wind_quiver_on_projection(
+        ax,
+        mean_lon,
+        mean_lat,
+        mean_eastward,
+        mean_northward,
+        axtitle=axtitle,
+        lonmin=lonmin,
+        lonmax=lonmax,
+        latmin=latmin,
+        latmax=latmax,
+    )
+
+    return ax, mean_eastward, mean_northward

@@ -15,8 +15,6 @@ from src.plot_quicklooks import save_figure
 
 
 # %% function definitions
-
-
 def plot_mean_wind_quiver_between_heights(
     ds_dropsonde, heights, figsize=(15, 9), lonmin=-35, lonmax=-15, latmin=0, latmax=20
 ):
@@ -33,22 +31,11 @@ def plot_mean_wind_quiver_between_heights(
 
     axes = axes.flatten()
     for n in range(1, len(heights)):
-        ht_min, ht_max, ds2mean = dropfuncs.get_dropsondes_within_heights(
-            ds_dropsonde, heights[n - 1], heights[n]
-        )
-        mean_lon = ds2mean.lon.mean(dim="gpsalt")
-        mean_lat = ds2mean.lat.mean(dim="gpsalt")
-        mean_eastward = ds2mean.u.mean(dim="gpsalt")
-        mean_northward = ds2mean.v.mean(dim="gpsalt")
-
-        axtitle = f"{ht_min/1000}km <= GPS Altitude < {ht_max/1000}km"
-        dropfuncs.plot_wind_quiver_on_projection(
+        dropfuncs.plot_mean_wind_quiver_between_heights(
             axes[n - 1],
-            mean_lon,
-            mean_lat,
-            mean_eastward,
-            mean_northward,
-            axtitle=axtitle,
+            ds_dropsonde,
+            heights[n - 1],
+            heights[n],
             lonmin=lonmin,
             lonmax=lonmax,
             latmin=latmin,
