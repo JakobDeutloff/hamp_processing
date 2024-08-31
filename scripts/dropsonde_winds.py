@@ -128,7 +128,7 @@ ds_dropsonde = ds.where(ds.lat < latmax, drop=True)
 
 fig, axes = dropfuncs.plot_dropsonde_wind_vertical_profiles(
     ds_dropsonde,
-    ds_dropsonde.lat,
+    "lat",
     figsize=(21, 12),
     cmap="plasma",
     cbarlab="latitude /$\u00B0$",
@@ -143,7 +143,7 @@ save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 # %% Plot Vertical Wind Profiles Coloured by RelH
 fig, axes = dropfuncs.plot_dropsonde_wind_vertical_profiles(
     ds_dropsonde,
-    ds_dropsonde.rh,
+    "rh",
     figsize=(21, 12),
     cmap="Blues",
     cbarlab="relative humidity Kg/Kg",
@@ -163,17 +163,17 @@ savename = path_saveplts / f"dropsonde_wind_slices_{flightname}_colorrelh.png"
 dpi = 64
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
-# %% Plot Mean Winds Between Height with scatter for components
-for h in range(1, len(heights)):
-    height_min, height_max = heights[h - 1], heights[h]
-    fig, axes = mean_winds_seperate_east_north_scatter(
-        ds_dropsonde,
-        height_min,
-        height_max,
-        figsize=(16, 4),
-        lonmin=-35,
-        lonmax=-15,
-        latmin=0,
-        latmax=20,
-    )
-plt.show()
+# # %% Plot Mean Winds Between Height with scatter for components
+# for h in range(1, len(heights)):
+#     height_min, height_max = heights[h - 1], heights[h]
+#     fig, axes = mean_winds_seperate_east_north_scatter(
+#         ds_dropsonde,
+#         height_min,
+#         height_max,
+#         figsize=(16, 4),
+#         lonmin=-35,
+#         lonmax=-15,
+#         latmin=0,
+#         latmax=20,
+#     )
+# plt.show()

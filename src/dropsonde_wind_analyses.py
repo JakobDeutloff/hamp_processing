@@ -18,6 +18,10 @@ def get_dropsondes_within_heights(ds, height_min, height_max):
     return ht_min, ht_max, ds_heightslice
 
 
+def horizontal_wind_speed(northward, eastward):
+    return np.sqrt(eastward * eastward + northward * northward)
+
+
 def horizontal_wind_direction(northward, eastward, bearing=False):
     """returns horizontal wind direction in degrees in range
     -180 <= direction <=180 relative to westerly winds (i.e. the vector
@@ -35,46 +39,92 @@ def horizontal_wind_direction(northward, eastward, bearing=False):
     return direction
 
 
+def plot_coloured_dropsonde_vertical_profile(
+    ax, verticaldata, height, vmin, vmax, colorby, cmap, axtitle=None, xlabel=None
+):
+    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
+    cmap = plt.get_cmap(cmap)
+    color = cmap(norm(colorby))
+
+    ax.scatter(verticaldata, height, marker=".", s=1, color=color)
+
+    ax.set_title(axtitle)
+    ax.set_ylabel("height / km")
+    ax.set_xlabel(xlabel)
+
+    return ax, norm, cmap
+
+
 def plot_dropsonde_wind_vertical_profiles(
-    ds_dropsonde, colorby, figsize=(21, 12), cmap="Blues", cbarlab=None
+    ds_dropsonde, colorby, figsize=(16, 9), cmap="Blues", cbarlab=None
 ):
     fig, axes = plt.subplots(
         nrows=1, ncols=5, figsize=figsize, width_ratios=[1, 1, 1, 1, 1 / 27]
     )
 
     height = np.tile(ds_dropsonde.gpsalt / 1000, ds_dropsonde.sonde_id.size)  # [km]
-    eastward = ds_dropsonde.u.values.flatten()
-    northward = ds_dropsonde.v.values.flatten()
-    direction = horizontal_wind_direction(eastward, northward)
-    magnitude = np.sqrt(eastward * eastward + northward * northward)
+    colorby = ds_dropsonde[colorby].values.flatten()
+    vmin, vmax = np.nanmin(colorby), np.nanmax(colorby)
 
-    norm = mcolors.Normalize(vmin=colorby.min(), vmax=colorby.max())
-    cmap = plt.get_cmap(cmap)
-    color = cmap(norm(colorby.values.flatten()))
-
-    axes[0].set_title("Eastward")
-    axes[0].scatter(eastward, height, marker=".", s=1, color=color)
-    axes[0].set_xlabel("u /m s$^{-1}$")
-
-    axes[1].set_title("Northward")
-    axes[1].scatter(northward, height, marker=".", s=1, color=color)
-    axes[1].set_xlabel("v /m s$^{-1}$")
-
-    axes[2].set_title("Direction")
-    axes[2].scatter(direction.T, height, marker=".", s=1, color=color)
-    axes[2].set_xlabel("$\u03C6$ /degrees")
-
-    axes[3].set_title("Magnitude")
-    axes[3].scatter(magnitude.T, height, marker=".", s=1, color=color)
-    axes[3].set_xlabel("|V$_{xy}$| /m s$^{-1}$")
-
-    cax = fig.colorbar(
-        ScalarMappable(norm=norm, cmap=cmap), cax=axes[4], label=cbarlab, shrink=0.8
+    eastward = ds_dropsonde.u.values
+    ax, norm1, cmap1 = plot_coloured_dropsonde_vertical_profile(
+        axes[0],
+        eastward.flatten(),
+        height,
+        vmin,
+        vmax,
+        colorby,
+        cmap,
+        axtitle="Eastward",
+        xlabel="u /m s$^{-1}$",
     )
 
-    for ax in axes[1:3]:
+    northward = ds_dropsonde.v.values
+    ax, norm1, cmap1 = plot_coloured_dropsonde_vertical_profile(
+        axes[1],
+        northward.flatten(),
+        height,
+        vmin,
+        vmax,
+        colorby,
+        cmap,
+        axtitle="Northward",
+        xlabel="v /m s$^{-1}$",
+    )
+
+    direction = horizontal_wind_direction(eastward, northward)
+    ax, norm1, cmap1 = plot_coloured_dropsonde_vertical_profile(
+        axes[2],
+        direction.flatten(),
+        height,
+        vmin,
+        vmax,
+        colorby,
+        cmap,
+        axtitle="Direction from Westerlies",
+        xlabel="$\u03C6$ /degrees",
+    )
+
+    magnitude = horizontal_wind_speed(northward, eastward)
+    ax, norm1, cmap1 = plot_coloured_dropsonde_vertical_profile(
+        axes[3],
+        magnitude.flatten(),
+        height,
+        vmin,
+        vmax,
+        colorby,
+        cmap,
+        axtitle="Horizontal Wind Speed",
+        xlabel="|V$_{xy}$| /m s$^{-1}$",
+    )
+
+    cax = fig.colorbar(
+        ScalarMappable(norm=norm1, cmap=cmap1), cax=axes[4], label=cbarlab, shrink=0.8
+    )
+
+    for ax in axes[1:4]:
         ax.sharey(axes[0])
-    axes[0].set_ylabel("height / km")
+        ax.set_ylabel("")
     plotfuncs.beautify_axes(axes)
     plotfuncs.beautify_colorbar_axes(cax)
 
@@ -111,8 +161,7 @@ def plot_wind_quiver_on_projection(
         headaxislength=2,
     )
 
-    if axtitle:
-        ax.set_title(axtitle)
+    ax.set_title(axtitle)
 
     xticks = np.linspace(lonmin, lonmax, 3)
     yticks = np.linspace(latmin, latmax, 3)
