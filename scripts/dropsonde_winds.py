@@ -102,61 +102,6 @@ def mean_winds_seperate_east_north_scatter(
     return fig, axes
 
 
-def plot_allflights_wind_vertical_profile(
-    ds_full,
-    dates,
-    calc_verticaldata,
-    latmax,
-    cmap,
-    vmin,
-    vmax,
-    hmin,
-    hmax,
-    xlabel,
-    figtitle,
-):
-    fig, axes = plt.subplots(
-        nrows=1, ncols=7, figsize=(21, 9), width_ratios=[1] * 6 + [1 / 27]
-    )
-
-    for d, date in enumerate(dates):
-        ds_dropsonde = loadfuncs.load_dropsonde_data_for_date(ds_full, date)
-        ds_dropsonde = ds_dropsonde.where(ds_dropsonde.lat < latmax, drop=True)
-        height = np.tile(ds_dropsonde.gpsalt / 1000, ds_dropsonde.sonde_id.size)  # [km]
-        colorby = ds_dropsonde["lat"].values.flatten()
-
-        ax, norm1, cmap1 = dropfuncs.plot_coloured_dropsonde_vertical_profile(
-            axes[d],
-            calc_verticaldata(ds_dropsonde),
-            height,
-            vmin,
-            vmax,
-            colorby,
-            cmap,
-            axtitle=None,
-            xlabel=xlabel,
-        )
-        ax.set_title(f"HALO-{date}a", fontsize=15)
-        ax.set_ylim(hmin, hmax)
-
-    for ax in axes[1:6]:
-        ax.sharey(axes[0])
-        ax.sharex(axes[0])
-        ax.set_ylabel("")
-
-    fig.suptitle(figtitle, fontsize=15)
-    cax = fig.colorbar(
-        ScalarMappable(norm=norm1, cmap=cmap1),
-        cax=axes[6],
-        label="latitude /$\u00B0$",
-        shrink=0.8,
-    )
-    plotfuncs.beautify_axes(axes)
-    plotfuncs.beautify_colorbar_axes(cax)
-
-    return fig, axes
-
-
 # %% load config and create HAMP post-processed data
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = sys.argv[1]
@@ -233,6 +178,63 @@ flightname = cfg["flightname"]
 #         latmax=20,
 #     )
 # plt.show()
+
+
+# %% Define more functions for plotting all flights
+def plot_allflights_wind_vertical_profile(
+    ds_full,
+    dates,
+    calc_verticaldata,
+    latmax,
+    cmap,
+    vmin,
+    vmax,
+    hmin,
+    hmax,
+    xlabel,
+    figtitle,
+):
+    fig, axes = plt.subplots(
+        nrows=1, ncols=7, figsize=(21, 9), width_ratios=[1] * 6 + [1 / 27]
+    )
+
+    for d, date in enumerate(dates):
+        ds_dropsonde = loadfuncs.load_dropsonde_data_for_date(ds_full, date)
+        ds_dropsonde = ds_dropsonde.where(ds_dropsonde.lat < latmax, drop=True)
+        height = np.tile(ds_dropsonde.gpsalt / 1000, ds_dropsonde.sonde_id.size)  # [km]
+        colorby = ds_dropsonde["lat"].values.flatten()
+
+        ax, norm1, cmap1 = dropfuncs.plot_coloured_dropsonde_vertical_profile(
+            axes[d],
+            calc_verticaldata(ds_dropsonde),
+            height,
+            vmin,
+            vmax,
+            colorby,
+            cmap,
+            axtitle=None,
+            xlabel=xlabel,
+        )
+        ax.set_title(f"HALO-{date}a", fontsize=15)
+        ax.set_ylim(hmin, hmax)
+
+    for ax in axes[1:6]:
+        ax.sharey(axes[0])
+        ax.sharex(axes[0])
+        ax.set_ylabel("")
+
+    fig.suptitle(figtitle, fontsize=15)
+    cax = fig.colorbar(
+        ScalarMappable(norm=norm1, cmap=cmap1),
+        cax=axes[6],
+        label="latitude /$\u00B0$",
+        shrink=0.8,
+    )
+    plotfuncs.beautify_axes(axes)
+    plotfuncs.beautify_colorbar_axes(cax)
+
+    return fig, axes
+
 
 # %% Plot Vertical Wind Profile for ALl Flights Coloured by Latitude
 latmax = 15
