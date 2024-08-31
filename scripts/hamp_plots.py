@@ -6,8 +6,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pandas as pd
 from src import plot_quicklooks as plotql
+from src import plot_functions as plotfuncs
 from src import load_data_functions as loadfuncs
 from src import readwrite_functions as rwfuncs
+import matplotlib.pyplot as plt
 
 # %%
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
@@ -31,7 +33,7 @@ hampdata = loadfuncs.do_post_processing(
     do_cwv=True,
 )
 # %% custom timeframe
-starttime, endtime = "2024-08-25 11:00", "2024-08-25 13:30"
+starttime, endtime = "2024-08-27 18:37", "2024-08-27 18:48"
 timeframe = slice(starttime, endtime)
 savefig_format = "png"
 savename = path_saveplts / "southern_circle.png"
@@ -45,6 +47,28 @@ fig, axes = plotql.hamp_timeslice_quicklook(
     savefigparams=[savefig_format, savename, dpi],
 )
 fig.tight_layout()
+
+# %% plot only radar and CVW
+starttime, endtime = "2024-08-27 18:37", "2024-08-27 18:48"
+timeframe = slice(starttime, endtime)
+fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharex="col", width_ratios=[1, 0.03])
+ax1, cax = plotfuncs.plot_radar_timeseries(
+    hampdata.sel(timeframe, method=None).radar, ax=axes[0, 0], fig=fig, cax=axes[0, 1]
+)
+ax2 = plotfuncs.plot_column_water_vapour_timeseries(
+    hampdata.sel(timeframe, method=None).column_water_vapour.IWV,
+    ax=axes[1, 0],
+    target_cwv=None,
+)
+ax1.set_ylim(0.1, 4)
+axes[1, 1].remove()
+for ax in axes.flatten():
+    ax.set_xlabel("")
+    ax.spines[["top", "right"]].set_visible(False)
+
+axes[0, 0].invert_xaxis()
+fig.tight_layout()
+fig.savefig(path_saveplts / "radar_cwv.png", dpi=300)
 
 # %% produce hourly HAMP quicklooks
 start_hour = pd.Timestamp(hampdata["183"].time[0].values).floor(
