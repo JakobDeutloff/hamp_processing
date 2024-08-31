@@ -31,7 +31,7 @@ def mean_wind_quivers_plot(
 
     axes = axes.flatten()
     for n in range(1, len(heights)):
-        dropfuncs.plot_mean_wind_quiver_between_heights(
+        dropfuncs.plot_mean_wind_quiver_on_projection(
             axes[n - 1],
             ds_dropsonde,
             heights[n - 1],
