@@ -6,132 +6,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-from matplotlib.cm import ScalarMappable
 import cartopy.crs as ccrs
 from src import readwrite_functions as rwfuncs
 from src import load_data_functions as loadfuncs
 from src import plot_functions as plotfuncs
+from src import dropsonde_wind_analyses as dropfuncs
 from src.plot_quicklooks import save_figure
 
 
 # %% function definitions
-def horizontal_wind_direction(northward, eastward, bearing=False):
-    """returns horizontal wind direction in degrees in range
-    -180 <= direction <=180 relative to westerly winds (i.e. the vector
-    from (0,0) to (1,0)]). If bearing is true (False by default), direction
-    is convered to a bearing before return, i.e. the direction relative
-    to the vector from (0,0) to (0,1) is returned instead."""
-    if bearing:
-        direction = np.arctan2(eastward, northward) * 180 / np.pi
-        direction = np.where(
-            direction < 0, direction + 360, direction
-        )  # [bearing from north]
-    else:
-        direction = np.arctan2(northward, eastward) * 180 / np.pi
-
-    return direction
-
-
-def plot_dropsonde_wind_vertical_profiles(
-    ds_dropsonde, colorby, figsize=(21, 12), cmap="Blues", cbarlab=None
-):
-    fig, axes = plt.subplots(
-        nrows=1, ncols=5, figsize=figsize, width_ratios=[1, 1, 1, 1, 1 / 27]
-    )
-
-    height = np.tile(ds_dropsonde.gpsalt / 1000, ds_dropsonde.sonde_id.size)  # [km]
-    eastward = ds_dropsonde.u.values.flatten()
-    northward = ds_dropsonde.v.values.flatten()
-    direction = horizontal_wind_direction(eastward, northward)
-    magnitude = np.sqrt(eastward * eastward + northward * northward)
-
-    norm = mcolors.Normalize(vmin=colorby.min(), vmax=colorby.max())
-    cmap = plt.get_cmap(cmap)
-    color = cmap(norm(colorby.values.flatten()))
-
-    axes[0].set_title("Eastward")
-    axes[0].scatter(eastward, height, marker=".", s=1, color=color)
-    axes[0].set_xlabel("u /m s$^{-1}$")
-
-    axes[1].set_title("Northward")
-    axes[1].scatter(northward, height, marker=".", s=1, color=color)
-    axes[1].set_xlabel("v /m s$^{-1}$")
-
-    axes[2].set_title("Direction")
-    axes[2].scatter(direction.T, height, marker=".", s=1, color=color)
-    axes[2].set_xlabel("$\u03C6$ /degrees")
-
-    axes[3].set_title("Magnitude")
-    axes[3].scatter(magnitude.T, height, marker=".", s=1, color=color)
-    axes[3].set_xlabel("|V$_{xy}$| /m s$^{-1}$")
-
-    cax = fig.colorbar(
-        ScalarMappable(norm=norm, cmap=cmap), cax=axes[4], label=cbarlab, shrink=0.8
-    )
-
-    for ax in axes[1:3]:
-        ax.sharey(axes[0])
-    axes[0].set_ylabel("height / km")
-    plotfuncs.beautify_axes(axes)
-    plotfuncs.beautify_colorbar_axes(cax)
-
-    return fig, axes
-
-
-def get_dataset_within_heights(ds, height_min, height_max):
-    """returns slice of dataset with gpsalt within ht1 <= gpsalt < ht2"""
-    ht_min = ds.gpsalt.sel(gpsalt=height_min, method="nearest").values
-    ht_max = ds.gpsalt.sel(gpsalt=height_max, method="nearest").values
-
-    ds_heightslice = ds.where(ds.gpsalt < ht_max, drop=True)
-    ds_heightslice = ds.where(ds_heightslice.gpsalt >= ht_min, drop=True)
-
-    return ht_min, ht_max, ds_heightslice
-
-
-def plot_wind_quiver_on_projection(
-    ax,
-    lon,
-    lat,
-    eastward,
-    northward,
-    axtitle=None,
-    lonmin=-35,
-    lonmax=-15,
-    latmin=0,
-    latmax=20,
-):
-    def plot_wind_quiver(ax, lon, lat, eastward, northward):
-        ax.quiver(
-            lon,
-            lat,
-            eastward,
-            northward,
-            angles="xy",
-            scale_units="xy",
-            scale=5,
-            color="k",
-            label="Arrows",
-            headlength=2,
-            headwidth=2,
-            headaxislength=2,
-        )
-
-    ax.coastlines()
-    ax.set_extent([lonmin, lonmax, latmin, latmax], crs=ccrs.PlateCarree())
-
-    plot_wind_quiver(ax, lon, lat, eastward, northward)
-
-    if axtitle:
-        ax.set_title(axtitle)
-
-    xticks = np.linspace(lonmin, lonmax, 3)
-    yticks = np.linspace(latmin, latmax, 3)
-    ax.set_xticks(xticks, crs=ccrs.PlateCarree())
-    ax.set_yticks(yticks, crs=ccrs.PlateCarree())
-
-    return ax
 
 
 def plot_mean_wind_quiver_between_heights(
@@ -150,7 +33,7 @@ def plot_mean_wind_quiver_between_heights(
 
     axes = axes.flatten()
     for n in range(1, len(heights)):
-        ht_min, ht_max, ds2mean = get_dataset_within_heights(
+        ht_min, ht_max, ds2mean = dropfuncs.get_dropsondes_within_heights(
             ds_dropsonde, heights[n - 1], heights[n]
         )
         mean_lon = ds2mean.lon.mean(dim="gpsalt")
@@ -159,7 +42,7 @@ def plot_mean_wind_quiver_between_heights(
         mean_northward = ds2mean.v.mean(dim="gpsalt")
 
         axtitle = f"{ht_min/1000}km <= GPS Altitude < {ht_max/1000}km"
-        plot_wind_quiver_on_projection(
+        dropfuncs.plot_wind_quiver_on_projection(
             axes[n - 1],
             mean_lon,
             mean_lat,
@@ -197,7 +80,7 @@ def plot_mean_wind_seperate_east_north_quiver(
     fig.delaxes(axes[0])
     axes[0] = fig.add_subplot(131, projection=ccrs.PlateCarree())
 
-    ht_min, ht_max, ds2mean = get_dataset_within_heights(
+    ht_min, ht_max, ds2mean = dropfuncs.get_dropsondes_within_heights(
         ds_dropsonde, height_min, height_max
     )
     mean_lon = ds2mean.lon.mean(dim="gpsalt")
@@ -205,7 +88,7 @@ def plot_mean_wind_seperate_east_north_quiver(
     mean_eastward = ds2mean.u.mean(dim="gpsalt")
     mean_northward = ds2mean.v.mean(dim="gpsalt")
 
-    plot_wind_quiver_on_projection(
+    dropfuncs.plot_wind_quiver_on_projection(
         axes[0],
         mean_lon,
         mean_lat,
@@ -263,7 +146,7 @@ ds = loadfuncs.load_dropsonde_data_for_date(cfg["path_dropsonde_level3"], cfg["d
 latmax = 15
 ds_dropsonde = ds.where(ds.lat < latmax, drop=True)
 
-fig, axes = plot_dropsonde_wind_vertical_profiles(
+fig, axes = dropfuncs.plot_dropsonde_wind_vertical_profiles(
     ds_dropsonde,
     ds_dropsonde.lat,
     figsize=(21, 12),
@@ -277,7 +160,7 @@ savename = (
 dpi = 64
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
-fig, axes = plot_dropsonde_wind_vertical_profiles(
+fig, axes = dropfuncs.plot_dropsonde_wind_vertical_profiles(
     ds_dropsonde,
     ds_dropsonde.rh,
     figsize=(21, 12),
