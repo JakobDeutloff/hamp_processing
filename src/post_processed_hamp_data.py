@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 class PostProcessedHAMPData:
     def __init__(
         self,
@@ -59,3 +62,23 @@ class PostProcessedHAMPData:
             return not self.is_planet
         else:
             raise KeyError(f"no known return provided for key '{key}'")
+
+    def sel(self, timeslice: pd.timedelta_range, method="nearest"):
+        cut_data = __class__(
+            None, None, None, None, None, None, is_planet=self.is_planet
+        )
+        if self.flightdata is not None:
+            cut_data.flightdata = self.flightdata.sel(time=timeslice, method=method)
+        if self.radar is not None:
+            cut_data["radar"] = self.radar.sel(time=timeslice, method=method)
+        if self.radio183 is not None:
+            cut_data["radio183"] = self.radio183.sel(time=timeslice, method=method)
+        if self.radio11990 is not None:
+            cut_data["radio11990"] = self.radio11990.sel(time=timeslice, method=method)
+        if self.radiokv is not None:
+            cut_data["radiokv"] = self.radiokv.sel(time=timeslice, method=method)
+        if self.column_water_vapour is not None:
+            cut_data["column_water_vapour"] = (
+                self.column_water_vapour.sel(time=timeslice, method=method),
+            )
+        return cut_data

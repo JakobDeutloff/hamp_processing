@@ -7,12 +7,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pandas as pd
 from src import plot_quicklooks as plotql
 from src import load_data_functions as loadfuncs
-from src import helper_functions as helpfuncs
+from src import readwrite_functions as rwfuncs
 
 # %%
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
-cfg = helpfuncs.extract_config_params(configfile)
+cfg = rwfuncs.extract_config_params(configfile)
 flightname = cfg["flightname"]
 path_saveplts = cfg["path_saveplts"]
 ### ------------------------------------------------------------- ###
@@ -30,25 +30,21 @@ hampdata = loadfuncs.do_post_processing(
     do_kv=True,
     do_cwv=True,
 )
-
-# %% find time when earthcare crosses halo
-ec_track = helpfuncs.get_earthcare_track(cfg["date"])
-ec_under_time = helpfuncs.find_ec_under_time(ec_track, hampdata.flightdata)
-
-# %%
-starttime, endtime = hampdata["kv"].time[0].values, hampdata["kv"].time[-1].values
+# %% custom timeframe
+starttime, endtime = "2024-08-25 11:00", "2024-08-25 13:30"
 timeframe = slice(starttime, endtime)
 savefig_format = "png"
-savename = path_saveplts / f"timesliceql_{flightname}_columnwatervapour.png"
-dpi = 72
-fig, axes = plotql.plot_kvband_column_water_vapour_retrieval(
+savename = path_saveplts / "southern_circle.png"
+dpi = 200
+fig, axes = plotql.hamp_timeslice_quicklook(
     hampdata,
     timeframe,
     flightname,
-    ec_under_time=ec_under_time,
-    figsize=(9, 12),
+    ec_under_time=None,
+    figsize=(18, 12),
     savefigparams=[savefig_format, savename, dpi],
 )
+fig.tight_layout()
 
 # %% produce hourly HAMP quicklooks
 start_hour = pd.Timestamp(hampdata["183"].time[0].values).floor(
@@ -58,7 +54,7 @@ end_hour = pd.Timestamp(hampdata["183"].time[-1].values).ceil(
     "h"
 )  # Round end time to full hour
 savefig_format = "png"
-dpi = 72
+dpi = 100
 plotql.hamp_hourly_quicklooks(
     hampdata,
     flightname,
@@ -66,3 +62,5 @@ plotql.hamp_hourly_quicklooks(
     end_hour,
     savefigparams=[savefig_format, path_saveplts, dpi],
 )
+
+# %%

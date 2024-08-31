@@ -197,14 +197,12 @@ def hamp_hourly_quicklooks(
             figsize=(18, 18),
         )
 
-        if savefigparams != []:
-            format, path_saveplts, dpi = savefigparams[0:3]
-            savename = (
-                path_saveplts
-                / f"hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.{format}"
-            )
-            savefigparams[1] = savename
-            save_figure(fig, savefigparams)
+        format, path_saveplts, dpi = savefigparams[0:3]
+        savename = (
+            path_saveplts
+            / f"hamp_hourql_{timeslices[i].strftime('%Y%m%d_%H%M')}.{format}"
+        )
+        save_figure(fig, [format, savename, dpi])
 
 
 def radiometer_quicklook(
