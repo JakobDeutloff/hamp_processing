@@ -1,6 +1,3 @@
-import pandas as pd
-
-
 class PostProcessedHAMPData:
     def __init__(
         self,
@@ -63,7 +60,7 @@ class PostProcessedHAMPData:
         else:
             raise KeyError(f"no known return provided for key '{key}'")
 
-    def sel(self, timeslice: pd.timedelta_range, method="nearest"):
+    def sel(self, timeslice, method="nearest"):
         cut_data = __class__(
             None, None, None, None, None, None, is_planet=self.is_planet
         )
@@ -78,7 +75,8 @@ class PostProcessedHAMPData:
         if self.radiokv is not None:
             cut_data["radiokv"] = self.radiokv.sel(time=timeslice, method=method)
         if self.column_water_vapour is not None:
-            cut_data["column_water_vapour"] = (
-                self.column_water_vapour.sel(time=timeslice, method=method),
+            cut_data["column_water_vapour"] = self.column_water_vapour.sel(
+                time=timeslice, method=method
             )
+
         return cut_data
