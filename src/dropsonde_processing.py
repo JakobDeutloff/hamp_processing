@@ -70,7 +70,7 @@ def get_all_clouds_flags_dropsondes(ds, coord="sonde_id", rh_name="rh"):
                 base_ml > min_moistlayer_base
             ):
                 # Check if max RH threshold for moist layer is exceeded --> cloud
-                max_rh_ml = rh_ml.where(rh_ml == rh_ml.max(), drop=True)
+                max_rh_ml = rh_ml.max()
 
                 # Choose altitude range and max RH based on height of moist layer base
                 if base_ml < 1300:

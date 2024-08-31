@@ -66,7 +66,7 @@ ws = setup_workspace()
 
 # %% loop over cloud free sondes
 TBs_arts = np.zeros((len(cloud_free_idxs), len(all_freqs)))
-TBs_hamp = np.zeros((len(cloud_free_idxs), len(all_freqs)))
+TBs_hamp = np.zeros((len(cloud_free_idxs), 25))
 dropsondes_extrap = []
 
 for i, sonde_id in enumerate(cloud_free_idxs):
@@ -88,27 +88,28 @@ for i, sonde_id in enumerate(cloud_free_idxs):
         height=height,
     )
     TBs_arts[i, :] = np.array(ws.y.value)
-    TBs_hamp[i, :] = get_hamp_TBs(hampdata_loc, freqs=all_freqs)
+    freqs_hamp, TBs_hamp[i, :] = get_hamp_TBs(hampdata_loc)
     #  compare to hamp radiometers
-    fig, ax = plot_arts_flux(ws, TBs_hamp[i, :], dropsonde_id=sonde_id, time=drop_time)
+    fig, ax = plot_arts_flux(
+        ws, TBs_hamp[i, :], freqs_hamp, dropsonde_id=sonde_id, time=drop_time
+    )
     if not os.path.exists(f"quicklooks/{cfg['flightname']}/arts_calibration"):
         os.makedirs(f"quicklooks/{cfg['flightname']}/arts_calibration")
     fig.savefig(
         f'quicklooks/{cfg["flightname"]}/arts_calibration/TBs_{drop_time.strftime("%Y%m%d_%H%M")}.png',
         dpi=100,
     )
-
 # %% concatenate datasets and save to netcdf
 BTs_arts = xr.DataArray(
-    np.array(list(TBs_arts.values())),
-    dims=["sonde_id", "frequencies"],
-    coords={"frequencies": all_freqs, "sonde_id": cloud_free_idxs},
+    np.array(list(TBs_arts)),
+    dims=["sonde_id", "frequency"],
+    coords={"frequency": all_freqs, "sonde_id": cloud_free_idxs},
 )
 BTs_arts.to_netcdf(f"arts_calibration_data/{cfg['flightname']}_arts_BTs.nc")
 BTs_hamp = xr.DataArray(
-    np.array(list(TBs_hamp.values())),
-    dims=["sonde_id", "frequencies"],
-    coords={"frequencies": all_freqs, "sonde_id": cloud_free_idxs},
+    np.array(list(TBs_hamp)),
+    dims=["sonde_id", "frequency"],
+    coords={"frequency": freqs_hamp, "sonde_id": cloud_free_idxs},
 )
 BTs_hamp.to_netcdf(f"arts_calibration_data/{cfg['flightname']}_hamp_BTs.nc")
 dropsondes_extrap = xr.concat(dropsondes_extrap, dim="sonde_id")
@@ -116,5 +117,23 @@ dropsondes_extrap.to_netcdf(
     f"arts_calibration_data/{cfg['flightname']}_dropsondes_extrap.nc"
 )
 
-# %% calculate mean BTs and differences
-mean_BT_arts = BTs_arts.mean("sonde_id")
+# %% calculate difference
+BTs_hamp_sel = BTs_hamp.sel(frequency=BTs_arts.frequency, method="nearest")
+BTs_hamp_sel = BTs_hamp_sel.assign_coords(frequency=BTs_arts.frequency)
+BTs_diff = BTs_hamp_sel - BTs_arts
+
+
+# %% plot mean and std of HAMP BTs
+import matplotlib.pyplot as plt
+
+frequencies_no_bottom = [54.94, 56.66, 58, 183.31]
+fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+ax.boxplot(BTs_diff.sel(frequency=frequencies_no_bottom))
+ax.axhline(0, color="black", linestyle="--")
+ax.set_xticklabels(frequencies_no_bottom)
+ax.set_xlabel("Frequency / GHz")
+ax.set_ylabel("BT HAMP - ARTS / K")
+ax.spines[["top", "right"]].set_visible(False)
+fig.savefig(f"quicklooks/{cfg['flightname']}/arts_calibration/BT_diff.png", dpi=100)
+
+# %%

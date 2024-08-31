@@ -346,19 +346,19 @@ def plot_dropsonde_iwv_comparison(ds_iwv, ds_dropsonde, bias, date, ax):
     return ax
 
 
-def get_hamp_TBs(hampdata, freqs):
+def get_hamp_TBs(hampdata):
     TB_hamp = []
     freqs_hamp = []
-    for radio in ["radio183", "radio11990", "radiokv"]:
+    for radio in ["radiokv", "radio11990", "radio183"]:
         TB_hamp = TB_hamp + list(hampdata[radio]["TBs"].values)
         freqs_hamp = freqs_hamp + list(hampdata[radio]["frequency"].values)
     return freqs_hamp, TB_hamp
 
 
-def plot_arts_flux(ws, TB_hamp, dropsonde_id, time):
+def plot_arts_flux(ws, TB_hamp, freqs_hamp, dropsonde_id, time):
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
     ax.scatter(ws.f_grid.value / 1e9, ws.y.value, label="ARTS", marker="o")
-    ax.scatter(ws.f_grid.value / 1e9, TB_hamp, label="HAMP", color="red", marker="x")
+    ax.scatter(freqs_hamp, TB_hamp, label="HAMP", color="red", marker="x")
     ax.set_xlabel("Frequency / GHz")
     ax.set_ylabel("Brightness Temperature / K")
     ax.spines[["top", "right"]].set_visible(False)
