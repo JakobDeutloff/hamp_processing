@@ -13,6 +13,8 @@ from src import plot_functions as plotfuncs
 from src import dropsonde_wind_analyses as dropfuncs
 from src.plot_quicklooks import save_figure
 from matplotlib.cm import ScalarMappable
+import matplotlib.colors as mcolors
+import matplotlib.gridspec as gridspec
 
 
 # %% helper function definitions
@@ -244,6 +246,8 @@ hmin, hmax = -0.5, 15
 cmap = "plasma"
 ds_full = loadfuncs.load_dropsonde_data(cfg["path_dropsonde_level3"])
 
+
+# %% Vertical line profile plots
 figtitle = "Eastward Wind Component"
 xlabel = "u /m s$^{-1}$"
 
@@ -349,5 +353,85 @@ fig, axes = plot_allflights_wind_vertical_profile(
 )
 savefig_format = "png"
 savename = path_saveplts / "allflights_vertical_magnitude_profile_colorlatitutde.png"
+dpi = 64
+save_figure(fig, savefigparams=[savefig_format, savename, dpi])
+
+
+# %% height-latitude plots
+def plot_allflights_vertical_vs_latitude_wind(
+    ds_full,
+    dates,
+    colorby_data,
+    latmin,
+    latmax,
+    hmin,
+    hmax,
+    cmap,
+    cbarlabel,
+    figsize=(16, 9),
+):
+    def plot_wind_component_scatter(ax, ds_dropsonde, colorby_data, norm, cmap):
+        height = np.tile(ds_dropsonde.gpsalt / 1000, ds_dropsonde.sonde_id.size)  # [km]
+        latitude = ds_dropsonde.lat.values.flatten()
+        color = cmap(norm(colorby_data(ds_dropsonde)))
+
+        ax.scatter(latitude, height, marker=",", color=color)
+        ax.set_xlabel("Latitude /$\u00B0$")
+        ax.set_ylabel("Height /km")
+
+        return norm, cmap
+
+    fig = plt.figure(figsize=figsize)
+    gs = gridspec.GridSpec(nrows=2, ncols=4, width_ratios=[1, 1, 1, 1 / 27])
+    axes = []
+    for r in range(2):
+        for c in range(3):
+            axes.append(fig.add_subplot(gs[r, c]))
+    cax = fig.add_subplot(gs[:, 3])
+
+    norm = mcolors.BoundaryNorm(boundaries=levels, ncolors=256)
+    cmap = plt.get_cmap(cmap)
+    for d, date in enumerate(dates):
+        ds_dropsonde = loadfuncs.load_dropsonde_data_for_date(ds_full, date)
+        plot_wind_component_scatter(axes[d], ds_dropsonde, colorby_data, cmap, levels)
+        axes[d].set_xlabel("")
+        axes[d].set_ylabel("")
+        axes[d].set_title(f"HALO-{date}a")
+        axes[d].set_xlim(latmin, latmax)
+        axes[d].set_ylim(hmin, hmax)
+    for ax in [axes[0], axes[3]]:
+        ax.set_ylabel("Height /km")
+    for ax in axes[3:]:
+        ax.set_xlabel("Latitude /$\u00B0$")
+
+    cax = fig.colorbar(
+        ScalarMappable(norm=norm, cmap=cmap),
+        cax=cax,
+        label=cbarlabel,
+        shrink=0.8,
+        fontsize=15,
+    )
+    plotfuncs.beautify_axes(axes)
+    plotfuncs.beautify_colorbar_axes(cax)
+
+    return fig, axes
+
+
+latmin, latmax = 5, 12
+hmin, hmax = -0.5, 15
+cmap = "coolwarm"
+
+
+def colorby_data(ds_dropsonde):
+    return ds_dropsonde.v.values.flatten()  # northward
+
+
+cbarlabel = "Northward, v /m s$^{-1}$"
+levels = [-25, -5, -2.5, 2.5, 5, 25]
+fig, axes = plot_allflights_vertical_vs_latitude_wind(
+    ds_full, dates, colorby_data, latmin, latmax, hmin, hmax, cmap, cbarlabel
+)
+savefig_format = "png"
+savename = path_saveplts / "allflights_vertvslat_northward.png"
 dpi = 64
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
