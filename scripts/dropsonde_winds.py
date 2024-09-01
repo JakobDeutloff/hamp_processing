@@ -111,6 +111,8 @@ cfg = rwfuncs.extract_config_params(configfile)
 path_saveplts = cfg["path_saveplts"]
 flightname = cfg["flightname"]
 ### ------------------------------------------------------------- ###
+ds_full = loadfuncs.load_dropsonde_data(cfg["path_dropsonde_level3"])
+dates = ["20240811", "20240813", "20240816", "20240818", "20240821", "20240822"]
 # ds = loadfuncs.load_dropsonde_data_for_date(cfg["path_dropsonde_level3"], cfg["date"])
 # # hampdata = loadfuncs.do_post_processing(
 # #     cfg["path_bahamas"],
@@ -202,6 +204,8 @@ def plot_allflights_wind_vertical_profile(
         nrows=1, ncols=nd + 1, figsize=(21, 9), width_ratios=[1] * nd + [1 / 27]
     )
 
+    xticks = np.linspace(xlims[0], xlims[1], 5)
+    yticks = np.linspace(0, 15, 5)
     for d, date in enumerate(dates):
         ds_dropsonde = loadfuncs.load_dropsonde_data_for_date(ds_full, date)
         ds_dropsonde = ds_dropsonde.where(ds_dropsonde.lat < latmax, drop=True)
@@ -220,15 +224,12 @@ def plot_allflights_wind_vertical_profile(
             xlabel=xlabel,
         )
         ax.set_title(f"HALO-{date}a", fontsize=15)
-        ax.set_ylim(hmin, hmax)
         ax.set_xlim(xlims)
-        xticks = np.linspace(xlims[0], xlims[1], 5)
-        yticks = np.linspace(0, 15, 5)
+        ax.set_ylim(hmin, hmax)
         ax.set_xticks(xticks)
         ax.set_yticks(yticks)
 
     for ax in axes[1:nd]:
-        ax.sharey(axes[0])
         ax.sharex(axes[0])
         ax.set_ylabel("")
         ax.set_yticklabels("")
@@ -246,133 +247,6 @@ def plot_allflights_wind_vertical_profile(
     plotfuncs.beautify_colorbar_axes(cax)
 
     return fig, axes
-
-
-# %% Plot Vertical Wind Profile for ALl Flights Coloured by Latitude
-latmax = 20
-dates = ["20240811", "20240813", "20240816", "20240818", "20240821", "20240822"]
-vmin, vmax = 5, 12
-hmin, hmax = -0.5, 15
-cmap = "plasma"
-ds_full = loadfuncs.load_dropsonde_data(cfg["path_dropsonde_level3"])
-
-
-# %% Vertical line profile plots
-figtitle = "Eastward Wind Component"
-xlabel = "u /m s$^{-1}$"
-xlims = [-20, 20]
-
-
-def calc_verticaldata(ds_dropsonde):
-    return ds_dropsonde.u.values.flatten()
-
-
-fig, axes = plot_allflights_wind_vertical_profile(
-    ds_full,
-    dates,
-    calc_verticaldata,
-    latmax,
-    cmap,
-    vmin,
-    vmax,
-    hmin,
-    hmax,
-    xlabel,
-    xlims,
-    figtitle,
-)
-savefig_format = "png"
-savename = path_saveplts / "allflights_vertical_eastward_profile_colorlatitutde.png"
-dpi = 64
-save_figure(fig, savefigparams=[savefig_format, savename, dpi])
-
-figtitle = "Northward Wind Component"
-xlabel = "v /m s$^{-1}$"
-xlims = [-10, 10]
-
-
-def calc_verticaldata(ds_dropsonde):
-    return ds_dropsonde.v.values.flatten()
-
-
-fig, axes = plot_allflights_wind_vertical_profile(
-    ds_full,
-    dates,
-    calc_verticaldata,
-    latmax,
-    cmap,
-    vmin,
-    vmax,
-    hmin,
-    hmax,
-    xlabel,
-    xlims,
-    figtitle,
-)
-savefig_format = "png"
-savename = path_saveplts / "allflights_vertical_northward_profile_colorlatitutde.png"
-dpi = 64
-save_figure(fig, savefigparams=[savefig_format, savename, dpi])
-
-figtitle = "Direction Relative to Westerlies (->)"
-xlabel = "$\u03C6$ /degrees"
-xlims = [-180, 180]
-
-
-def calc_verticaldata(ds_dropsonde):
-    eastward = ds_dropsonde.u.values.flatten()
-    northward = ds_dropsonde.v.values.flatten()
-    return dropfuncs.horizontal_wind_direction(northward, eastward)
-
-
-fig, axes = plot_allflights_wind_vertical_profile(
-    ds_full,
-    dates,
-    calc_verticaldata,
-    latmax,
-    cmap,
-    vmin,
-    vmax,
-    hmin,
-    hmax,
-    xlabel,
-    xlims,
-    figtitle,
-)
-savefig_format = "png"
-savename = path_saveplts / "allflights_vertical_direction_profile_colorlatitutde.png"
-dpi = 64
-save_figure(fig, savefigparams=[savefig_format, savename, dpi])
-
-figtitle = "Horizontal Wind Speed"
-xlabel = "|V$_{xy}$| /m s$^{-1}$"
-xlims = [0, 30]
-
-
-def calc_verticaldata(ds_dropsonde):
-    eastward = ds_dropsonde.u.values.flatten()
-    northward = ds_dropsonde.v.values.flatten()
-    return dropfuncs.horizontal_wind_speed(northward, eastward)
-
-
-fig, axes = plot_allflights_wind_vertical_profile(
-    ds_full,
-    dates,
-    calc_verticaldata,
-    latmax,
-    cmap,
-    vmin,
-    vmax,
-    hmin,
-    hmax,
-    xlabel,
-    xlims,
-    figtitle,
-)
-savefig_format = "png"
-savename = path_saveplts / "allflights_vertical_magnitude_profile_colorlatitutde.png"
-dpi = 64
-save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
 
 # %% height-latitude plots
@@ -411,22 +285,23 @@ def plot_allflights_vertical_vs_latitude_wind(
 
     cmap = plt.get_cmap(cmap)
     norm = mcolors.BoundaryNorm(boundaries=levels, ncolors=cmap.N)
+    xticks = np.linspace(latmin, latmax, 5)
+    yticks = np.linspace(0, 15, 5)
     for d, date in enumerate(dates):
         ds_dropsonde = loadfuncs.load_dropsonde_data_for_date(ds_full, date)
         plot_wind_component_scatter(axes[d], ds_dropsonde, colorby_data, norm, cmap)
 
-        axes[d].set_title(f"HALO-{date}a", fontsize=15)
         axes[d].set_xlabel("")
         axes[d].set_ylabel("")
-        xticks = np.linspace(latmin, latmax, 5)
-        yticks = np.linspace(0, 15, 5)
-        axes[d].set_xticks(xticks)
-        axes[d].set_yticks(yticks)
         axes[d].set_yticklabels("")
         axes[d].set_xticklabels("")
 
+        axes[d].set_title(f"HALO-{date}a", fontsize=15)
         axes[d].set_xlim(latmin, latmax)
         axes[d].set_ylim(hmin, hmax)
+        axes[d].set_xticks(xticks)
+        axes[d].set_yticks(yticks)
+
     for ax in [axes[0], axes[3]]:
         ax.set_ylabel("Height /km")
         ax.set_yticklabels(yticks)
@@ -449,13 +324,122 @@ def plot_allflights_vertical_vs_latitude_wind(
     return fig, axes
 
 
-dates = ["20240811", "20240813", "20240816", "20240818", "20240821", "20240822"]
+# %% Vertical line profile plots
+latmax = 20
+vmin, vmax = 5, 12
+hmin, hmax = -0.5, 15
+cmap = "plasma"
 
 
-def colorby_data(ds_dropsonde):
-    return ds_dropsonde.v.values.flatten()  # northward
+def calc_eastwarddata(ds_dropsonde):
+    return ds_dropsonde.u.values.flatten()
 
 
+def calc_northwarddata(ds_dropsonde):
+    return ds_dropsonde.v.values.flatten()
+
+
+def calc_directiondata(ds_dropsonde):
+    eastward = ds_dropsonde.u.values.flatten()
+    northward = ds_dropsonde.v.values.flatten()
+    return dropfuncs.horizontal_wind_direction(northward, eastward)
+
+
+def calc_magnitudedata(ds_dropsonde):
+    eastward = ds_dropsonde.u.values.flatten()
+    northward = ds_dropsonde.v.values.flatten()
+    return dropfuncs.horizontal_wind_speed(northward, eastward)
+
+
+figtitle = "Eastward Wind Component"
+xlabel = "u /m s$^{-1}$"
+xlims = [-20, 20]
+fig, axes = plot_allflights_wind_vertical_profile(
+    ds_full,
+    dates,
+    calc_eastwarddata,
+    latmax,
+    cmap,
+    vmin,
+    vmax,
+    hmin,
+    hmax,
+    xlabel,
+    xlims,
+    figtitle,
+)
+savefig_format = "png"
+savename = path_saveplts / "allflights_vertical_eastward_profile_colorlatitutde.png"
+dpi = 64
+save_figure(fig, savefigparams=[savefig_format, savename, dpi])
+
+figtitle = "Northward Wind Component"
+xlabel = "v /m s$^{-1}$"
+xlims = [-10, 10]
+fig, axes = plot_allflights_wind_vertical_profile(
+    ds_full,
+    dates,
+    calc_northwarddata,
+    latmax,
+    cmap,
+    vmin,
+    vmax,
+    hmin,
+    hmax,
+    xlabel,
+    xlims,
+    figtitle,
+)
+savefig_format = "png"
+savename = path_saveplts / "allflights_vertical_northward_profile_colorlatitutde.png"
+dpi = 64
+save_figure(fig, savefigparams=[savefig_format, savename, dpi])
+
+figtitle = "Direction Relative to Westerlies (->)"
+xlabel = "$\u03C6$ /degrees"
+xlims = [-180, 180]
+fig, axes = plot_allflights_wind_vertical_profile(
+    ds_full,
+    dates,
+    calc_directiondata,
+    latmax,
+    cmap,
+    vmin,
+    vmax,
+    hmin,
+    hmax,
+    xlabel,
+    xlims,
+    figtitle,
+)
+savefig_format = "png"
+savename = path_saveplts / "allflights_vertical_direction_profile_colorlatitutde.png"
+dpi = 64
+save_figure(fig, savefigparams=[savefig_format, savename, dpi])
+
+figtitle = "Horizontal Wind Speed"
+xlabel = "|V$_{xy}$| /m s$^{-1}$"
+xlims = [0, 30]
+fig, axes = plot_allflights_wind_vertical_profile(
+    ds_full,
+    dates,
+    calc_magnitudedata,
+    latmax,
+    cmap,
+    vmin,
+    vmax,
+    hmin,
+    hmax,
+    xlabel,
+    xlims,
+    figtitle,
+)
+savefig_format = "png"
+savename = path_saveplts / "allflights_vertical_magnitude_profile_colorlatitutde.png"
+dpi = 64
+save_figure(fig, savefigparams=[savefig_format, savename, dpi])
+
+# %% Vertical vs Latitude Scatter Plots
 latmin, latmax = 0, 20
 hmin, hmax = -0.5, 15
 cmap = "coolwarm"
@@ -466,7 +450,7 @@ extend = "both"
 fig, axes = plot_allflights_vertical_vs_latitude_wind(
     ds_full,
     dates,
-    colorby_data,
+    calc_northwarddata,
     latmin,
     latmax,
     hmin,
@@ -482,10 +466,6 @@ dpi = 64
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
 
-def colorby_data(ds_dropsonde):
-    return ds_dropsonde.u.values.flatten()  # eastward
-
-
 latmin, latmax = 0, 20
 hmin, hmax = -0.5, 15
 cmap = "coolwarm"
@@ -496,7 +476,7 @@ extend = "both"
 fig, axes = plot_allflights_vertical_vs_latitude_wind(
     ds_full,
     dates,
-    colorby_data,
+    calc_eastwarddata,
     latmin,
     latmax,
     hmin,
@@ -511,13 +491,6 @@ savename = path_saveplts / "allflights_vertvslat_eastward.png"
 dpi = 64
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
-
-def colorby_data(ds_dropsonde):
-    eastward = ds_dropsonde.u.values.flatten()
-    northward = ds_dropsonde.v.values.flatten()
-    return dropfuncs.horizontal_wind_direction(northward, eastward)
-
-
 latmin, latmax = 0, 20
 hmin, hmax = -0.5, 15
 cmap = "twilight"
@@ -528,7 +501,7 @@ extend = None
 fig, axes = plot_allflights_vertical_vs_latitude_wind(
     ds_full,
     dates,
-    colorby_data,
+    calc_directiondata,
     latmin,
     latmax,
     hmin,
