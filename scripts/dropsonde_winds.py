@@ -203,7 +203,7 @@ def plot_allflights_wind_vertical_profile(
     for d, date in enumerate(dates):
         ds_dropsonde = loadfuncs.load_dropsonde_data_for_date(ds_full, date)
         ds_dropsonde = ds_dropsonde.where(ds_dropsonde.lat < latmax, drop=True)
-        height = np.tile(ds_dropsonde.gpsalt / 1000, ds_dropsonde.sonde_id.size)  # [km]
+        height = np.tile(ds_dropsonde.alt / 1000, ds_dropsonde.sonde_id.size)  # [km]
         colorby = ds_dropsonde["lat"].values.flatten()
 
         ax, norm1, cmap1 = dropfuncs.plot_coloured_dropsonde_vertical_profile(
@@ -371,7 +371,7 @@ def plot_allflights_vertical_vs_latitude_wind(
     figsize=(16, 9),
 ):
     def plot_wind_component_scatter(ax, ds_dropsonde, colorby_data, norm, cmap):
-        height = np.tile(ds_dropsonde.gpsalt / 1000, ds_dropsonde.sonde_id.size)  # [km]
+        height = np.tile(ds_dropsonde.alt / 1000, ds_dropsonde.sonde_id.size)  # [km]
         latitude = ds_dropsonde.lat.values.flatten()
         color = cmap(norm(colorby_data(ds_dropsonde)))
 

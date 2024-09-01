@@ -8,12 +8,12 @@ from . import plot_functions as plotfuncs
 
 
 def get_dropsondes_within_heights(ds, height_min, height_max):
-    """returns slice of dataset with gpsalt within ht1 <= gpsalt < ht2"""
-    ht_min = ds.gpsalt.sel(gpsalt=height_min, method="nearest").values
-    ht_max = ds.gpsalt.sel(gpsalt=height_max, method="nearest").values
+    """returns slice of dataset with alt within ht1 <= alt < ht2"""
+    ht_min = ds.alt.sel(alt=height_min, method="nearest").values
+    ht_max = ds.alt.sel(alt=height_max, method="nearest").values
 
-    ds_heightslice = ds.where(ds.gpsalt < ht_max, drop=True)
-    ds_heightslice = ds.where(ds_heightslice.gpsalt >= ht_min, drop=True)
+    ds_heightslice = ds.where(ds.alt < ht_max, drop=True)
+    ds_heightslice = ds.where(ds_heightslice.alt >= ht_min, drop=True)
 
     return ht_min, ht_max, ds_heightslice
 
@@ -62,7 +62,7 @@ def plot_dropsonde_wind_vertical_profiles(
         nrows=1, ncols=5, figsize=figsize, width_ratios=[1, 1, 1, 1, 1 / 27]
     )
 
-    height = np.tile(ds_dropsonde.gpsalt / 1000, ds_dropsonde.sonde_id.size)  # [km]
+    height = np.tile(ds_dropsonde.alt / 1000, ds_dropsonde.sonde_id.size)  # [km]
     colorby = ds_dropsonde[colorby].values.flatten()
     vmin, vmax = np.nanmin(colorby), np.nanmax(colorby)
 
@@ -185,10 +185,10 @@ def plot_mean_wind_quiver_on_projection(
     ht_min, ht_max, ds2mean = get_dropsondes_within_heights(
         ds_dropsonde, height_min, height_max
     )
-    mean_lon = ds2mean.lon.mean(dim="gpsalt")
-    mean_lat = ds2mean.lat.mean(dim="gpsalt")
-    mean_eastward = ds2mean.u.mean(dim="gpsalt")
-    mean_northward = ds2mean.v.mean(dim="gpsalt")
+    mean_lon = ds2mean.lon.mean(dim="alt")
+    mean_lat = ds2mean.lat.mean(dim="alt")
+    mean_eastward = ds2mean.u.mean(dim="alt")
+    mean_northward = ds2mean.v.mean(dim="alt")
 
     axtitle = f"{ht_min/1000}km <= GPS Altitude < {ht_max/1000}km"
     plot_wind_quiver_on_projection(
