@@ -92,7 +92,7 @@ def plot_dropsonde_wind_vertical_profiles(
         xlabel="v /m s$^{-1}$",
     )
 
-    direction = horizontal_wind_direction(eastward, northward)
+    direction = horizontal_wind_direction(northward, eastward)
     ax, norm1, cmap1 = plot_coloured_dropsonde_vertical_profile(
         axes[2],
         direction.flatten(),
