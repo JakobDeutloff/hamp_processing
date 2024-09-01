@@ -33,7 +33,7 @@ hampdata = loadfuncs.do_post_processing(
     do_cwv=True,
 )
 # %% custom timeframe
-starttime, endtime = "2024-08-27 18:37", "2024-08-27 18:48"
+starttime, endtime = "2024-08-27 18:40", "2024-08-27 18:45"
 timeframe = slice(starttime, endtime)
 savefig_format = "png"
 savename = path_saveplts / "southern_circle.png"
@@ -49,7 +49,7 @@ fig, axes = plotql.hamp_timeslice_quicklook(
 fig.tight_layout()
 
 # %% plot only radar and CVW
-starttime, endtime = "2024-08-27 18:37", "2024-08-27 18:48"
+starttime, endtime = "2024-08-27 18:40", "2024-08-27 18:45"
 timeframe = slice(starttime, endtime)
 fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharex="col", width_ratios=[1, 0.03])
 ax1, cax = plotfuncs.plot_radar_timeseries(
