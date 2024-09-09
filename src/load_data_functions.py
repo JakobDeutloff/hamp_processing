@@ -53,15 +53,24 @@ def do_level1_processing_radar(ds_radar_lev0, flightdata, phi, the, alt):
     return ds_radar_lev1
 
 
-def do_level1_processing_radiometer(ds_radiometer_lev0, flightdata, phi, alt):
+def do_level1_processing_radiometer(ds_radiometer_lev0, flightdata, phi, alt, lon, lat):
     ds_radiometer_lev1 = ds_radiometer_lev0.pipe(
-        filter_radiometer, flightdata[alt], flightdata[phi]
+        filter_radiometer,
+        flightdata[alt],
+        flightdata[phi],
+        flightdata[lon],
+        flightdata[lat],
+        mask=xr.open_dataarray("Data/Aux/sea_land_mask.nc"),
     )
     return ds_radiometer_lev1
 
 
-def do_level1_processing_column_water_vapour(ds_cwv_lev0, flightdata, phi, alt):
-    ds_cwv_lev1 = do_level1_processing_radiometer(ds_cwv_lev0, flightdata, phi, alt)
+def do_level1_processing_column_water_vapour(
+    ds_cwv_lev0, flightdata, phi, alt, lat, lon
+):
+    ds_cwv_lev1 = do_level1_processing_radiometer(
+        ds_cwv_lev0, flightdata, phi, alt, lat, lon
+    )
     return ds_cwv_lev1
 
 
@@ -121,6 +130,8 @@ def do_level1_processing(level0data: PostProcessedHAMPData) -> PostProcessedHAMP
         phi = "IRS_PHI"
         the = "IRS_THE"
         alt = "IRS_ALT"
+        lon = "IRS_LON"
+        lat = "IRS_LAT"
 
     if level0data.radar:
         level1data["radar"] = do_level1_processing_radar(
@@ -130,15 +141,12 @@ def do_level1_processing(level0data: PostProcessedHAMPData) -> PostProcessedHAMP
     for radio in ["183", "11990", "kv"]:
         if level0data[radio]:
             level1data[radio] = do_level1_processing_radiometer(
-                level0data[radio], level0data.flightdata, phi, alt
+                level0data[radio], level0data.flightdata, phi, alt, lon, lat
             )
 
     if level0data["cwv"]:
         level1data["cwv"] = do_level1_processing_column_water_vapour(
-            level0data["cwv"],
-            level0data.flightdata,
-            phi,
-            alt,
+            level0data["cwv"], level0data.flightdata, phi, alt, lat, lon
         )
 
     return level1data

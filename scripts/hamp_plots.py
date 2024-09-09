@@ -26,7 +26,7 @@ hampdata = loadfuncs.do_post_processing(
     cfg["path_radiometer"],
     cfg["radiometer_date"],
     is_planet=cfg["is_planet"],
-    do_radar=True,
+    do_radar=False,
     do_183=True,
     do_11990=True,
     do_kv=True,

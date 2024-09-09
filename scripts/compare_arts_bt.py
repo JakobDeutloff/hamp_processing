@@ -29,7 +29,7 @@ path_saveplts = cfg["path_saveplts"]
 flightname = cfg["flightname"]
 
 # %% read dropsonde data
-ds_dropsonde = xr.open_mfdataset(str(cfg["path_dropsondes_level3"])).load()
+ds_dropsonde = xr.open_mfdataset(str(cfg["path_dropsonde_level3"])).load()
 
 # %% create HAMP post-processed data
 hampdata = loadfuncs.do_post_processing(
