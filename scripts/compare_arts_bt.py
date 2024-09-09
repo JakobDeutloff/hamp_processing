@@ -18,6 +18,7 @@ from src.dropsonde_processing import get_all_clouds_flags_dropsondes
 import pyarts
 import numpy as np
 import typhon
+import pandas as pd
 
 # %% set path to arts data
 pyarts.cat.download.retrieve(verbose=True)
@@ -30,6 +31,13 @@ flightname = cfg["flightname"]
 
 # %% read dropsonde data
 ds_dropsonde = xr.open_mfdataset(str(cfg["path_dropsonde_level3"])).load()
+ds_dropsonde = ds_dropsonde.where(
+    (ds_dropsonde["interp_time"] > pd.to_datetime(cfg["date"]))
+    & (
+        ds_dropsonde["interp_time"]
+        < pd.to_datetime(cfg["date"]) + pd.DateOffset(hour=23)
+    )
+).dropna(dim="sonde_id", how="all")
 
 # %% create HAMP post-processed data
 hampdata = loadfuncs.do_post_processing(
@@ -43,16 +51,22 @@ hampdata = loadfuncs.do_post_processing(
     do_183=True,
     do_11990=True,
     do_kv=True,
-    do_cwv=True,
+    do_cwv=False,
 )
 # %% define frequencies
 freq_k = [22.24, 23.04, 23.84, 25.44, 26.24, 27.84, 31.40]
 freq_v = [50.3, 51.76, 52.8, 53.75, 54.94, 56.66, 58.00]
 freq_90 = [90.0]
-freq_119 = [118.75]
-freq_183 = [183.31]
+center_freq_119 = 118.75
+center_freq_183 = 183.31
 width_119 = [1.4, 2.3, 4.2, 8.5]
 width_183 = [0.6, 1.5, 2.5, 3.5, 5.0, 7.5]
+freq_119 = [center_freq_119 - w for w in width_119] + [
+    center_freq_119 + w for w in width_119
+]
+freq_183 = [center_freq_183 - w for w in width_183] + [
+    center_freq_183 + w for w in width_183
+]
 
 all_freqs = freq_k + freq_v + freq_90 + freq_119 + freq_183
 
