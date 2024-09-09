@@ -53,23 +53,25 @@ def do_level1_processing_radar(ds_radar_lev0, flightdata, phi, the, alt):
     return ds_radar_lev1
 
 
-def do_level1_processing_radiometer(ds_radiometer_lev0, flightdata, phi, alt, lon, lat):
+def do_level1_processing_radiometer(
+    ds_radiometer_lev0, flightdata, phi, alt, lon, lat, path_mask
+):
     ds_radiometer_lev1 = ds_radiometer_lev0.pipe(
         filter_radiometer,
         flightdata[alt],
         flightdata[phi],
         flightdata[lon],
         flightdata[lat],
-        mask=xr.open_dataarray("Data/Aux/sea_land_mask.nc"),
+        mask=xr.open_dataarray(path_mask),
     )
     return ds_radiometer_lev1
 
 
 def do_level1_processing_column_water_vapour(
-    ds_cwv_lev0, flightdata, phi, alt, lat, lon
+    ds_cwv_lev0, flightdata, phi, alt, lat, lon, path_mask
 ):
     ds_cwv_lev1 = do_level1_processing_radiometer(
-        ds_cwv_lev0, flightdata, phi, alt, lat, lon
+        ds_cwv_lev0, flightdata, phi, alt, lat, lon, path_mask
     )
     return ds_cwv_lev1
 
@@ -115,7 +117,9 @@ def do_level0_processing(
     return level0data
 
 
-def do_level1_processing(level0data: PostProcessedHAMPData) -> PostProcessedHAMPData:
+def do_level1_processing(
+    level0data: PostProcessedHAMPData, path_mask
+) -> PostProcessedHAMPData:
     """do level1 processing on level0 data"""
 
     level1data = PostProcessedHAMPData(
@@ -141,12 +145,12 @@ def do_level1_processing(level0data: PostProcessedHAMPData) -> PostProcessedHAMP
     for radio in ["183", "11990", "kv"]:
         if level0data[radio]:
             level1data[radio] = do_level1_processing_radiometer(
-                level0data[radio], level0data.flightdata, phi, alt, lon, lat
+                level0data[radio], level0data.flightdata, phi, alt, lon, lat, path_mask
             )
 
     if level0data["cwv"]:
         level1data["cwv"] = do_level1_processing_column_water_vapour(
-            level0data["cwv"], level0data.flightdata, phi, alt, lat, lon
+            level0data["cwv"], level0data.flightdata, phi, alt, lat, lon, path_mask
         )
 
     return level1data
@@ -157,6 +161,7 @@ def do_post_processing(
     path_radar,
     path_radiometer,
     radiometer_date,
+    path_mask,
     is_planet=False,
     do_radar=True,
     do_183=True,
@@ -178,7 +183,8 @@ def do_post_processing(
             do_11990=do_11990,
             do_kv=do_kv,
             do_cwv=do_cwv,
-        )
+        ),
+        path_mask,
     )
 
     return level1data

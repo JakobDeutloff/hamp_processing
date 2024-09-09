@@ -57,6 +57,7 @@ def get_config_params(config, config_yaml):
     config["path_saveplts"] = get_formatted_path("saveplts")
     config["path_writedata"] = get_formatted_path("writedata")
     config["path_hampdata"] = get_formatted_path("hampdata")
+    config["path_sea_land_mask"] = get_formatted_path("sea_land_mask")
 
     return config
 
