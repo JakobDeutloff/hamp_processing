@@ -191,7 +191,7 @@ def fit_linear(x, y):
 
 
 def fill_upper_levels(x, y, popt, func):
-    offset = y.dropna("gpsalt").values[-1]
+    offset = y.dropna("alt").values[-1]
     nan_vals = np.isnan(y)
     idx_nan = np.where(nan_vals)[0]
     nan_vals[idx_nan - 1] = True  # get overlap of one
@@ -204,42 +204,42 @@ def fill_upper_levels(x, y, popt, func):
 
 def get_profiles(sonde_id, ds_dropsonde, hampdata):
     ds_dropsonde_loc = ds_dropsonde.sel(sonde_id=sonde_id)
-    drop_time = ds_dropsonde_loc["interpolated_time"].dropna("gpsalt").min().values
+    drop_time = ds_dropsonde_loc["interp_time"].dropna("alt").min().values
     hampdata_loc = hampdata.sel(timeslice=drop_time, method="nearest")
     height = float(hampdata_loc.flightdata["IRS_ALT"].values)
     return ds_dropsonde_loc, hampdata_loc, height, pd.to_datetime(drop_time)
 
 
 def extrapolate_dropsonde(ds_dropsonde, height):
-    ds_dropsonde = ds_dropsonde.where(ds_dropsonde["gpsalt"] < height, drop=True)
+    ds_dropsonde = ds_dropsonde.where(ds_dropsonde["alt"] < height, drop=True)
     # drop nans at lower levels
-    bool = (ds_dropsonde["p"].isnull()) & (ds_dropsonde["gpsalt"] < 100)
+    bool = (ds_dropsonde["p"].isnull()) & (ds_dropsonde["alt"] < 100)
     ds_dropsonde = ds_dropsonde.where(~bool, drop=True)
     popt_p = fit_exponential(
-        ds_dropsonde["gpsalt"].values, ds_dropsonde["p"].values, p0=[1e5, -0.0001]
+        ds_dropsonde["alt"].values, ds_dropsonde["p"].values, p0=[1e5, -0.0001]
     )
-    popt_ta = fit_linear(ds_dropsonde["gpsalt"].values, ds_dropsonde["ta"].values)
+    popt_ta = fit_linear(ds_dropsonde["alt"].values, ds_dropsonde["ta"].values)
 
     p_extrap = fill_upper_levels(
-        ds_dropsonde["gpsalt"].values,
-        ds_dropsonde["p"].interpolate_na("gpsalt"),
+        ds_dropsonde["alt"].values,
+        ds_dropsonde["p"].interpolate_na("alt"),
         popt_p,
         exponential,
     )
     ta_extrap = fill_upper_levels(
-        ds_dropsonde["gpsalt"].values,
-        ds_dropsonde["ta"].interpolate_na("gpsalt"),
+        ds_dropsonde["alt"].values,
+        ds_dropsonde["ta"].interpolate_na("alt"),
         popt_ta,
         linear,
     )
-    q_extrap = ds_dropsonde["q"].interpolate_na("gpsalt").values
+    q_extrap = ds_dropsonde["q"].interpolate_na("alt").values
     q_extrap[np.isnan(q_extrap)] = q_extrap[~np.isnan(q_extrap)][-1]
 
     return xr.Dataset(
         {
-            "p": (("gpsalt"), p_extrap),
-            "ta": (("gpsalt"), ta_extrap),
-            "q": (("gpsalt"), q_extrap),
+            "p": (("alt"), p_extrap),
+            "ta": (("alt"), ta_extrap),
+            "q": (("alt"), q_extrap),
         },
-        coords={"gpsalt": ds_dropsonde["gpsalt"].values},
+        coords={"alt": ds_dropsonde["alt"].values},
     )

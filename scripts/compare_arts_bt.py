@@ -12,6 +12,7 @@ from src.arts_functions import (
     setup_workspace,
     extrapolate_dropsonde,
     get_profiles,
+    average_double_bands,
 )
 from src.plot_functions import plot_arts_flux, get_hamp_TBs
 from src.dropsonde_processing import get_all_clouds_flags_dropsondes
@@ -69,6 +70,7 @@ freq_183 = [center_freq_183 - w for w in width_183] + [
 ]
 
 all_freqs = freq_k + freq_v + freq_90 + freq_119 + freq_183
+all_freqs = np.sort(all_freqs)
 
 # %% check if dropsondes are cloud free
 ds_dropsonde = get_all_clouds_flags_dropsondes(ds_dropsonde)
@@ -80,7 +82,7 @@ cloud_free_idxs = (
 ws = setup_workspace()
 
 # %% loop over cloud free sondes
-TBs_arts = np.zeros((len(cloud_free_idxs), len(all_freqs)))
+TBs_arts = np.zeros((len(cloud_free_idxs), 25))
 TBs_hamp = np.zeros((len(cloud_free_idxs), 25))
 dropsondes_extrap = []
 
@@ -89,21 +91,30 @@ for i, sonde_id in enumerate(cloud_free_idxs):
     ds_dropsonde_loc, hampdata_loc, height, drop_time = get_profiles(
         sonde_id, ds_dropsonde, hampdata
     )
+    # check if dropsonde is broken (contains only nan values)
+    if ds_dropsonde_loc["ta"].isnull().mean().values == 1:
+        print(f"Dropsonde {sonde_id} is broken, skipping")
+        continue
+
     # extrapolate dropsonde data
     ds_dropsonde_extrap = extrapolate_dropsonde(ds_dropsonde_loc, height)
     dropsondes_extrap.append(ds_dropsonde_extrap)
+
     # run arts
     run_arts(
         pressure_profile=ds_dropsonde_extrap["p"].values,
         temperature_profile=ds_dropsonde_extrap["ta"].values,
         h2o_profile=typhon.physics.mixing_ratio2vmr(ds_dropsonde_extrap["q"].values),
         ws=ws,
-        frequencies=np.array(all_freqs) * 1e9,
+        frequencies=all_freqs * 1e9,
         zenith_angle=180,
         height=height,
     )
-    TBs_arts[i, :] = np.array(ws.y.value)
+
+    # average double banded frequencies
+    TBs_arts[i, :] = average_double_bands(np.array(ws.y.value))
     freqs_hamp, TBs_hamp[i, :] = get_hamp_TBs(hampdata_loc)
+
     #  compare to hamp radiometers
     fig, ax = plot_arts_flux(
         ws, TBs_hamp[i, :], freqs_hamp, dropsonde_id=sonde_id, time=drop_time
@@ -114,6 +125,7 @@ for i, sonde_id in enumerate(cloud_free_idxs):
         f'quicklooks/{cfg["flightname"]}/arts_calibration/TBs_{drop_time.strftime("%Y%m%d_%H%M")}.png',
         dpi=100,
     )
+    break
 # %% concatenate datasets and save to netcdf
 BTs_arts = xr.DataArray(
     np.array(list(TBs_arts)),
