@@ -82,8 +82,11 @@ cloud_free_idxs = (
 ws = setup_workspace()
 
 # %% loop over cloud free sondes
-TBs_arts = np.zeros((len(cloud_free_idxs), 25))
-TBs_hamp = np.zeros((len(cloud_free_idxs), 25))
+freqs_hamp, _ = get_hamp_TBs(
+    hampdata.sel(timeslice=ds_dropsonde["interp_time"].values[0])
+)
+TBs_arts = pd.DataFrame(index=freqs_hamp, columns=cloud_free_idxs)
+TBs_hamp = TBs_arts.copy()
 dropsondes_extrap = []
 
 for i, sonde_id in enumerate(cloud_free_idxs):
@@ -111,13 +114,21 @@ for i, sonde_id in enumerate(cloud_free_idxs):
         height=height,
     )
 
-    # average double banded frequencies
-    TBs_arts[i, :] = average_double_bands(np.array(ws.y.value))
-    freqs_hamp, TBs_hamp[i, :] = get_hamp_TBs(hampdata_loc)
+    # get according hamp data
+    freqs_hamp, TBs_hamp[sonde_id] = get_hamp_TBs(hampdata_loc)
+
+    # average double bands
+    TB_arts = pd.DataFrame(
+        data=np.array(ws.y.value), index=np.array(ws.f_grid.value) / 1e9
+    )
+    TBs_arts[sonde_id] = average_double_bands(
+        TB_arts,
+        freqs_hamp,
+    )
 
     #  compare to hamp radiometers
     fig, ax = plot_arts_flux(
-        ws, TBs_hamp[i, :], freqs_hamp, dropsonde_id=sonde_id, time=drop_time
+        TBs_hamp[sonde_id], TBs_arts[sonde_id], dropsonde_id=sonde_id, time=drop_time
     )
     if not os.path.exists(f"quicklooks/{cfg['flightname']}/arts_calibration"):
         os.makedirs(f"quicklooks/{cfg['flightname']}/arts_calibration")
@@ -125,7 +136,7 @@ for i, sonde_id in enumerate(cloud_free_idxs):
         f'quicklooks/{cfg["flightname"]}/arts_calibration/TBs_{drop_time.strftime("%Y%m%d_%H%M")}.png',
         dpi=100,
     )
-    break
+
 # %% concatenate datasets and save to netcdf
 BTs_arts = xr.DataArray(
     np.array(list(TBs_arts)),

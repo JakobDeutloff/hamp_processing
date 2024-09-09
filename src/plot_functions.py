@@ -352,13 +352,14 @@ def get_hamp_TBs(hampdata):
     for radio in ["radiokv", "radio11990", "radio183"]:
         TB_hamp = TB_hamp + list(hampdata[radio]["TBs"].values)
         freqs_hamp = freqs_hamp + list(hampdata[radio]["frequency"].values)
+    freqs_hamp = np.array(freqs_hamp).astype(float).round(2)
     return freqs_hamp, TB_hamp
 
 
-def plot_arts_flux(ws, TB_hamp, freqs_hamp, dropsonde_id, time):
+def plot_arts_flux(TB_hamp, TB_arts, dropsonde_id, time):
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.scatter(ws.f_grid.value / 1e9, ws.y.value, label="ARTS", marker="o")
-    ax.scatter(freqs_hamp, TB_hamp, label="HAMP", color="red", marker="x")
+    ax.scatter(TB_arts.index, TB_arts.values, label="ARTS", marker="o")
+    ax.scatter(TB_hamp.index, TB_hamp.values, label="HAMP", color="red", marker="x")
     ax.set_xlabel("Frequency / GHz")
     ax.set_ylabel("Brightness Temperature / K")
     ax.spines[["top", "right"]].set_visible(False)
