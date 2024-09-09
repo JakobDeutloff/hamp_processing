@@ -166,6 +166,7 @@ cython_debug/
 /planet_data
 /Radiometer_Data
 /Radar_Data
+/Data
 /arts_calibration_data
 
 # other or unknown
