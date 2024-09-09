@@ -50,8 +50,8 @@ def get_all_clouds_flags_dropsondes(ds, coord="sonde_id", rh_name="rh"):
             # Keep only moist layer for this analysis
             rh_ml = rh_ml.where(~np.isnan(rh_ml), drop=True)
 
-            base_ml = rh_ml.gpsalt[0]
-            top_ml = rh_ml.gpsalt[-1]
+            base_ml = rh_ml.alt[0]
+            top_ml = rh_ml.alt[-1]
             thickness_ml = top_ml - base_ml
 
             min_rh_low = 0.92
