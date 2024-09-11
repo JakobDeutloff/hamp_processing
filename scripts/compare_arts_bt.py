@@ -13,6 +13,8 @@ from src.arts_functions import (
     extrapolate_dropsonde,
     get_profiles,
     average_double_bands,
+    get_surface_temperature,
+    get_surface_windspeed,
 )
 from src.plot_functions import plot_arts_flux, get_hamp_TBs
 from src.dropsonde_processing import get_all_clouds_flags_dropsondes
@@ -82,6 +84,8 @@ cloud_free_idxs = (
 ws = setup_workspace()
 
 # %% loop over cloud free sondes
+
+# setup container dataframes to store data from all cloud free sondes
 freqs_hamp, _ = get_hamp_TBs(
     hampdata.sel(timeslice=ds_dropsonde["interp_time"].values[0])
 )
@@ -89,17 +93,23 @@ TBs_arts = pd.DataFrame(index=freqs_hamp, columns=cloud_free_idxs)
 TBs_hamp = TBs_arts.copy()
 dropsondes_extrap = []
 
+# loop over cloud free sondes
 for i, sonde_id in enumerate(cloud_free_idxs):
     # get profiles
     ds_dropsonde_loc, hampdata_loc, height, drop_time = get_profiles(
         sonde_id, ds_dropsonde, hampdata
     )
+
     # check if dropsonde is broken (contains only nan values)
     if ds_dropsonde_loc["ta"].isnull().mean().values == 1:
         print(f"Dropsonde {sonde_id} is broken, skipping")
         continue
 
-    # extrapolate dropsonde data
+    # get surface values
+    surface_temp = get_surface_temperature(ds_dropsonde_loc)
+    surface_ws = get_surface_windspeed(ds_dropsonde_loc)
+
+    # extrapolate dropsonde profiles
     ds_dropsonde_extrap = extrapolate_dropsonde(ds_dropsonde_loc, height)
     dropsondes_extrap.append(ds_dropsonde_extrap)
 
@@ -108,6 +118,8 @@ for i, sonde_id in enumerate(cloud_free_idxs):
         pressure_profile=ds_dropsonde_extrap["p"].values,
         temperature_profile=ds_dropsonde_extrap["ta"].values,
         h2o_profile=typhon.physics.mixing_ratio2vmr(ds_dropsonde_extrap["q"].values),
+        surface_ws=surface_ws,
+        surface_temp=surface_temp,
         ws=ws,
         frequencies=all_freqs * 1e9,
         zenith_angle=180,
@@ -126,7 +138,7 @@ for i, sonde_id in enumerate(cloud_free_idxs):
         freqs_hamp,
     )
 
-    #  compare to hamp radiometers
+    # Plot to compare arts to hamp radiometers
     fig, ax = plot_arts_flux(
         TBs_hamp[sonde_id], TBs_arts[sonde_id], dropsonde_id=sonde_id, time=drop_time
     )
