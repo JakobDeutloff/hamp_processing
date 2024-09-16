@@ -51,7 +51,7 @@ def postprocess_hamp(date, version):
 
     # configure paths
     paths = {}
-    paths["radar"] = config["root"] + config["radar"].format(date=date)
+    paths["radar"] = config["radar"].format(date=date)
     paths["radiometer"] = config["root"] + config["radiometer"].format(date=date)
     paths["bahamas"] = config["bahamas"].format(date=date)
     paths["sea_land_mask"] = config["root"] + config["sea_land_mask"]
@@ -59,8 +59,8 @@ def postprocess_hamp(date, version):
 
     # load raw data
     print(f"Loading raw data for {date}")
-    ds_radar_raw = xr.open_mfdataset(paths["radar"]).load()
-    ds_bahamas_raw = xr.open_dataset(paths["bahamas"], engine="zarr")
+    ds_radar_raw = xr.open_mfdataset(paths["radar"], engine="zarr").load()
+    ds_bahamas_raw = xr.open_dataset(paths["bahamas"])
     ds_iwv_raw = xr.open_dataset(f"{paths['radiometer']}/KV/{date[2:]}.IWV.NC")
     radiometers = ["183", "11990", "KV"]
     ds_radiometers_raw = {}
@@ -71,10 +71,7 @@ def postprocess_hamp(date, version):
 
     # do level 1 processing
     print("Level 1 processing")
-    if "time" in ds_bahamas_raw.dims:  # check if bahamas file is already processed
-        ds_bahamas_lev1 = ds_bahamas_raw
-    else:
-        ds_bahamas_lev1 = fix_bahamas(ds_bahamas_raw)
+    ds_bahamas_lev1 = fix_bahamas(ds_bahamas_raw)
     ds_radar_lev1 = fix_radar(ds_radar_raw, ds_bahamas_lev1)
     ds_iwv_lev1 = fix_iwv(ds_iwv_raw, ds_bahamas_lev1)
     ds_radiometers_lev1 = {}
@@ -111,7 +108,7 @@ def postprocess_hamp(date, version):
 
 
 # %% run postprocessing
-dates = ["20240906", "20240907", "20240909"]
+dates = ["20240903"]
 
 version = "0.1"
 for date in dates:
