@@ -6,9 +6,9 @@ from .post_processed_hamp_data import PostProcessedHAMPData
 
 def load_hamp_data(path_radar, path_radiometer, path_iwv):
     hampdata = PostProcessedHAMPData(
-        xr.open_dataset(path_radar),
-        xr.open_dataset(path_radiometer),
-        xr.open_dataset(path_iwv),
+        xr.open_dataset(path_radar, engine="zarr"),
+        xr.open_dataset(path_radiometer, engine="zarr"),
+        xr.open_dataset(path_iwv, engine="zarr"),
     )
     return hampdata
 
