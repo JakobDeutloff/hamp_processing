@@ -1,0 +1,31 @@
+# Holds the path definitions for reading data and saving plots
+# IMPORTANT: You need to adjust the paths / variables with "[...]"
+
+date_11: &date_11 "20240811"
+
+date_13: &date_13 "20240813"
+
+date_16: &date_16 "20240816"
+
+date_18: &date_18 "20240818"
+
+date_21: &date_21 "20240821"
+
+date_22: &date_22 "20240822"
+
+date_25: &date_25 "20240825"
+
+date_27: &date_27 "20240827"
+
+date_06: &date_06 "20240906"
+
+date_07: &date_07 "20240907"
+
+date_09: &date_09 "20240909"
+
+date: *date_25
+radar: ipns://latest.orcestra-campaign.org/products/HALO/radar/moments/HALO-{date}a.zarr
+radiometer: ipns://latest.orcestra-campaign.org/products/HALO/radiometer/HALO-{date}a.zarr
+iwv: ipns://latest.orcestra-campaign.org/products/HALO/iwv/HALO-{date}a.zarr
+path_saveplots: /Users/jakobdeutloff/Programming/Orcestra/hamp_processing/quicklooks/HALO-{date}a
+flightname: HALO-{date}a
