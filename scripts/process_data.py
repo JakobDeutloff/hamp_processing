@@ -6,7 +6,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import yaml
 import xarray as xr
-from orcestra.postprocess.level1 import fix_bahamas, fix_radiometer, fix_radar, fix_iwv
+from orcestra.postprocess.level1 import (
+    fix_bahamas,
+    fix_radiometer,
+    fix_radar,
+    fix_iwv,
+    concatenate_radiometers,
+)
 from orcestra.postprocess.level2 import (
     correct_radar_height,
     filter_radar,
@@ -51,15 +57,15 @@ def postprocess_hamp(date, version):
 
     # configure paths
     paths = {}
-    paths["radar"] = config["radar"].format(date=date)
+    paths["radar"] = config["root"] + config["radar"].format(date=date)
     paths["radiometer"] = config["root"] + config["radiometer"].format(date=date)
-    paths["bahamas"] = config["bahamas"].format(date=date)
+    paths["bahamas"] = config["root"] + config["bahamas"].format(date=date)
     paths["sea_land_mask"] = config["root"] + config["sea_land_mask"]
     paths["save_dir"] = config["root"] + config["save_dir"].format(date=date)
 
     # load raw data
     print(f"Loading raw data for {date}")
-    ds_radar_raw = xr.open_mfdataset(paths["radar"], engine="zarr").load()
+    ds_radar_raw = xr.open_mfdataset(paths["radar"]).load()
     ds_bahamas_raw = xr.open_dataset(paths["bahamas"])
     ds_iwv_raw = xr.open_dataset(f"{paths['radiometer']}/KV/{date[2:]}.IWV.NC")
     radiometers = ["183", "11990", "KV"]
@@ -80,9 +86,9 @@ def postprocess_hamp(date, version):
             ds_radiometers_raw[radio], ds_bahamas_lev1
         )
 
-    # concatenate radiometers
-    ds_radiometers_lev1_concat = xr.concat(
-        [ds_radiometers_lev1[radio] for radio in radiometers], dim="frequency"
+    # concatenate radiometers and add georeference
+    ds_radiometers_lev1_concat = concatenate_radiometers(
+        [ds_radiometers_lev1[radio] for radio in radiometers], ds_bahamas_lev1
     )
 
     # do level 2 processing
@@ -96,21 +102,24 @@ def postprocess_hamp(date, version):
 
     # save data
     print(f"Saving data for {date}")
-    os.makedirs(paths["save_dir"], exist_ok=True)
     ds_radar_lev2.attrs["version"] = version
     ds_radiometer_lev2.attrs["version"] = version
     ds_iwv_lev2.attrs["version"] = version
-    ds_radar_lev2.to_zarr(f"{paths['save_dir']}/HALO-{date}a_radar_vs{version}.zarr")
+    ds_radar_lev2.to_zarr(f"{paths['save_dir']}/radar/HALO-{date}a_radar.zarr")
     ds_radiometer_lev2.to_zarr(
-        f"{paths['save_dir']}/HALO-{date}a_radiometer_vs{version}.zarr"
+        f"{paths['save_dir']}/radiometer/HALO-{date}a_radio.zarr"
     )
-    ds_iwv_lev2.to_zarr(f"{paths['save_dir']}/HALO-{date}a_iwv_vs{version}.zarr")
+    ds_iwv_lev2.to_zarr(f"{paths['save_dir']}/iwv/HALO-{date}a_iwv.zarr")
 
 
 # %% run postprocessing
-dates = ["20240903"]
+dates = [
+    "20240906",
+    "20240907",
+    "20240909",
+]
 
-version = "0.1"
+version = "0.2"
 for date in dates:
     postprocess_hamp(date, version)
 

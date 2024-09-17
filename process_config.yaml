@@ -1,6 +1,6 @@
 root: /Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Data
-radar: ipns://latest.orcestra-campaign.org/raw/HALO/radar/moments/HALO-{date}a/*.nc
+radar: /Radar_Data/HALO-{date}a/*.nc
 radiometer: /Radiometer_Data/HALO-{date}a
-bahamas: "ipns://latest.orcestra-campaign.org/raw/HALO/bahamas/HALO-{date}a/QL_HALO-{date}a_BAHAMAS_V01.nc"
+bahamas: "/Bahamas_Data/HALO-{date}a/QL_HALO-{date}a_BAHAMAS_V01.nc"
 sea_land_mask: /Aux/sea_land_mask.nc
-save_dir: /Hamp_Processed/HALO-{date}a
+save_dir: /Hamp_Processed
