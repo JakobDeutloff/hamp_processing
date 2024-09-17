@@ -17,15 +17,19 @@ date_25: &date_25 "20240825"
 
 date_27: &date_27 "20240827"
 
+date_03: &date_03 "20240903"
+
 date_06: &date_06 "20240906"
 
 date_07: &date_07 "20240907"
 
 date_09: &date_09 "20240909"
 
-date: *date_25
-radar: ipns://latest.orcestra-campaign.org/products/HALO/radar/moments/HALO-{date}a.zarr
-radiometer: ipns://latest.orcestra-campaign.org/products/HALO/radiometer/HALO-{date}a.zarr
-iwv: ipns://latest.orcestra-campaign.org/products/HALO/iwv/HALO-{date}a.zarr
+date_12: &date_12 "20240912"
+
+date: *date_12
+radar: /Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Data/Hamp_Processed/radar/HALO-{date}a_radar.zarr
+radiometer: /Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Data/Hamp_Processed/radiometer/HALO-{date}a_radio.zarr
+iwv: /Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Data/Hamp_Processed/iwv/HALO-{date}a_iwv.zarr
 path_saveplots: /Users/jakobdeutloff/Programming/Orcestra/hamp_processing/quicklooks/HALO-{date}a
 flightname: HALO-{date}a
