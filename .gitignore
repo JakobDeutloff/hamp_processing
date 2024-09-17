@@ -171,3 +171,4 @@ cython_debug/
 
 # other or unknown
 **/.DS_Store
+**/config.yaml
