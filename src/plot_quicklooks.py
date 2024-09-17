@@ -100,37 +100,45 @@ def hamp_timeslice_quicklook(
 
     # plot K-Band radiometer
     plotfuncs.plot_radiometer_timeseries(
-        hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)),
+        hampdata.radiometers["TBs"].sel(time=timeframe, frequency=slice(22.24, 31.4)),
         axes[1],
     )
 
     # plot V-Band radiometer
     plotfuncs.plot_radiometer_timeseries(
-        hampdata.radiokv["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)), axes[2]
+        hampdata.radiometers["TBs"].sel(time=timeframe, frequency=slice(50.3, 58)),
+        axes[2],
     )
 
     # plot 90 GHz radiometer
     plotfuncs.plot_radiometer_timeseries(
-        hampdata.radio11990["TBs"].sel(time=timeframe, frequency=90),
+        hampdata.radiometers["TBs"].sel(time=timeframe, frequency=90),
         axes[3],
         is_90=True,
     )
 
     # plot 119 GHz radiometer
     plotfuncs.plot_radiometer_timeseries(
-        hampdata.radio11990["TBs"].sel(time=timeframe, frequency=slice(120.15, 127.25)),
+        hampdata.radiometers["TBs"].sel(
+            time=timeframe, frequency=slice(120.15, 127.25)
+        ),
         axes[4],
     )
 
     # plot 183 GHz radiometer
     plotfuncs.plot_radiometer_timeseries(
-        hampdata.radio183["TBs"].sel(time=timeframe), axes[5]
+        hampdata.radiometers["TBs"].sel(
+            time=timeframe, frequency=slice(183.91, 190.81)
+        ),
+        axes[5],
     )
 
     # plot CWV retrieval
     target_cwv = 48  # [mm]
     plotfuncs.plot_column_water_vapour_timeseries(
-        hampdata["CWV"]["IWV"].sel(time=timeframe), axes[6], target_cwv=target_cwv
+        hampdata.column_water_vapour["IWV"].sel(time=timeframe),
+        axes[6],
+        target_cwv=target_cwv,
     )
 
     axes_timeseries_plots = [axes[0][0]] + axes[1:]

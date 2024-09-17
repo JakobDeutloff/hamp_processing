@@ -15,7 +15,19 @@ def extract_config_params(config_file):
         print(f"Reading config YAML: '{config_file}'")
         config_yaml = yaml.safe_load(file)
 
-    config = get_config_params(config, config_yaml)
+    config["path_radar"] = config_yaml["root"] + config_yaml["radar"].format(
+        date=config_yaml["date"]
+    )
+    config["path_radiometers"] = config_yaml["root"] + config_yaml["radiometer"].format(
+        date=config_yaml["date"]
+    )
+    config["path_iwv"] = config_yaml["root"] + config_yaml["iwv"].format(
+        date=config_yaml["date"]
+    )
+    config["path_saveplots"] = config_yaml["path_saveplots"].format(
+        date=config_yaml["date"]
+    )
+    config["flightname"] = config_yaml["flightname"].format(date=config_yaml["date"])
 
     return config
 
@@ -57,6 +69,7 @@ def get_config_params(config, config_yaml):
     config["path_saveplts"] = get_formatted_path("saveplts")
     config["path_writedata"] = get_formatted_path("writedata")
     config["path_hampdata"] = get_formatted_path("hampdata")
+    config["path_sea_land_mask"] = get_formatted_path("sea_land_mask")
 
     return config
 

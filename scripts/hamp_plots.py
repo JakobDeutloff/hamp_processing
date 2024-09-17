@@ -15,28 +15,21 @@ import matplotlib.pyplot as plt
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
 cfg = rwfuncs.extract_config_params(configfile)
+path_saveplts = cfg["path_saveplots"]
 flightname = cfg["flightname"]
-path_saveplts = cfg["path_saveplts"]
 ### ------------------------------------------------------------- ###
 
 # %% create HAMP post-processed data
-hampdata = loadfuncs.do_post_processing(
-    cfg["path_bahamas"],
+hampdata = loadfuncs.load_hamp_data(
     cfg["path_radar"],
-    cfg["path_radiometer"],
-    cfg["radiometer_date"],
-    is_planet=cfg["is_planet"],
-    do_radar=True,
-    do_183=True,
-    do_11990=True,
-    do_kv=True,
-    do_cwv=True,
+    cfg["path_radiometers"],
+    cfg["path_iwv"],
 )
 # %% custom timeframe
-starttime, endtime = "2024-08-27 18:40", "2024-08-27 18:45"
+starttime, endtime = "2024-08-25 12:40", "2024-08-25 18:45"
 timeframe = slice(starttime, endtime)
 savefig_format = "png"
-savename = path_saveplts / "southern_circle.png"
+savename = "test"
 dpi = 200
 fig, axes = plotql.hamp_timeslice_quicklook(
     hampdata,
@@ -49,7 +42,7 @@ fig, axes = plotql.hamp_timeslice_quicklook(
 fig.tight_layout()
 
 # %% plot only radar and CVW
-starttime, endtime = "2024-08-27 18:40", "2024-08-27 18:45"
+starttime, endtime = "2024-08-25 15:40", "2024-08-25 18:45"
 timeframe = slice(starttime, endtime)
 fig, axes = plt.subplots(2, 2, figsize=(10, 8), sharex="col", width_ratios=[1, 0.03])
 ax1, cax = plotfuncs.plot_radar_timeseries(

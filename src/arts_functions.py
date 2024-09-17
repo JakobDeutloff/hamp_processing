@@ -62,6 +62,8 @@ def run_arts(
     pressure_profile,
     temperature_profile,
     h2o_profile,
+    surface_ws,
+    surface_temp,
     ws: pyarts.workspace.Workspace,
     N2=0.78,
     O2=0.21,
@@ -104,9 +106,6 @@ def run_arts(
     ws.VectorSetConstant(ws.surface_scalar_reflectivity, 1, 0.1)
     ws.surface_rtprop_agendaSet(option="Specular_NoPol_ReflFix_SurfTFromt_surface")
 
-    # Emissivity of sea surface
-    ws.surface_emission = [[0]]
-
     # No sensor properties
     ws.sensorOff()
 
@@ -142,13 +141,36 @@ def run_arts(
     ws.atmfields_checkedCalc()
     ws.z_fieldFromHSE()
 
-    # Set surface temperature equal to the lowest atmosphere level
-    ws.surface_skin_t = ws.t_field.value[0, 0, 0]
-    ws.t_surface = [[ws.t_field.value[0, 0, 0]]]
-
     # Definition of sensor position and line of sight (LOS)
     ws.MatrixSet(ws.sensor_pos, np.array([[height]]))
     ws.MatrixSet(ws.sensor_los, np.array([[zenith_angle]]))
+
+    # configure surface emissions
+    ws.IndexCreate("nf")
+    ws.VectorCreate("trans")
+    ws.NumericCreate("wspeed")
+    ws.NumericCreate("surface_temperature")
+
+    # Set surface temperature equal to the lowest atmosphere level
+    ws.wspeed = surface_ws
+    ws.surface_skin_t = surface_temp
+    ws.surface_temperature = surface_temp
+
+    # agenda for surface properties
+    def surface_rtprop_agenda_tessem(ws):
+        ws.Copy(ws.surface_skin_t, ws.surface_temperature)
+        ws.specular_losCalc()
+
+        ws.nelemGet(ws.nf, ws.f_grid)
+        ws.VectorSetConstant(ws.trans, ws.nf, 1.0)
+
+        ws.surfaceTessem(
+            salinity=0.034,
+            wind_speed=ws.wspeed,
+        )
+
+    ws.iy_surface_agenda = ws.iy_surface_agenda__UseSurfaceRtprop
+    ws.surface_rtprop_agenda = surface_rtprop_agenda_tessem
 
     # Perform RT calculations
     ws.propmat_clearsky_agendaAuto()  # Calculate the absorption coefficient matrix automatically
@@ -191,7 +213,7 @@ def fit_linear(x, y):
 
 
 def fill_upper_levels(x, y, popt, func):
-    offset = y.dropna("gpsalt").values[-1]
+    offset = y.dropna("alt").values[-1]
     nan_vals = np.isnan(y)
     idx_nan = np.where(nan_vals)[0]
     nan_vals[idx_nan - 1] = True  # get overlap of one
@@ -204,42 +226,124 @@ def fill_upper_levels(x, y, popt, func):
 
 def get_profiles(sonde_id, ds_dropsonde, hampdata):
     ds_dropsonde_loc = ds_dropsonde.sel(sonde_id=sonde_id)
-    drop_time = ds_dropsonde_loc["interpolated_time"].dropna("gpsalt").min().values
+    drop_time = ds_dropsonde_loc["interp_time"].dropna("alt").min().values
     hampdata_loc = hampdata.sel(timeslice=drop_time, method="nearest")
     height = float(hampdata_loc.flightdata["IRS_ALT"].values)
     return ds_dropsonde_loc, hampdata_loc, height, pd.to_datetime(drop_time)
 
 
 def extrapolate_dropsonde(ds_dropsonde, height):
-    ds_dropsonde = ds_dropsonde.where(ds_dropsonde["gpsalt"] < height, drop=True)
+    ds_dropsonde = ds_dropsonde.where(ds_dropsonde["alt"] < height, drop=True)
     # drop nans at lower levels
-    bool = (ds_dropsonde["p"].isnull()) & (ds_dropsonde["gpsalt"] < 100)
+    bool = (ds_dropsonde["p"].isnull()) & (ds_dropsonde["alt"] < 100)
     ds_dropsonde = ds_dropsonde.where(~bool, drop=True)
     popt_p = fit_exponential(
-        ds_dropsonde["gpsalt"].values, ds_dropsonde["p"].values, p0=[1e5, -0.0001]
+        ds_dropsonde["alt"].values, ds_dropsonde["p"].values, p0=[1e5, -0.0001]
     )
-    popt_ta = fit_linear(ds_dropsonde["gpsalt"].values, ds_dropsonde["ta"].values)
+    popt_ta = fit_linear(ds_dropsonde["alt"].values, ds_dropsonde["ta"].values)
 
     p_extrap = fill_upper_levels(
-        ds_dropsonde["gpsalt"].values,
-        ds_dropsonde["p"].interpolate_na("gpsalt"),
+        ds_dropsonde["alt"].values,
+        ds_dropsonde["p"].interpolate_na("alt"),
         popt_p,
         exponential,
     )
     ta_extrap = fill_upper_levels(
-        ds_dropsonde["gpsalt"].values,
-        ds_dropsonde["ta"].interpolate_na("gpsalt"),
+        ds_dropsonde["alt"].values,
+        ds_dropsonde["ta"].interpolate_na("alt"),
         popt_ta,
         linear,
     )
-    q_extrap = ds_dropsonde["q"].interpolate_na("gpsalt").values
+    q_extrap = ds_dropsonde["q"].interpolate_na("alt").values
     q_extrap[np.isnan(q_extrap)] = q_extrap[~np.isnan(q_extrap)][-1]
 
     return xr.Dataset(
         {
-            "p": (("gpsalt"), p_extrap),
-            "ta": (("gpsalt"), ta_extrap),
-            "q": (("gpsalt"), q_extrap),
+            "p": (("alt"), p_extrap),
+            "ta": (("alt"), ta_extrap),
+            "q": (("alt"), q_extrap),
         },
-        coords={"gpsalt": ds_dropsonde["gpsalt"].values},
+        coords={"alt": ds_dropsonde["alt"].values},
     )
+
+
+def average_double_bands(TB, freqs_hamp):
+    """Average double bands of ARTS simulations.
+
+    Parameters:
+        TB (ndarray): Brightness temperatures.
+
+    Returns:
+        ndarray: Averaged brightness temperatures.
+    """
+
+    TB_averaged = pd.DataFrame(index=freqs_hamp, columns=["TB"])
+    single_freqs = np.array(
+        [
+            22.24,
+            23.04,
+            23.84,
+            25.44,
+            26.24,
+            27.84,
+            31.4,
+            50.3,
+            51.76,
+            52.8,
+            53.75,
+            54.94,
+            56.66,
+            58.0,
+            90,
+        ]
+    )
+    double_freqs = np.array(
+        [120.15, 121.05, 122.95, 127.25, 183.91, 184.81, 185.81, 186.81, 188.31, 190.81]
+    )
+    mirror_freqs = np.array(
+        [117.35, 116.45, 114.55, 110.25, 182.71, 181.81, 179.81, 178.31, 180.81, 175.81]
+    )
+    counterparts = pd.DataFrame(
+        data=mirror_freqs, index=double_freqs, columns=["mirror_freq"]
+    )
+    for freq in freqs_hamp:
+        if freq in single_freqs:
+            TB_averaged.loc[freq] = TB.loc[freq].values[0]
+        else:
+            TB_averaged.loc[freq] = np.mean(
+                [
+                    float(TB.loc[freq].values),
+                    float(TB.loc[counterparts.loc[freq].values].values),
+                ]
+            )
+
+    return TB_averaged
+
+
+def get_surface_temperature(dropsonde):
+    """
+    Get temperature at lowest level of dropsonde which is not nan.
+
+    Parameters:
+        dropsonde (xr.Dataset): Dropsonde data.
+
+    Returns:
+        float: Surface temperature.
+    """
+
+    return dropsonde["ta"].where(~dropsonde["ta"].isnull(), drop=True).values[-1]
+
+
+def get_surface_windspeed(dropsonde):
+    """
+    Get windspeed at lowest level of dropsonde which is not nan.
+
+    Parameters:
+        dropsonde (xr.Dataset): Dropsonde data.
+
+    Returns:
+        float: Surface windspeed.
+    """
+    u = dropsonde["u"].where(~dropsonde["u"].isnull(), drop=True).values[-1]
+    v = dropsonde["v"].where(~dropsonde["v"].isnull(), drop=True).values[-1]
+    return np.sqrt(u**2 + v**2)
