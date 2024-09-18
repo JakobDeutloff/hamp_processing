@@ -44,7 +44,7 @@ def add_lat_lon_axes(hampdata, timeframe, ax_time, set_time_ticks=False):
     time_slice = hampdata.radar.time.sel(time=timeframe)
     idxs = np.linspace(0, len(time_slice.time) - 1, nticks, dtype=int)
     xticks0 = time_slice.isel(time=idxs)
-    xticks = hampdata.flightdata.time.sel(time=xticks0.values, method="nearest")
+    xticks = hampdata.radar.time.sel(time=xticks0.values, method="nearest")
 
     for ax in [ax_lat, ax_lon]:
         ax.set_xlim(ax_time.get_xlim())
@@ -53,10 +53,10 @@ def add_lat_lon_axes(hampdata, timeframe, ax_time, set_time_ticks=False):
         ax.set_xticks(xticks)
         ax.spines[["top", "right", "left"]].set_visible(False)
 
-    lat_labels = hampdata.flightdata.IRS_LAT.sel(time=xticks.values).round(1).values
+    lat_labels = hampdata.radar.lat.sel(time=xticks.values).round(1).values
     label_axis(ax_lat, 45, lat_labels, "Latitude /$\u00B0$")
 
-    lon_labels = hampdata.flightdata.IRS_LON.sel(time=xticks.values).round(1).values
+    lon_labels = hampdata.radar.lat.sel(time=xticks.values).round(1).values
     label_axis(ax_lon, 85, lon_labels, "Longitude /$\u00B0$")
 
     if set_time_ticks:
