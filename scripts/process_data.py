@@ -6,6 +6,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import yaml
 import xarray as xr
+import shutil
+import numcodecs
 from orcestra.postprocess.level1 import (
     fix_radiometer,
     fix_radar,
@@ -20,6 +22,47 @@ from orcestra.postprocess.level2 import (
 
 
 # %% define function
+def get_chunks(dimensions):
+    if "frequency" in dimensions:
+        chunks = {
+            "time": 4**8,
+            "frequency": 5,
+        }
+    elif "height" in dimensions:
+        chunks = {
+            "time": 4**5,
+            "height": 4**4,
+        }
+    else:
+        chunks = {
+            "time": 4**9,
+        }
+
+    return tuple((chunks[d] for d in dimensions))
+
+
+def add_encoding(dataset):
+    numcodecs.blosc.set_nthreads(1)
+    compressor = numcodecs.Blosc("zstd")
+
+    for var in dataset.variables:
+        if var not in dataset.dims:
+            dataset[var].encoding = {
+                "compressor": compressor,
+                "dtype": "float32",
+                "chunks": get_chunks(dataset[var].dims),
+            }
+
+    return dataset
+
+
+async def get_client(**kwargs):
+    import aiohttp
+
+    conn = aiohttp.TCPConnector(limit=1)
+    return aiohttp.ClientSession(connector=conn, **kwargs)
+
+
 def postprocess_hamp(date, version):
     """
     Postprocess raw data from HAMP.
@@ -65,7 +108,14 @@ def postprocess_hamp(date, version):
     # load raw data
     print(f"Loading raw data for {date}")
     ds_radar_raw = xr.open_mfdataset(paths["radar"]).load()
-    ds_bahamas = xr.open_zarr(paths["bahamas"])
+    ds_bahamas = (
+        xr.open_dataset(
+            paths["bahamas"], engine="zarr", storage_options={"get_client": get_client}
+        )
+        .reset_coords(["lat", "lon", "alt"])
+        .resample(time="0.25s")
+        .mean()
+    )
     ds_iwv_raw = xr.open_dataset(f"{paths['radiometer']}/KV/{date[2:]}.IWV.NC")
     radiometers = ["183", "11990", "KV"]
     ds_radiometers_raw = {}
@@ -101,6 +151,9 @@ def postprocess_hamp(date, version):
     # concatenate radiometers and add georeference
     ds_radiometers_lev1_concat = xr.concat(
         [ds_radiometers_lev1[radio] for radio in radiometers], dim="frequency"
+    ).sortby("frequency")
+    ds_radiometers_lev1_concat = ds_radiometers_lev1_concat.assign(
+        TBs=ds_radiometers_lev1_concat["TBs"].T
     ).pipe(
         add_georeference,
         lat=ds_bahamas["lat"],
@@ -120,26 +173,33 @@ def postprocess_hamp(date, version):
     )
     ds_iwv_lev2 = filter_radiometer(ds_iwv_lev1, sea_land_mask=sea_land_mask)
 
-    # save data
+    # save data - delete if exists to prevent overwriting which can cause issues with zarr
     print(f"Saving data for {date}")
     ds_radar_lev2.attrs["version"] = version
     ds_radiometer_lev2.attrs["version"] = version
     ds_iwv_lev2.attrs["version"] = version
-    ds_radar_lev2.to_zarr(
-        f"{paths['save_dir']}/radar/HALO-{date}a_radar.zarr", mode="w"
+    path_radar = f"{paths['save_dir']}/radar/HALO-{date}a_radar.zarr"
+    if os.path.exists(path_radar):
+        shutil.rmtree(path_radar)
+    ds_radar_lev2.chunk(time=4**9).pipe(add_encoding).to_zarr(path_radar, mode="w")
+    path_radiometer = f"{paths['save_dir']}/radiometer/HALO-{date}a_radio.zarr"
+    if os.path.exists(path_radiometer):
+        shutil.rmtree(path_radiometer)
+    ds_radiometer_lev2.chunk(time=4**9, frequency=-1).pipe(add_encoding).to_zarr(
+        path_radiometer, mode="w"
     )
-    ds_radiometer_lev2.to_zarr(
-        f"{paths['save_dir']}/radiometer/HALO-{date}a_radio.zarr", mode="w"
-    )
-    ds_iwv_lev2.to_zarr(f"{paths['save_dir']}/iwv/HALO-{date}a_iwv.zarr", mode="w")
+    path_iwv = f"{paths['save_dir']}/iwv/HALO-{date}a_iwv.zarr"
+    if os.path.exists(path_iwv):
+        shutil.rmtree(path_iwv)
+    ds_iwv_lev2.chunk(time=4**9).pipe(add_encoding).to_zarr(path_iwv, mode="w")
 
 
 # %% run postprocessing
 dates = [
-    "20240831",
+    "20240906",
 ]
 
-version = "0.2"
+version = "0.3"
 for date in dates:
     postprocess_hamp(date, version)
 

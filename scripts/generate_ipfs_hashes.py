@@ -36,9 +36,13 @@ dates = [
     "20240822",
     "20240825",
     "20240827",
+    "20240829",
+    "20240831",
+    "20240903",
     "20240906",
     "20240907",
     "20240909",
+    "20240912",
 ]
 
 # Ensure the structure exists and initialize empty dicts if they don't exist
