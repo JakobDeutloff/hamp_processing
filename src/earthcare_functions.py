@@ -23,8 +23,8 @@ def find_ec_under_time(ec_track, ds):
 
     ec_track = ec_track.interp(time=ds.time)
 
-    lat_halo = ds["lat"]
-    lon_halo = ds["lon"]
+    lat_halo = ds["lat"].fillna(-90)
+    lon_halo = ds["lon"].fillna(-90)
     lat_ec = ec_track["lat"]
     lon_ec = ec_track["lon"]
 
