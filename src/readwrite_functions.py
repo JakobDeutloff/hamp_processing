@@ -151,3 +151,12 @@ def load_timeslice_all_level1hampdata(
         level1data[var] = xr.open_mfdataset(ncfilename)
 
     return level1data
+
+
+def get_dates():
+    """
+    get all dates from config.yaml
+    """
+    with open("config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+    return [value for key, value in config.items() if key.startswith("date_")]
