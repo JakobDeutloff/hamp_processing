@@ -178,16 +178,19 @@ def postprocess_hamp(date, version):
     ds_radar_lev2.attrs["version"] = version
     ds_radiometer_lev2.attrs["version"] = version
     ds_iwv_lev2.attrs["version"] = version
+    # radar
     path_radar = f"{paths['save_dir']}/radar/HALO-{date}a_radar.zarr"
     if os.path.exists(path_radar):
         shutil.rmtree(path_radar)
     ds_radar_lev2.chunk(time=4**9).pipe(add_encoding).to_zarr(path_radar, mode="w")
+    # radiometer
     path_radiometer = f"{paths['save_dir']}/radiometer/HALO-{date}a_radio.zarr"
     if os.path.exists(path_radiometer):
         shutil.rmtree(path_radiometer)
     ds_radiometer_lev2.chunk(time=4**9, frequency=-1).pipe(add_encoding).to_zarr(
         path_radiometer, mode="w"
     )
+    # iwv
     path_iwv = f"{paths['save_dir']}/iwv/HALO-{date}a_iwv.zarr"
     if os.path.exists(path_iwv):
         shutil.rmtree(path_iwv)

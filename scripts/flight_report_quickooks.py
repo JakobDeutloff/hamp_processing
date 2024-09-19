@@ -46,7 +46,7 @@ plotql.hamp_timeslice_quicklook(
     hampdata,
     timeframe,
     flightname,
-    ec_under_time=None,  # ec_under_time,
+    ec_under_time=ec_under_time,
     figsize=(28, 20),
     savefigparams=None,  # [savefig_format, savename, dpi],
 )
@@ -62,7 +62,7 @@ plotql.hamp_timeslice_quicklook(
     flightname,
     ec_under_time=ec_under_time,
     figsize=(28, 20),
-    savefigparams=None,  # [savefig_format, savename, dpi],
+    savefigparams=[savefig_format, savename, dpi],
 )
 
 # %% produce radar-only ec_under single quicklook
