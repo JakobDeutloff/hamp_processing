@@ -48,7 +48,7 @@ plotql.hamp_timeslice_quicklook(
     flightname,
     ec_under_time=ec_under_time,
     figsize=(28, 20),
-    savefigparams=[savefig_format, savename, dpi],
+    savefigparams=None,  # [savefig_format, savename, dpi],
 )
 
 # %% produce ec_under single quicklook

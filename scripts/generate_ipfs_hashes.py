@@ -36,9 +36,13 @@ dates = [
     "20240822",
     "20240825",
     "20240827",
+    "20240829",
+    "20240831",
+    "20240903",
     "20240906",
     "20240907",
     "20240909",
+    "20240912",
 ]
 
 # Ensure the structure exists and initialize empty dicts if they don't exist
@@ -54,11 +58,9 @@ if tree["products"]["HALO"]["iwv"] is None:
 
 # add the hashes to the tree
 for date in tqdm(dates):
-    radar = path2ipfs(f"Data/HAMP_Processed/radar/HALO-{date}a_radar_vs0.1.zarr")
-    radiometer = path2ipfs(
-        f"Data/HAMP_Processed/radiometer/HALO-{date}a_radiometer_vs0.1.zarr"
-    )
-    iwv = path2ipfs(f"Data/HAMP_Processed/iwv/HALO-{date}a_iwv_vs0.1.zarr")
+    radar = path2ipfs(f"Data/HAMP_Processed/radar/HALO-{date}a_radar.zarr")
+    radiometer = path2ipfs(f"Data/HAMP_Processed/radiometer/HALO-{date}a_radio.zarr")
+    iwv = path2ipfs(f"Data/HAMP_Processed/iwv/HALO-{date}a_iwv.zarr")
     tree["products"]["HALO"]["radar"]["moments"][f"HALO-{date}a.zarr"] = radar
     tree["products"]["HALO"]["radiometer"][f"HALO-{date}a.zarr"] = radiometer
     tree["products"]["HALO"]["iwv"][f"HALO-{date}a.zarr"] = iwv
