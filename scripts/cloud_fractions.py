@@ -57,7 +57,7 @@ def plot_cloudfraction(date, ax, ds_radar, ec_under_time):
             add_colorbar=False,
             vmax=30,
             vmin=-30,
-            cmap="YlGnBu",
+            cmap="viridis",
             extend="max",
         )
     )
@@ -70,7 +70,7 @@ def plot_cloudfraction(date, ax, ds_radar, ec_under_time):
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     ax.axvline(ec_under_time, color="r", linestyle="--", linewidth=1.0)
 
-    return pmesh
+    return pmesh, cf_total
 
 
 # %% load data
@@ -89,6 +89,8 @@ dates = [
     "20240907",
     "20240909",
     "20240912",
+    "20240914",
+    "20240916",
 ]
 ec_under_times = {}
 radar_data = {}
@@ -96,9 +98,12 @@ for date in dates:
     radar_data[date], ec_under_times[date] = read_radar(date)
 
 # %% call plotfunction
-fig, axes = plt.subplots(5, 3, figsize=(30, 18), sharey=True)
+cf_total = {}
+fig, axes = plt.subplots(4, 4, figsize=(35, 18), sharey=True)
 for date, ax in zip(dates, axes.flatten()):
-    pmesh = plot_cloudfraction(date, ax, radar_data[date], ec_under_times[date])
+    pmesh, cf_total[date] = plot_cloudfraction(
+        date, ax, radar_data[date], ec_under_times[date]
+    )
 
 fig.colorbar(
     pmesh,
@@ -107,10 +112,10 @@ fig.colorbar(
     aspect=40,
     extend="max",
 )
-fig.savefig("quicklooks/cloudfractions/all_days.png", dpi=150, bbox_inches="tight")
+fig.savefig("quicklooks/cloudfractions/all_days.png", dpi=300, bbox_inches="tight")
 # %% process missing data
-date = "20240914"
-ds_radar_raw = xr.open_mfdataset(f"Data/Radar_Data/HALO-{date}a/*.nc")
+date = "20240916"
+ds_radar_raw = xr.open_mfdataset(f"Data/Radar_Data/HALO-{date}a/*.nc").load()
 ds_bahamas = (
     xr.open_dataset(
         f"Data/Bahamas_Data/HALO-{date}a.zarr",
@@ -120,7 +125,6 @@ ds_bahamas = (
     .resample(time="0.25s")
     .mean()
 )
-# %%
 ds_radar_lev1 = fix_radar(ds_radar_raw).pipe(
     add_georeference,
     lat=ds_bahamas["lat"],
@@ -130,7 +134,6 @@ ds_radar_lev1 = fix_radar(ds_radar_raw).pipe(
     plane_altitude=ds_bahamas["alt"],
     source=ds_bahamas.attrs["source"],
 )
-# %%
 ds_radar = correct_radar_height(ds_radar_lev1).pipe(filter_radar)
 ds_radar.to_zarr(f"Data/Hamp_Processed/radar/HALO-{date}a_radar.zarr")
 
