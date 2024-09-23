@@ -12,7 +12,7 @@ from src import earthcare_functions as ecfuncs
 
 # %%
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
-configfile = "config.yaml"
+configfile = "config_ipns.yaml"
 cfg = rwfuncs.extract_config_params(configfile)
 path_saveplts = cfg["path_saveplots"]
 flightname = cfg["flightname"]
@@ -39,7 +39,7 @@ flight_starttime, flight_endtime = (
     hampdata.radiometers.time[-1].values,
 )
 savefig_format = "png"
-savename = path_saveplts + f"/hamp_fullflight_{flightname}.png"
+savename = path_saveplts + f"hamp_fullflight_{flightname}.png"
 dpi = 72
 timeframe = slice(flight_starttime, flight_endtime)
 plotql.hamp_timeslice_quicklook(
@@ -48,7 +48,7 @@ plotql.hamp_timeslice_quicklook(
     flightname,
     ec_under_time=ec_under_time,
     figsize=(28, 20),
-    savefigparams=None,  # [savefig_format, savename, dpi],
+    savefigparams=[savefig_format, savename, dpi],
 )
 
 # %% produce ec_under single quicklook
