@@ -8,17 +8,19 @@ import yaml
 import xarray as xr
 import shutil
 import numcodecs
-from orcestra.postprocess.level1 import (
+from orcestra.postprocess.level0 import (
     fix_radiometer,
     fix_radar,
     fix_iwv,
     add_georeference,
 )
-from orcestra.postprocess.level2 import (
+from orcestra.postprocess.level1 import (
     correct_radar_height,
     filter_radar,
     filter_radiometer,
 )
+import io
+import fsspec
 
 
 # %% define function
@@ -54,6 +56,12 @@ def add_encoding(dataset):
             }
 
     return dataset
+
+
+def read_nc(url):
+    with fsspec.open(url, "rb") as fp:
+        bio = io.BytesIO(fp.read())
+        return xr.open_dataset(bio, engine="scipy")
 
 
 async def get_client(**kwargs):
