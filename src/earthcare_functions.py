@@ -5,8 +5,15 @@ import pyproj
 
 def get_earthcare_track(date):
     day = pd.Timestamp(date)
+    if day < pd.Timestamp("2024-09-06"):
+        roi = "CAPE_VERDE"
+    else:
+        roi = "BARBADOS"
     track = sat.SattrackLoader(
-        "EARTHCARE", (day - pd.Timedelta("1d")).strftime(format="%Y-%m-%d"), kind="PRE"
+        "EARTHCARE",
+        (day - pd.Timedelta("1d")).strftime(format="%Y-%m-%d"),
+        kind="PRE",
+        roi=roi,
     ).get_track_for_day(day.strftime(format="%Y-%m-%d"))
 
     track = track.where(track.time > (day + pd.Timedelta("1h")), drop=True)
