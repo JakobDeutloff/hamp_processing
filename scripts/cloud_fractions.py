@@ -7,8 +7,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import xarray as xr
 import matplotlib.pyplot as plt
 from src import earthcare_functions as ecfuncs
-from orcestra.postprocess.level0 import fix_radar, add_georeference
-from orcestra.postprocess.level1 import correct_radar_height, filter_radar
 import pandas as pd
 import matplotlib.dates as mdates
 
@@ -113,28 +111,4 @@ fig.colorbar(
     extend="max",
 )
 fig.savefig("quicklooks/cloudfractions/all_days.png", dpi=300, bbox_inches="tight")
-# %% process missing data
-date = "20240916"
-ds_radar_raw = xr.open_mfdataset(f"Data/Radar_Data/HALO-{date}a/*.nc").load()
-ds_bahamas = (
-    xr.open_dataset(
-        f"Data/Bahamas_Data/HALO-{date}a.zarr",
-        engine="zarr",
-    )
-    .reset_coords(["lat", "lon", "alt"])
-    .resample(time="0.25s")
-    .mean()
-)
-ds_radar_lev1 = fix_radar(ds_radar_raw).pipe(
-    add_georeference,
-    lat=ds_bahamas["lat"],
-    lon=ds_bahamas["lon"],
-    plane_pitch=ds_bahamas["pitch"],
-    plane_roll=ds_bahamas["roll"],
-    plane_altitude=ds_bahamas["alt"],
-    source=ds_bahamas.attrs["source"],
-)
-ds_radar = correct_radar_height(ds_radar_lev1).pipe(filter_radar)
-ds_radar.to_zarr(f"Data/Hamp_Processed/radar/HALO-{date}a_radar.zarr")
-
 # %%

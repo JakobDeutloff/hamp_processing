@@ -8,17 +8,20 @@ import yaml
 import xarray as xr
 import shutil
 import numcodecs
-from orcestra.postprocess.level1 import (
-    fix_radiometer,
-    fix_radar,
-    fix_iwv,
+from orcestra.postprocess.level0 import (
+    radiometer,
+    radar,
+    iwv,
     add_georeference,
 )
-from orcestra.postprocess.level2 import (
+from orcestra.postprocess.level1 import (
     correct_radar_height,
     filter_radar,
     filter_radiometer,
+    filter_spikes,
 )
+import io
+import fsspec
 
 
 # %% define function
@@ -54,6 +57,12 @@ def add_encoding(dataset):
             }
 
     return dataset
+
+
+def read_nc(url):
+    with fsspec.open(url, "rb") as fp:
+        bio = io.BytesIO(fp.read())
+        return xr.open_dataset(bio, engine="scipy")
 
 
 async def get_client(**kwargs):
@@ -126,7 +135,7 @@ def postprocess_hamp(date, version):
 
     # do level 1 processing
     print("Level 1 processing")
-    ds_radar_lev1 = fix_radar(ds_radar_raw).pipe(
+    ds_radar_lev1 = radar(ds_radar_raw).pipe(
         add_georeference,
         lat=ds_bahamas["lat"],
         lon=ds_bahamas["lon"],
@@ -135,7 +144,7 @@ def postprocess_hamp(date, version):
         plane_altitude=ds_bahamas["alt"],
         source=ds_bahamas.attrs["source"],
     )
-    ds_iwv_lev1 = fix_iwv(ds_iwv_raw).pipe(
+    ds_iwv_lev1 = iwv(ds_iwv_raw).pipe(
         add_georeference,
         lat=ds_bahamas["lat"],
         lon=ds_bahamas["lon"],
@@ -146,7 +155,7 @@ def postprocess_hamp(date, version):
     )
     ds_radiometers_lev1 = {}
     for radio in radiometers:
-        ds_radiometers_lev1[radio] = fix_radiometer(ds_radiometers_raw[radio])
+        ds_radiometers_lev1[radio] = radiometer(ds_radiometers_raw[radio])
 
     # concatenate radiometers and add georeference
     ds_radiometers_lev1_concat = xr.concat(
@@ -170,7 +179,7 @@ def postprocess_hamp(date, version):
     ds_radar_lev2 = correct_radar_height(ds_radar_lev1).pipe(filter_radar)
     ds_radiometer_lev2 = filter_radiometer(
         ds_radiometers_lev1_concat, sea_land_mask=sea_land_mask
-    )
+    ).pipe(filter_spikes)
     ds_iwv_lev2 = filter_radiometer(ds_iwv_lev1, sea_land_mask=sea_land_mask)
 
     # save data - delete if exists to prevent overwriting which can cause issues with zarr
@@ -199,7 +208,7 @@ def postprocess_hamp(date, version):
 
 # %% run postprocessing
 dates = [
-    "20240906",
+    "20240914",
 ]
 
 version = "0.3"

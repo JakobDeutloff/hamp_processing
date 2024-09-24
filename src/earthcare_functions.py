@@ -1,6 +1,7 @@
 import pandas as pd
 from orcestra import sat
 import pyproj
+import warnings
 
 
 def get_earthcare_track(date):
@@ -9,15 +10,23 @@ def get_earthcare_track(date):
         roi = "CAPE_VERDE"
     else:
         roi = "BARBADOS"
-    track = sat.SattrackLoader(
-        "EARTHCARE",
-        (day - pd.Timedelta("1d")).strftime(format="%Y-%m-%d"),
-        kind="PRE",
-        roi=roi,
-    ).get_track_for_day(day.strftime(format="%Y-%m-%d"))
+    try:
+        track = sat.SattrackLoader(
+            "EARTHCARE",
+            day.strftime(format="%Y-%m-%d"),
+            kind="PRE",
+            roi=roi,
+        ).get_track_for_day(day.strftime(format="%Y-%m-%d"))
+    except Exception:
+        warnings.warn(f"No EarthCARE track found for {day}, falling back to day before")
+        track = sat.SattrackLoader(
+            "EARTHCARE",
+            (day - pd.Timedelta("1d")).strftime(format="%Y-%m-%d"),
+            kind="PRE",
+            roi=roi,
+        ).get_track_for_day((day).strftime(format="%Y-%m-%d"))
 
-    track = track.where(track.time > (day + pd.Timedelta("1h")), drop=True)
-
+    track = track.sel(time=slice(day + pd.Timedelta("8h"), None))
     return track
 
 
@@ -28,6 +37,7 @@ def find_ec_under_time(ec_track, ds):
     """
     geod = pyproj.Geod(ellps="WGS84")
 
+    ds = ds.sel(time=slice(ec_track.time.min(), ec_track.time.max()))
     ec_track = ec_track.interp(time=ds.time)
 
     lat_halo = ds["lat"].fillna(-90)
