@@ -12,7 +12,7 @@ from src import earthcare_functions as ecfuncs
 
 # %%
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
-configfile = "config_ipns.yaml"
+configfile = "config.yaml"
 cfg = rwfuncs.extract_config_params(configfile)
 path_saveplts = cfg["path_saveplots"]
 flightname = cfg["flightname"]
@@ -47,7 +47,7 @@ plotql.hamp_timeslice_quicklook(
     timeframe,
     flightname,
     ec_under_time=ec_under_time,
-    figsize=(28, 20),
+    figsize=(18, 12),
     savefigparams=[savefig_format, savename, dpi],
 )
 
@@ -61,7 +61,7 @@ plotql.hamp_timeslice_quicklook(
     timeframe,
     flightname,
     ec_under_time=ec_under_time,
-    figsize=(28, 20),
+    figsize=(18, 12),
     savefigparams=[savefig_format, savename, dpi],
 )
 
