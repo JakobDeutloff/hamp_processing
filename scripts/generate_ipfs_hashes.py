@@ -28,10 +28,10 @@ tree = yaml.load(
 )
 
 dates = [
-    "20240914",
-    "20240916",
-    "20240919",
     "20240921",
+    "20240923",
+    "20240924",
+    "20240926",
 ]
 
 # Ensure the structure exists and initialize empty dicts if they don't exist
