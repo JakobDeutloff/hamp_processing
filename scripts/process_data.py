@@ -18,7 +18,6 @@ from orcestra.postprocess.level1 import (
     correct_radar_height,
     filter_radar,
     filter_radiometer,
-    filter_spikes,
 )
 import io
 import fsspec
@@ -110,7 +109,7 @@ def postprocess_hamp(date, version):
     paths = {}
     paths["radar"] = config["root"] + config["radar"].format(date=date)
     paths["radiometer"] = config["root"] + config["radiometer"].format(date=date)
-    paths["bahamas"] = config["bahamas"].format(date=date)
+    paths["bahamas"] = config["root"] + config["bahamas"].format(date=date)
     paths["sea_land_mask"] = config["root"] + config["sea_land_mask"]
     paths["save_dir"] = config["root"] + config["save_dir"].format(date=date)
 
@@ -118,9 +117,7 @@ def postprocess_hamp(date, version):
     print(f"Loading raw data for {date}")
     ds_radar_raw = xr.open_mfdataset(paths["radar"]).load()
     ds_bahamas = (
-        xr.open_dataset(
-            paths["bahamas"], engine="zarr", storage_options={"get_client": get_client}
-        )
+        xr.open_dataset(paths["bahamas"], engine="zarr")
         .reset_coords(["lat", "lon", "alt"])
         .resample(time="0.25s")
         .mean()
@@ -179,7 +176,7 @@ def postprocess_hamp(date, version):
     ds_radar_lev2 = correct_radar_height(ds_radar_lev1).pipe(filter_radar)
     ds_radiometer_lev2 = filter_radiometer(
         ds_radiometers_lev1_concat, sea_land_mask=sea_land_mask
-    ).pipe(filter_spikes)
+    )
     ds_iwv_lev2 = filter_radiometer(ds_iwv_lev1, sea_land_mask=sea_land_mask)
 
     # save data - delete if exists to prevent overwriting which can cause issues with zarr
@@ -208,7 +205,10 @@ def postprocess_hamp(date, version):
 
 # %% run postprocessing
 dates = [
-    "20240914",
+    "20240921",
+    "20240923",
+    "20240924",
+    "20240926",
 ]
 
 version = "0.3"
