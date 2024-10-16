@@ -27,12 +27,7 @@ tree = yaml.load(
     open("/Users/jakobdeutloff/Programming/Orcestra/ipfs_tools/tree.yaml", "r")
 )
 
-dates = [
-    "20240921",
-    "20240923",
-    "20240924",
-    "20240926",
-]
+dates = ["20240928"]
 
 # Ensure the structure exists and initialize empty dicts if they don't exist
 tree["products"]["HALO"]["radar"].setdefault("moments", {})

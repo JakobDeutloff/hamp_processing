@@ -204,12 +204,7 @@ def postprocess_hamp(date, version):
 
 
 # %% run postprocessing
-dates = [
-    "20240921",
-    "20240923",
-    "20240924",
-    "20240926",
-]
+dates = ["20240928"]
 
 version = "0.3"
 for date in dates:
