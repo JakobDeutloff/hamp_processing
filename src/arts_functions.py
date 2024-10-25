@@ -3,6 +3,7 @@ import pyarts
 from scipy.optimize import curve_fit
 import xarray as xr
 import pandas as pd
+from pyarts.workspace import arts_agenda
 
 
 def setup_workspace(verbosity=0):
@@ -102,10 +103,6 @@ def run_arts(
     # Throw away lines outside f_grid
     ws.abs_lines_per_speciesCompact()
 
-    # Non reflecting surface
-    ws.VectorSetConstant(ws.surface_scalar_reflectivity, 1, 0.1)
-    ws.surface_rtprop_agendaSet(option="Specular_NoPol_ReflFix_SurfTFromt_surface")
-
     # No sensor properties
     ws.sensorOff()
 
@@ -157,6 +154,7 @@ def run_arts(
     ws.surface_temperature = surface_temp
 
     # agenda for surface properties
+    @arts_agenda
     def surface_rtprop_agenda_tessem(ws):
         ws.Copy(ws.surface_skin_t, ws.surface_temperature)
         ws.specular_losCalc()
@@ -170,7 +168,7 @@ def run_arts(
         )
 
     ws.iy_surface_agenda = ws.iy_surface_agenda__UseSurfaceRtprop
-    ws.surface_rtprop_agenda = surface_rtprop_agenda_tessem
+    ws.surface_rtprop_agenda = surface_rtprop_agenda_tessem(ws)
 
     # Perform RT calculations
     ws.propmat_clearsky_agendaAuto()  # Calculate the absorption coefficient matrix automatically

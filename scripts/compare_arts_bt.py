@@ -29,11 +29,11 @@ pyarts.cat.download.retrieve(verbose=True)
 ### -------- USER PARAMETERS YOU MUST SET IN CONFIG.YAML -------- ###
 configfile = "config.yaml"
 cfg = rwfuncs.extract_config_params(configfile)
-path_saveplts = cfg["path_saveplts"]
+path_saveplts = cfg["path_saveplots"]
 flightname = cfg["flightname"]
 
 # %% read dropsonde data
-ds_dropsonde = xr.open_mfdataset(str(cfg["path_dropsonde_level3"])).load()
+ds_dropsonde = xr.open_dataset(cfg["path_dropsondes"], engine="zarr")
 ds_dropsonde = ds_dropsonde.where(
     (ds_dropsonde["interp_time"] > pd.to_datetime(cfg["date"]))
     & (

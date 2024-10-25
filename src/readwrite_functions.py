@@ -25,6 +25,7 @@ def extract_config_params(config_file):
     )
     config["flightname"] = config_yaml["flightname"].format(date=config_yaml["date"])
     config["date"] = config_yaml["date"]
+    config["path_dropsondes"] = config_yaml["path_dropsondes"]
 
     return config
 
