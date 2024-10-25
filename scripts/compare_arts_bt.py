@@ -16,7 +16,7 @@ from src.arts_functions import (
     get_surface_temperature,
     get_surface_windspeed,
 )
-from src.plot_functions import plot_arts_flux, get_hamp_TBs
+from src.plot_functions import plot_arts_flux
 from src.dropsonde_processing import get_all_clouds_flags_dropsondes
 import pyarts
 import numpy as np
@@ -43,18 +43,8 @@ ds_dropsonde = ds_dropsonde.where(
 ).dropna(dim="sonde_id", how="all")
 
 # %% create HAMP post-processed data
-hampdata = loadfuncs.do_post_processing(
-    cfg["path_bahamas"],
-    cfg["path_radar"],
-    cfg["path_radiometer"],
-    cfg["radiometer_date"],
-    cfg["path_sea_land_mask"],
-    is_planet=cfg["is_planet"],
-    do_radar=False,
-    do_183=True,
-    do_11990=True,
-    do_kv=True,
-    do_cwv=False,
+hampdata = loadfuncs.load_hamp_data(
+    cfg["path_radar"], cfg["path_radiometers"], cfg["path_iwv"]
 )
 # %% define frequencies
 freq_k = [22.24, 23.04, 23.84, 25.44, 26.24, 27.84, 31.40]
@@ -86,9 +76,7 @@ ws = setup_workspace()
 # %% loop over cloud free sondes
 
 # setup container dataframes to store data from all cloud free sondes
-freqs_hamp, _ = get_hamp_TBs(
-    hampdata.sel(timeslice=ds_dropsonde["interp_time"].values[0])
-)
+freqs_hamp = hampdata.radiometers.frequency.values
 TBs_arts = pd.DataFrame(index=freqs_hamp, columns=cloud_free_idxs)
 TBs_hamp = TBs_arts.copy()
 dropsondes_extrap = []
@@ -127,7 +115,7 @@ for i, sonde_id in enumerate(cloud_free_idxs):
     )
 
     # get according hamp data
-    freqs_hamp, TBs_hamp[sonde_id] = get_hamp_TBs(hampdata_loc)
+    TBs_hamp[sonde_id] = hampdata_loc.radiometers.TBs.values
 
     # average double bands
     TB_arts = pd.DataFrame(

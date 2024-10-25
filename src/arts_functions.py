@@ -162,12 +162,12 @@ def run_arts(
         ws.nelemGet(ws.nf, ws.f_grid)
         ws.VectorSetConstant(ws.trans, ws.nf, 1.0)
 
-        ws.surfaceTessem(
-            salinity=0.034,
-            wind_speed=ws.wspeed,
+        ws.surfaceFastem(
+            salinity=0.034, wind_speed=ws.wspeed, transmittance=ws.transmittance
         )
 
-    ws.iy_surface_agenda = ws.iy_surface_agenda__UseSurfaceRtprop
+    ws.VectorCreate("transmittance")
+    ws.transmittance = np.ones(ws.f_grid.value.shape)
     ws.surface_rtprop_agenda = surface_rtprop_agenda_tessem(ws)
 
     # Perform RT calculations
@@ -226,7 +226,7 @@ def get_profiles(sonde_id, ds_dropsonde, hampdata):
     ds_dropsonde_loc = ds_dropsonde.sel(sonde_id=sonde_id)
     drop_time = ds_dropsonde_loc["interp_time"].dropna("alt").min().values
     hampdata_loc = hampdata.sel(timeslice=drop_time, method="nearest")
-    height = float(hampdata_loc.flightdata["IRS_ALT"].values)
+    height = float(hampdata_loc.radiometers.plane_altitude.values)
     return ds_dropsonde_loc, hampdata_loc, height, pd.to_datetime(drop_time)
 
 
@@ -305,7 +305,7 @@ def average_double_bands(TB, freqs_hamp):
         data=mirror_freqs, index=double_freqs, columns=["mirror_freq"]
     )
     for freq in freqs_hamp:
-        if freq in single_freqs:
+        if int(freq) in single_freqs:
             TB_averaged.loc[freq] = TB.loc[freq].values[0]
         else:
             TB_averaged.loc[freq] = np.mean(
@@ -329,7 +329,7 @@ def get_surface_temperature(dropsonde):
         float: Surface temperature.
     """
 
-    return dropsonde["ta"].where(~dropsonde["ta"].isnull(), drop=True).values[-1]
+    return dropsonde["ta"].where(~dropsonde["ta"].isnull(), drop=True).values[0]
 
 
 def get_surface_windspeed(dropsonde):
@@ -342,6 +342,6 @@ def get_surface_windspeed(dropsonde):
     Returns:
         float: Surface windspeed.
     """
-    u = dropsonde["u"].where(~dropsonde["u"].isnull(), drop=True).values[-1]
-    v = dropsonde["v"].where(~dropsonde["v"].isnull(), drop=True).values[-1]
+    u = dropsonde["u"].where(~dropsonde["u"].isnull(), drop=True).values[0]
+    v = dropsonde["v"].where(~dropsonde["v"].isnull(), drop=True).values[0]
     return np.sqrt(u**2 + v**2)
