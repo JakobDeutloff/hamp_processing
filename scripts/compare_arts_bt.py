@@ -119,7 +119,7 @@ for i, sonde_id in enumerate(cloud_free_idxs):
 
     # average double bands
     TB_arts = pd.DataFrame(
-        data=np.array(ws.y.value), index=np.array(ws.f_grid.value) / 1e9
+        data=np.array(ws.y.value), index=np.float32(np.array(ws.f_grid.value) / 1e9)
     )
     TBs_arts[sonde_id] = average_double_bands(
         TB_arts,

@@ -276,36 +276,64 @@ def average_double_bands(TB, freqs_hamp):
     """
 
     TB_averaged = pd.DataFrame(index=freqs_hamp, columns=["TB"])
-    single_freqs = np.array(
-        [
-            22.24,
-            23.04,
-            23.84,
-            25.44,
-            26.24,
-            27.84,
-            31.4,
-            50.3,
-            51.76,
-            52.8,
-            53.75,
-            54.94,
-            56.66,
-            58.0,
-            90,
-        ]
+    single_freqs = np.float32(
+        np.array(
+            [
+                22.24,
+                23.04,
+                23.84,
+                25.44,
+                26.24,
+                27.84,
+                31.4,
+                50.3,
+                51.76,
+                52.8,
+                53.75,
+                54.94,
+                56.66,
+                58.0,
+                90,
+            ]
+        )
     )
-    double_freqs = np.array(
-        [120.15, 121.05, 122.95, 127.25, 183.91, 184.81, 185.81, 186.81, 188.31, 190.81]
+    double_freqs = np.float32(
+        np.array(
+            [
+                120.15,
+                121.05,
+                122.95,
+                127.25,
+                183.91,
+                184.81,
+                185.81,
+                186.81,
+                188.31,
+                190.81,
+            ]
+        )
     )
-    mirror_freqs = np.array(
-        [117.35, 116.45, 114.55, 110.25, 182.71, 181.81, 179.81, 178.31, 180.81, 175.81]
+    mirror_freqs = np.float32(
+        np.array(
+            [
+                117.35,
+                116.45,
+                114.55,
+                110.25,
+                182.71,
+                181.81,
+                179.81,
+                178.31,
+                180.81,
+                175.81,
+            ]
+        )
     )
     counterparts = pd.DataFrame(
         data=mirror_freqs, index=double_freqs, columns=["mirror_freq"]
     )
     for freq in freqs_hamp:
-        if int(freq) in single_freqs:
+        if freq in single_freqs:
             TB_averaged.loc[freq] = TB.loc[freq].values[0]
         else:
             TB_averaged.loc[freq] = np.mean(
