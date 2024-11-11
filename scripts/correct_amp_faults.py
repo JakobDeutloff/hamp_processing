@@ -7,9 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src import load_data_functions as loadfuncs
 from src import readwrite_functions as rwfuncs
 import numpy as np
-import matplotlib
 
-matplotlib.use("macosx")
 import matplotlib.pyplot as plt
 import xarray as xr
 import yaml
