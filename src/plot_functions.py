@@ -366,6 +366,6 @@ def plot_arts_flux(TB_hamp, TB_arts, dropsonde_id, time):
     ax.set_ylabel("Brightness Temperature / K")
     ax.spines[["top", "right"]].set_visible(False)
     ax.legend()
-    ax.set_title(f"Dropsonde {dropsonde_id} at {time.strftime('%Y-%m-%d %H:%M')}")
+    # ax.set_title(f"Dropsonde {dropsonde_id} at {time.strftime('%Y-%m-%d %H:%M')}")
     fig.tight_layout()
     return fig, ax

@@ -72,11 +72,8 @@ def run_arts(
     CH4=1.8e-6,
     O3=1e-6,
     zenith_angle=180,
-    height=1e4,
+    height=None,
     surface_altitude=0.0,
-    fmin=10e9,
-    fmax=250e9,
-    fnum=100,
     frequencies=None,
 ):
     """Perform a radiative transfer simulation.
@@ -95,10 +92,7 @@ def run_arts(
     """
 
     # Set frequencies
-    if frequencies is None:
-        ws.VectorNLinSpace(ws.f_grid, int(fnum), float(fmin), float(fmax))
-    else:
-        ws.f_grid = np.array(frequencies)
+    ws.f_grid = np.array(frequencies)
 
     # Throw away lines outside f_grid
     ws.abs_lines_per_speciesCompact()
@@ -190,70 +184,74 @@ def exponential(x, a, b):
     return a * np.exp(b * x)
 
 
-def linear(x, a, b):
-    return a * x + b
-
-
 def fit_exponential(x, y, p0):
     valid_idx = (~np.isnan(y)) & (~np.isnan(x))
-    x = x[valid_idx]
-    y = y[valid_idx]
-    popt, pcov = curve_fit(exponential, x, y, p0=p0)
-    return popt
-
-
-def fit_linear(x, y):
-    valid_idx = (~np.isnan(y)) & (~np.isnan(x))
-    x = x[valid_idx]
-    y = y[valid_idx]
-    popt, pcov = curve_fit(linear, x, y)
-    return popt
-
-
-def fill_upper_levels(x, y, popt, func):
-    offset = y.dropna("alt").values[-1]
+    popt, _ = curve_fit(exponential, x[valid_idx], y[valid_idx], p0=p0)
+    offset = y[~np.isnan(y)][-1].values
     nan_vals = np.isnan(y)
     idx_nan = np.where(nan_vals)[0]
     nan_vals[idx_nan - 1] = True  # get overlap of one
     filled = np.zeros_like(y)
     filled[~nan_vals] = y[~nan_vals]
-    new_vals = func(x[nan_vals], *popt)
+    new_vals = exponential(x[nan_vals], *popt)
     filled[nan_vals] = new_vals - new_vals[0] + offset
+    return filled
+
+
+def fit_linear(x, y, upper_val, height):
+    last_val = y[~np.isnan(y)][-1]
+    last_height = x[~np.isnan(y)][-1]
+    nan_vals = np.isnan(y)
+    idx_nan = np.where(nan_vals)[0]
+    nan_vals[idx_nan - 1] = True  # get overlap of one
+    slope = (upper_val - last_val) / (height - last_height)
+    filled = np.zeros_like(y)
+    filled[~nan_vals] = y[~nan_vals]
+    new_vals = slope * (x[nan_vals] - last_height) + last_val
+    filled[nan_vals] = new_vals
     return filled
 
 
 def get_profiles(sonde_id, ds_dropsonde, hampdata):
     ds_dropsonde_loc = ds_dropsonde.sel(sonde_id=sonde_id)
-    drop_time = ds_dropsonde_loc["interp_time"].dropna("alt").min().values
+    drop_time = ds_dropsonde_loc["launch_time"].values
     hampdata_loc = hampdata.sel(timeslice=drop_time, method="nearest")
     height = float(hampdata_loc.radiometers.plane_altitude.values)
-    return ds_dropsonde_loc, hampdata_loc, height, pd.to_datetime(drop_time)
+    return ds_dropsonde_loc, hampdata_loc, height, drop_time
 
 
-def extrapolate_dropsonde(ds_dropsonde, height):
+def extrapolate_dropsonde(ds_dropsonde, height, ds_bahamas):
+    # drop nans
     ds_dropsonde = ds_dropsonde.where(ds_dropsonde["alt"] < height, drop=True)
-    # drop nans at lower levels
-    bool = (ds_dropsonde["p"].isnull()) & (ds_dropsonde["alt"] < 100)
+    bool = (ds_dropsonde["p"].isnull()) & (
+        ds_dropsonde["alt"] < 100
+    )  # drop nans at lower levels
     ds_dropsonde = ds_dropsonde.where(~bool, drop=True)
-    popt_p = fit_exponential(
-        ds_dropsonde["alt"].values, ds_dropsonde["p"].values, p0=[1e5, -0.0001]
-    )
-    popt_ta = fit_linear(ds_dropsonde["alt"].values, ds_dropsonde["ta"].values)
 
-    p_extrap = fill_upper_levels(
+    p_extrap = fit_exponential(
         ds_dropsonde["alt"].values,
         ds_dropsonde["p"].interpolate_na("alt"),
-        popt_p,
-        exponential,
+        p0=[1e5, -0.0001],
     )
-    ta_extrap = fill_upper_levels(
+
+    ta_extrap = fit_linear(
         ds_dropsonde["alt"].values,
-        ds_dropsonde["ta"].interpolate_na("alt"),
-        popt_ta,
-        linear,
+        ds_dropsonde["ta"].interpolate_na("alt").values,
+        ds_bahamas["TS"]
+        .sel(time=ds_dropsonde["launch_time"].values, method="nearest")
+        .values,
+        height,
     )
-    q_extrap = ds_dropsonde["q"].interpolate_na("alt").values
-    q_extrap[np.isnan(q_extrap)] = q_extrap[~np.isnan(q_extrap)][-1]
+
+    q_extrap = fit_linear(
+        ds_dropsonde["alt"].values,
+        ds_dropsonde["q"].interpolate_na("alt").values,
+        ds_bahamas["MIXRATIO"]
+        .sel(time=ds_dropsonde["launch_time"].values, method="nearest")
+        .values
+        / 1e3,
+        height,
+    )
 
     return xr.Dataset(
         {
