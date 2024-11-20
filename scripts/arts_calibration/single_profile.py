@@ -50,7 +50,7 @@ hampdata = loadfuncs.load_hamp_data(
 
 # %% read bahamas raw
 ds_bahamas = xr.open_dataset(
-    f'Data/Bahamas_Raw/QL_{cfg["flightname"]}_BAHAMAS_V01.nc'
+    f'Data/Bahamas_Raw/{cfg["flightname"]}/QL_{cfg["flightname"]}_BAHAMAS_V01.nc'
 ).pipe(bahamas)
 
 # %% define frequencies
@@ -199,6 +199,11 @@ TB_arts_av = average_double_bands(
 )
 
 # %% Plot to compare arts to hamp radiometers
-fig, ax = plot_arts_flux(TB_hamp, TB_arts_av, dropsonde_id=sonde_id, time=drop_time)
+import matplotlib
+
+matplotlib.use("inline")
+fig, ax = plot_arts_flux(
+    TB_hamp, TB_arts_av, dropsonde_id=sonde_id, time=drop_time, ds_bahamas=ds_bahamas
+)
 plt.show()
 # %%

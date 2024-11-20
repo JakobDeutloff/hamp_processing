@@ -36,10 +36,8 @@ def setup_workspace(verbosity=0):
     # Absorption species
     ws.abs_speciesSet(
         species=[
-            "H2O, H2O-SelfContCKDMT400, H2O-ForeignContCKDMT400",
-            "CO2, CO2-CKDMT252",
-            "CH4",
-            "O2,O2-CIAfunCKDMT100",
+            "H2O-PWR2022",
+            "O2-PWR2022",
             "N2, N2-CIAfunCKDMT252, N2-CIArotCKDMT252",
             "O3",
         ]
@@ -68,8 +66,6 @@ def run_arts(
     ws: pyarts.workspace.Workspace,
     N2=0.78,
     O2=0.21,
-    CO2=400e-6,
-    CH4=1.8e-6,
     O3=1e-6,
     zenith_angle=180,
     height=None,
@@ -116,13 +112,11 @@ def run_arts(
     ws.p_grid = pressure_profile
     ws.t_field = temperature_profile[:, np.newaxis, np.newaxis]
 
-    vmr_field = np.zeros((6, len(pressure_profile), 1, 1))
+    vmr_field = np.zeros((4, len(pressure_profile), 1, 1))
     vmr_field[0, :, 0, 0] = h2o_profile
-    vmr_field[1, :, 0, 0] = CO2
-    vmr_field[2, :, 0, 0] = CH4
-    vmr_field[3, :, 0, 0] = O2
-    vmr_field[4, :, 0, 0] = N2
-    vmr_field[5, :, 0, 0] = O3
+    vmr_field[1, :, 0, 0] = O2
+    vmr_field[2, :, 0, 0] = N2
+    vmr_field[3, :, 0, 0] = O3
     ws.vmr_field = vmr_field
 
     ws.z_surface = np.array([[surface_altitude]])
