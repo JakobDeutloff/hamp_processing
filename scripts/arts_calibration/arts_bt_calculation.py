@@ -45,10 +45,11 @@ print("Download ARTS data")
 pyarts.cat.download.retrieve(verbose=True)
 ws = setup_workspace()
 
+
 # %% define function
 def calc_arts_bts(date):
     """
-    Calculates brightness temperatures for the radiometer frequencies with 
+    Calculates brightness temperatures for the radiometer frequencies with
     ARTS based on the dropsonde profiles for the flight on date.
 
     PARAMETERS
@@ -142,7 +143,9 @@ def calc_arts_bts(date):
         surface_ws = get_surface_windspeed(ds_dropsonde_loc)
 
         # extrapolate dropsonde profiles
-        ds_dropsonde_extrap = extrapolate_dropsonde(ds_dropsonde_loc, height, ds_bahamas)
+        ds_dropsonde_extrap = extrapolate_dropsonde(
+            ds_dropsonde_loc, height, ds_bahamas
+        )
         dropsondes_extrap.append(ds_dropsonde_extrap)
 
         # run arts
@@ -186,7 +189,8 @@ def calc_arts_bts(date):
     TBs_arts.to_csv(f"Data/arts_calibration/{cfg['flightname']}/TBs_arts.csv")
     TBs_hamp.to_csv(f"Data/arts_calibration/{cfg['flightname']}/TBs_hamp.csv")
 
-# %% call function 
+
+# %% call function
 date = str(sys.argv[1])
 calc_arts_bts(date)
 
