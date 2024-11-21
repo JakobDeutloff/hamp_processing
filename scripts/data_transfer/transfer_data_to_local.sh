@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FLIGHT="HALO-20241110a"
+FLIGHT="HALO-20241112a"
 
 LOCAL_PATH="/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Data"
 REMOTE_SSH="m301049@login2.mpimet.mpg.de:/pool/OBS/transfer-LH/HALO"
