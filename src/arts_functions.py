@@ -193,16 +193,16 @@ def fit_exponential(x, y, p0):
 
 
 def fit_linear(x, y, upper_val, height):
-    last_val = y[~np.isnan(y)][-1]
-    last_height = x[~np.isnan(y)][-1]
-    nan_vals = np.isnan(y)
-    idx_nan = np.where(nan_vals)[0]
-    nan_vals[idx_nan - 1] = True  # get overlap of one
+    nanmask = np.isnan(y) | np.isnan(x)  # nan's exist under plane where we want to extrapolate
+    last_val = y[~nanmask][-1]
+    last_height = x[~nanmask][-1]
+    idx_nan = np.where(nanmask)[0]
+    nanmask[idx_nan - 1] = True  # get overlap of one
     slope = (upper_val - last_val) / (height - last_height)
     filled = np.zeros_like(y)
-    filled[~nan_vals] = y[~nan_vals]
-    new_vals = slope * (x[nan_vals] - last_height) + last_val
-    filled[nan_vals] = new_vals
+    filled[~nanmask] = y[~nanmask]
+    new_vals = slope * (x[nanmask] - last_height) + last_val
+    filled[nanmask] = new_vals
     return filled
 
 
@@ -232,6 +232,7 @@ def extrapolate_dropsonde(ds_dropsonde, height, ds_bahamas):
         ds_dropsonde["alt"].values,
         ds_dropsonde["ta"].interpolate_na("alt").values,
         ds_bahamas["TS"]
+        .where(~np.isnan(ds_bahamas['MIXRATIO']))
         .sel(time=ds_dropsonde["launch_time"].values, method="nearest")
         .values,
         height,
@@ -241,6 +242,7 @@ def extrapolate_dropsonde(ds_dropsonde, height, ds_bahamas):
         ds_dropsonde["alt"].values,
         ds_dropsonde["q"].interpolate_na("alt").values,
         ds_bahamas["MIXRATIO"]
+        .where(~np.isnan(ds_bahamas['MIXRATIO']))
         .sel(time=ds_dropsonde["launch_time"].values, method="nearest")
         .values
         / 1e3,
