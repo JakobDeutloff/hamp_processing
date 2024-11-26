@@ -1,9 +1,9 @@
 #!/bin/bash
 
-FLIGHT="HALO-20241112a"
+FLIGHT="HALO-20241119a"
 
 LOCAL_PATH="/Users/jakobdeutloff/Programming/Orcestra/hamp_processing/Data"
-REMOTE_SSH="m301049@login2.mpimet.mpg.de:/pool/OBS/transfer-LH/HALO"
+REMOTE_SSH="m301049@login2.mpimet.mpg.de:/pool/OBS/ORCESTRA/raw/HALO"
 RADIOMETERS=("KV" "183" "11990")
 PASSWORD="Anvilclouds_2026"  # Replace with your actual password
 
