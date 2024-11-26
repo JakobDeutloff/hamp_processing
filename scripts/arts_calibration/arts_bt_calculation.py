@@ -74,9 +74,13 @@ def calc_arts_bts(date):
 
     # load bahamas data from ipfs
     print("Load Bahamas Data")
-    ds_bahamas = read_nc(
-        f"ipns://latest.orcestra-campaign.org/raw/HALO/bahamas/{cfg['flightname']}/QL_*.nc"
-    ).pipe(bahamas).interpolate_na("time")
+    ds_bahamas = (
+        read_nc(
+            f"ipns://latest.orcestra-campaign.org/raw/HALO/bahamas/{cfg['flightname']}/QL_*.nc"
+        )
+        .pipe(bahamas)
+        .interpolate_na("time")
+    )
 
     # read dropsonde data
     print("Load Dropsonde Data")
@@ -196,7 +200,7 @@ def calc_arts_bts(date):
 
 
 # %% call function
-#date = str(sys.argv[1])
-calc_arts_bts('20240827')
+# date = str(sys.argv[1])
+calc_arts_bts("20240827")
 
 # %%

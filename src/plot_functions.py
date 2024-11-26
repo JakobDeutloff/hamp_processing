@@ -54,10 +54,10 @@ def add_lat_lon_axes(hampdata, timeframe, ax_time, set_time_ticks=False):
         ax.spines[["top", "right", "left"]].set_visible(False)
 
     lat_labels = hampdata.radar.lat.sel(time=xticks.values).round(1).values
-    label_axis(ax_lat, 45, lat_labels, "Latitude /$\u00B0$")
+    label_axis(ax_lat, 45, lat_labels, "Latitude /$\u00b0$")
 
     lon_labels = hampdata.radar.lat.sel(time=xticks.values).round(1).values
-    label_axis(ax_lon, 85, lon_labels, "Longitude /$\u00B0$")
+    label_axis(ax_lon, 85, lon_labels, "Longitude /$\u00b0$")
 
     if set_time_ticks:
         ax_time.set_xticks(xticks0)

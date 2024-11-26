@@ -179,7 +179,7 @@ def exponential(x, a, b):
 
 
 def fit_exponential(x, y, p0):
-    nanmask = np.isnan(y) | np.isnan(x) 
+    nanmask = np.isnan(y) | np.isnan(x)
     popt, _ = curve_fit(exponential, x[~nanmask], y[~nanmask], p0=p0)
     offset = y[~nanmask][-1].values
     idx_nan = np.where(nanmask)[0]
@@ -192,7 +192,9 @@ def fit_exponential(x, y, p0):
 
 
 def fit_linear(x, y, upper_val, height):
-    nanmask = np.isnan(y) | np.isnan(x)  # nan's exist under plane where we want to extrapolate
+    nanmask = np.isnan(y) | np.isnan(
+        x
+    )  # nan's exist under plane where we want to extrapolate
     last_val = y[~nanmask][-1]
     last_height = x[~nanmask][-1]
     idx_nan = np.where(nanmask)[0]

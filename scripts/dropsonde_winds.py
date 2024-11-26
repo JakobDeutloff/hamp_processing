@@ -86,8 +86,8 @@ def mean_winds_seperate_east_north_scatter(
         latmin=latmin,
         latmax=latmax,
     )
-    axes[0].set_ylabel("Latitude /$\u00B0$")
-    axes[0].set_xlabel("Longitude /$\u00B0$")
+    axes[0].set_ylabel("Latitude /$\u00b0$")
+    axes[0].set_xlabel("Longitude /$\u00b0$")
 
     xlab = "Nothward wind, v / m s$^{-1}$"
     plot_wind_component_scatter(axes[1], mean_northward, mean_lat, xlab=xlab, fit=True)
@@ -239,7 +239,7 @@ def plot_allflights_wind_vertical_profile(
     cax = fig.colorbar(
         ScalarMappable(norm=norm1, cmap=cmap1),
         cax=axes[nd],
-        label="latitude /$\u00B0$",
+        label="latitude /$\u00b0$",
         shrink=0.8,
         extend="both",
     )
@@ -270,7 +270,7 @@ def plot_allflights_vertical_vs_latitude_wind(
         color = cmap(norm(colorby_data(ds_dropsonde)))
 
         ax.scatter(latitude, height, marker=",", color=color)
-        ax.set_xlabel("Latitude /$\u00B0$")
+        ax.set_xlabel("Latitude /$\u00b0$")
         ax.set_ylabel("Height /km")
 
         return norm, cmap
@@ -306,7 +306,7 @@ def plot_allflights_vertical_vs_latitude_wind(
         ax.set_ylabel("Height /km")
         ax.set_yticklabels(yticks)
     for ax in axes[3:]:
-        ax.set_xlabel("Latitude /$\u00B0$")
+        ax.set_xlabel("Latitude /$\u00b0$")
         ax.set_xticklabels(xticks)
 
     cax = fig.colorbar(
@@ -396,7 +396,7 @@ dpi = 64
 save_figure(fig, savefigparams=[savefig_format, savename, dpi])
 
 figtitle = "Direction Relative to Westerlies (->)"
-xlabel = "$\u03C6$ /degrees"
+xlabel = "$\u03c6$ /degrees"
 xlims = [-180, 180]
 fig, axes = plot_allflights_wind_vertical_profile(
     ds_full,
@@ -495,7 +495,7 @@ latmin, latmax = 0, 20
 hmin, hmax = -0.5, 15
 cmap = "twilight"
 figtitle = "Direction Relative to Westerlies (->)"
-cbarlabel = "$\u03C6$ /degrees"
+cbarlabel = "$\u03c6$ /degrees"
 levels = [-180, -90, -60, -30, 30, 60, 90, 180]
 extend = None
 fig, axes = plot_allflights_vertical_vs_latitude_wind(
