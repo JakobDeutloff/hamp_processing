@@ -11,5 +11,5 @@
 # Set pythonpath
 export PYTHONPATH="${PYTHONPATH}:/home/m/m301049/hamp_processing/"
 
-# execute python script in respective environment 
+# execute python script in respective environment
 /home/m/m301049/.conda/envs/main/bin/python /home/m/m301049/hamp_processing/scripts/arts_calibration/arts_bt_calculation.py $1

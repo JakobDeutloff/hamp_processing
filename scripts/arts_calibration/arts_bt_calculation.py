@@ -1,6 +1,5 @@
 # %%
 import os
-import sys
 import xarray as xr
 from src import load_data_functions as loadfuncs
 from src.arts_functions import (
@@ -167,9 +166,11 @@ def calc_arts_bts(date):
                 zenith_angle=180,
                 height=height,
             )
-        except:
-            print(f"ARTS or extrapolation failed for dropsonde {sonde_id}, skipping")
-            continue
+        except (ValueError, KeyError, RuntimeError) as e:
+            print(
+                f"ARTS or extrapolation failed for dropsonde {sonde_id} with error: {e}, skipping"
+            )
+            pass
 
         # get according hamp data
         TBs_hamp[sonde_id] = hampdata_loc.radiometers.TBs.values
