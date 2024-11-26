@@ -75,7 +75,7 @@ def plot_radiometer_timeseries(ds, ax, is_90=False):
     ax : matplotlib.axes.Axes
         Axes to plot on.
     """
-    ds = ds.where((ds < 300) & (ds > 100))
+    # ds = ds.where((ds < 300) & (ds > 100))
 
     if is_90:
         ds.plot.line(ax=ax, x="time", color="k")
@@ -117,7 +117,7 @@ def plot_column_water_vapour_timeseries(ds, ax, target_cwv=None):
         value to CWV [mm] to mark on plot, e.g. 48mm contour
     """
 
-    ds = ds.where((ds > 20) & (ds < 80))
+    # ds = ds.where((ds > 20) & (ds < 80))
     ds.plot.line(ax=ax, x="time", color="k")
 
     if target_cwv:

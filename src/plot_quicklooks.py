@@ -134,7 +134,7 @@ def hamp_timeslice_quicklook(
     )
 
     # plot CWV retrieval
-    target_cwv = 48  # [mm]
+    target_cwv = None  # [mm]
     plotfuncs.plot_column_water_vapour_timeseries(
         hampdata.column_water_vapour["IWV"].sel(time=timeframe),
         axes[6],

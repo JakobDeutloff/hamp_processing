@@ -71,7 +71,7 @@ async def get_client(**kwargs):
     return aiohttp.ClientSession(connector=conn, **kwargs)
 
 
-def postprocess_hamp(date, version):
+def postprocess_hamp(date, flightletter, version):
     """
     Postprocess raw data from HAMP.
 
@@ -107,11 +107,17 @@ def postprocess_hamp(date, version):
 
     # configure paths
     paths = {}
-    paths["radar"] = config["root"] + config["radar"].format(date=date)
-    paths["radiometer"] = config["root"] + config["radiometer"].format(date=date)
-    paths["bahamas"] = config["root"] + config["bahamas"].format(date=date)
+    paths["radar"] = config["root"] + config["radar"].format(
+        date=date, flightletter=flightletter
+    )
+    paths["radiometer"] = config["root"] + config["radiometer"].format(
+        date=date, flightletter=flightletter
+    )
+    paths["bahamas"] = config["bahamas"].format(date=date, flightletter=flightletter)
     paths["sea_land_mask"] = config["root"] + config["sea_land_mask"]
-    paths["save_dir"] = config["root"] + config["save_dir"].format(date=date)
+    paths["save_dir"] = config["root"] + config["save_dir"].format(
+        date=date, flightletter=flightletter
+    )
 
     # load raw data
     print(f"Loading raw data for {date}")
@@ -205,14 +211,21 @@ def postprocess_hamp(date, version):
 
 # %% run postprocessing
 dates = [
-    "20240921",
-    "20240923",
-    "20240924",
-    "20240926",
+    "20241112",
+    "20241114",
+    "20241116",
+    "20241119",
+]
+
+flightletters = [
+    "b",
+    "b",
+    "a",
+    "a",
 ]
 
 version = "0.3"
-for date in dates:
-    postprocess_hamp(date, version)
+for date, flightletter in zip(dates, flightletters):
+    postprocess_hamp(date, flightletter, version)
 
 # %%
