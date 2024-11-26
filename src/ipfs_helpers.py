@@ -39,7 +39,7 @@ def add_encoding(dataset):
 
 
 def read_nc(url):
-    with fsspec.open(url, "rb") as fp:
+    with fsspec.open(url, "rb", expand=True) as fp:
         bio = io.BytesIO(fp.read())
         return xr.open_dataset(bio, engine="scipy")
 

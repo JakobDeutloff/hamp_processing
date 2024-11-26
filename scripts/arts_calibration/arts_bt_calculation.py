@@ -75,8 +75,8 @@ def calc_arts_bts(date):
     # load bahamas data from ipfs
     print("Load Bahamas Data")
     ds_bahamas = read_nc(
-        f"ipns://latest.orcestra-campaign.org/raw/HALO/bahamas/{cfg['flightname']}/QL_{cfg['flightname']}_BAHAMAS_V01.nc"
-    ).pipe(bahamas)
+        f"ipns://latest.orcestra-campaign.org/raw/HALO/bahamas/{cfg['flightname']}/QL_*.nc"
+    ).pipe(bahamas).interpolate_na("time")
 
     # read dropsonde data
     print("Load Dropsonde Data")
@@ -142,26 +142,30 @@ def calc_arts_bts(date):
         surface_temp = get_surface_temperature(ds_dropsonde_loc)
         surface_ws = get_surface_windspeed(ds_dropsonde_loc)
 
-        # extrapolate dropsonde profiles
-        ds_dropsonde_extrap = extrapolate_dropsonde(
-            ds_dropsonde_loc, height, ds_bahamas
-        )
-        dropsondes_extrap.append(ds_dropsonde_extrap)
+        try:
+            # extrapolate dropsonde profiles
+            ds_dropsonde_extrap = extrapolate_dropsonde(
+                ds_dropsonde_loc, height, ds_bahamas
+            )
+            dropsondes_extrap.append(ds_dropsonde_extrap)
 
-        # run arts
-        run_arts(
-            pressure_profile=ds_dropsonde_extrap["p"].values,
-            temperature_profile=ds_dropsonde_extrap["ta"].values,
-            h2o_profile=typhon.physics.specific_humidity2vmr(
-                ds_dropsonde_extrap["q"].values
-            ),
-            surface_ws=surface_ws,
-            surface_temp=surface_temp,
-            ws=ws,
-            frequencies=all_freqs * 1e9,
-            zenith_angle=180,
-            height=height,
-        )
+            # run arts
+            run_arts(
+                pressure_profile=ds_dropsonde_extrap["p"].values,
+                temperature_profile=ds_dropsonde_extrap["ta"].values,
+                h2o_profile=typhon.physics.specific_humidity2vmr(
+                    ds_dropsonde_extrap["q"].values
+                ),
+                surface_ws=surface_ws,
+                surface_temp=surface_temp,
+                ws=ws,
+                frequencies=all_freqs * 1e9,
+                zenith_angle=180,
+                height=height,
+            )
+        except:
+            print(f"ARTS or extrapolation failed for dropsonde {sonde_id}, skipping")
+            continue
 
         # get according hamp data
         TBs_hamp[sonde_id] = hampdata_loc.radiometers.TBs.values
@@ -184,6 +188,7 @@ def calc_arts_bts(date):
             ds_bahamas=ds_bahamas,
         )
         fig.savefig(f"Data/arts_calibration/{cfg['flightname']}/plots/{sonde_id}.png")
+        fig.clf()
 
     # save results
     TBs_arts.to_csv(f"Data/arts_calibration/{cfg['flightname']}/TBs_arts.csv")
@@ -191,7 +196,7 @@ def calc_arts_bts(date):
 
 
 # %% call function
-date = str(sys.argv[1])
-calc_arts_bts(date)
+#date = str(sys.argv[1])
+calc_arts_bts('20240827')
 
 # %%

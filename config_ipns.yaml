@@ -1,4 +1,4 @@
-date: '20240928'
+date: '20240827'
 flightname: HALO-{date}a
 iwv: ipns://latest.orcestra-campaign.org/products/HALO/iwv/HALO-{date}a.zarr
 path_dropsondes: ipns://latest.orcestra-campaign.org/products/HALO/dropsondes/Level_3/PERCUSION_Level_3.zarr

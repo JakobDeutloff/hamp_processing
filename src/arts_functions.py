@@ -179,16 +179,15 @@ def exponential(x, a, b):
 
 
 def fit_exponential(x, y, p0):
-    valid_idx = (~np.isnan(y)) & (~np.isnan(x))
-    popt, _ = curve_fit(exponential, x[valid_idx], y[valid_idx], p0=p0)
-    offset = y[~np.isnan(y)][-1].values
-    nan_vals = np.isnan(y)
-    idx_nan = np.where(nan_vals)[0]
-    nan_vals[idx_nan - 1] = True  # get overlap of one
+    nanmask = np.isnan(y) | np.isnan(x) 
+    popt, _ = curve_fit(exponential, x[~nanmask], y[~nanmask], p0=p0)
+    offset = y[~nanmask][-1].values
+    idx_nan = np.where(nanmask)[0]
+    nanmask[idx_nan - 1] = True  # get overlap of one
     filled = np.zeros_like(y)
-    filled[~nan_vals] = y[~nan_vals]
-    new_vals = exponential(x[nan_vals], *popt)
-    filled[nan_vals] = new_vals - new_vals[0] + offset
+    filled[~nanmask] = y[~nanmask]
+    new_vals = exponential(x[nanmask], *popt)
+    filled[nanmask] = new_vals - new_vals[0] + offset
     return filled
 
 
@@ -232,7 +231,6 @@ def extrapolate_dropsonde(ds_dropsonde, height, ds_bahamas):
         ds_dropsonde["alt"].values,
         ds_dropsonde["ta"].interpolate_na("alt").values,
         ds_bahamas["TS"]
-        .where(~np.isnan(ds_bahamas['MIXRATIO']))
         .sel(time=ds_dropsonde["launch_time"].values, method="nearest")
         .values,
         height,
@@ -242,7 +240,6 @@ def extrapolate_dropsonde(ds_dropsonde, height, ds_bahamas):
         ds_dropsonde["alt"].values,
         ds_dropsonde["q"].interpolate_na("alt").values,
         ds_bahamas["MIXRATIO"]
-        .where(~np.isnan(ds_bahamas['MIXRATIO']))
         .sel(time=ds_dropsonde["launch_time"].values, method="nearest")
         .values
         / 1e3,
