@@ -36,10 +36,8 @@ def setup_workspace(verbosity=0):
     # Absorption species
     ws.abs_speciesSet(
         species=[
-            "H2O, H2O-SelfContCKDMT400, H2O-ForeignContCKDMT400",
-            "CO2, CO2-CKDMT252",
-            "CH4",
-            "O2,O2-CIAfunCKDMT100",
+            "H2O-PWR2022",
+            "O2-PWR2022",
             "N2, N2-CIAfunCKDMT252, N2-CIArotCKDMT252",
             "O3",
         ]
@@ -68,8 +66,6 @@ def run_arts(
     ws: pyarts.workspace.Workspace,
     N2=0.78,
     O2=0.21,
-    CO2=400e-6,
-    CH4=1.8e-6,
     O3=1e-6,
     zenith_angle=180,
     height=None,
@@ -116,13 +112,11 @@ def run_arts(
     ws.p_grid = pressure_profile
     ws.t_field = temperature_profile[:, np.newaxis, np.newaxis]
 
-    vmr_field = np.zeros((6, len(pressure_profile), 1, 1))
+    vmr_field = np.zeros((4, len(pressure_profile), 1, 1))
     vmr_field[0, :, 0, 0] = h2o_profile
-    vmr_field[1, :, 0, 0] = CO2
-    vmr_field[2, :, 0, 0] = CH4
-    vmr_field[3, :, 0, 0] = O2
-    vmr_field[4, :, 0, 0] = N2
-    vmr_field[5, :, 0, 0] = O3
+    vmr_field[1, :, 0, 0] = O2
+    vmr_field[2, :, 0, 0] = N2
+    vmr_field[3, :, 0, 0] = O3
     ws.vmr_field = vmr_field
 
     ws.z_surface = np.array([[surface_altitude]])
@@ -185,30 +179,31 @@ def exponential(x, a, b):
 
 
 def fit_exponential(x, y, p0):
-    valid_idx = (~np.isnan(y)) & (~np.isnan(x))
-    popt, _ = curve_fit(exponential, x[valid_idx], y[valid_idx], p0=p0)
-    offset = y[~np.isnan(y)][-1].values
-    nan_vals = np.isnan(y)
-    idx_nan = np.where(nan_vals)[0]
-    nan_vals[idx_nan - 1] = True  # get overlap of one
+    nanmask = np.isnan(y) | np.isnan(x)
+    popt, _ = curve_fit(exponential, x[~nanmask], y[~nanmask], p0=p0)
+    offset = y[~nanmask][-1].values
+    idx_nan = np.where(nanmask)[0]
+    nanmask[idx_nan - 1] = True  # get overlap of one
     filled = np.zeros_like(y)
-    filled[~nan_vals] = y[~nan_vals]
-    new_vals = exponential(x[nan_vals], *popt)
-    filled[nan_vals] = new_vals - new_vals[0] + offset
+    filled[~nanmask] = y[~nanmask]
+    new_vals = exponential(x[nanmask], *popt)
+    filled[nanmask] = new_vals - new_vals[0] + offset
     return filled
 
 
 def fit_linear(x, y, upper_val, height):
-    last_val = y[~np.isnan(y)][-1]
-    last_height = x[~np.isnan(y)][-1]
-    nan_vals = np.isnan(y)
-    idx_nan = np.where(nan_vals)[0]
-    nan_vals[idx_nan - 1] = True  # get overlap of one
+    nanmask = np.isnan(y) | np.isnan(
+        x
+    )  # nan's exist under plane where we want to extrapolate
+    last_val = y[~nanmask][-1]
+    last_height = x[~nanmask][-1]
+    idx_nan = np.where(nanmask)[0]
+    nanmask[idx_nan - 1] = True  # get overlap of one
     slope = (upper_val - last_val) / (height - last_height)
     filled = np.zeros_like(y)
-    filled[~nan_vals] = y[~nan_vals]
-    new_vals = slope * (x[nan_vals] - last_height) + last_val
-    filled[nan_vals] = new_vals
+    filled[~nanmask] = y[~nanmask]
+    new_vals = slope * (x[nanmask] - last_height) + last_val
+    filled[nanmask] = new_vals
     return filled
 
 

@@ -102,7 +102,7 @@ def plot_dropsonde_wind_vertical_profiles(
         colorby,
         cmap,
         axtitle="Direction from Westerlies",
-        xlabel="$\u03C6$ /degrees",
+        xlabel="$\u03c6$ /degrees",
     )
 
     magnitude = horizontal_wind_speed(northward, eastward)

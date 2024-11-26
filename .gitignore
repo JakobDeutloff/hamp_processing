@@ -167,7 +167,8 @@ cython_debug/
 /Radiometer_Data
 /Radar_Data
 /Data
-/arts_calibration_data
+/arts_calibration
+/.vscode
 
 # other or unknown
 **/.DS_Store

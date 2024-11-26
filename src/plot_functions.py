@@ -54,10 +54,10 @@ def add_lat_lon_axes(hampdata, timeframe, ax_time, set_time_ticks=False):
         ax.spines[["top", "right", "left"]].set_visible(False)
 
     lat_labels = hampdata.radar.lat.sel(time=xticks.values).round(1).values
-    label_axis(ax_lat, 45, lat_labels, "Latitude /$\u00B0$")
+    label_axis(ax_lat, 45, lat_labels, "Latitude /$\u00b0$")
 
     lon_labels = hampdata.radar.lat.sel(time=xticks.values).round(1).values
-    label_axis(ax_lon, 85, lon_labels, "Longitude /$\u00B0$")
+    label_axis(ax_lon, 85, lon_labels, "Longitude /$\u00b0$")
 
     if set_time_ticks:
         ax_time.set_xticks(xticks0)
@@ -358,14 +358,23 @@ def get_hamp_TBs(hampdata):
     return freqs_hamp, TB_hamp
 
 
-def plot_arts_flux(TB_hamp, TB_arts, dropsonde_id, time):
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.scatter(TB_arts.index, TB_arts.values, label="ARTS", marker="o")
-    ax.scatter(TB_hamp.index, TB_hamp.values, label="HAMP", color="red", marker="x")
-    ax.set_xlabel("Frequency / GHz")
-    ax.set_ylabel("Brightness Temperature / K")
-    ax.spines[["top", "right"]].set_visible(False)
-    ax.legend()
+def plot_arts_flux(TB_hamp, TB_arts, dropsonde_id, time, ds_bahamas):
+    fig, axes = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
+    axes[0].scatter(TB_arts.index, TB_arts.values, label="ARTS", marker="o")
+    axes[0].scatter(
+        TB_hamp.index, TB_hamp.values, label="HAMP", color="red", marker="x"
+    )
+    axes[0].set_ylabel("Brightness Temperature / K")
+    axes[0].spines[["top", "right"]].set_visible(False)
+    axes[0].axhline(ds_bahamas["TS"].sel(time=time, method="nearest"))
+    axes[0].legend()
+
+    # plot difference
+    diff = TB_arts.values - TB_hamp.values
+    axes[1].scatter(TB_arts.index, diff, color="black")
+    axes[1].set_xlabel("Frequency / GHz")
+    axes[1].set_ylabel("Difference / K")
     # ax.set_title(f"Dropsonde {dropsonde_id} at {time.strftime('%Y-%m-%d %H:%M')}")
     fig.tight_layout()
-    return fig, ax
+
+    return fig, axes
