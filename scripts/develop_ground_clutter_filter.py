@@ -1,6 +1,5 @@
 # %%
 import xarray as xr
-from src.plot_functions import plot_radardata_timeseries
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -8,15 +7,6 @@ import numpy as np
 ds_radar = xr.open_dataset(
     "ipns://latest.orcestra-campaign.org/products/HALO/radar/moments/HALO-20240926a.zarr",
     engine="zarr",
-)
-
-# %% plot data
-fig, ax = plt.subplots(figsize=(10, 5))
-ds_radar_plot = ds_radar.sel(
-    time=slice("2024-09-26 12:20", "2024-09-26 13:00"), height=slice(0, 0.5e3)
-)
-plot_radardata_timeseries(
-    ds_radar_plot.time, ds_radar_plot.height / 1e3, ds_radar_plot.dBZg.T, ax=ax, fig=fig
 )
 
 # %% plot histogram of dBZg > -30 against height
@@ -78,13 +68,48 @@ def filter_ground_signal(ds):
 # %%
 ds = filter_ground_signal(ds_radar)
 
-# %% plot data
-fig, ax = plt.subplots(figsize=(10, 5))
-ds_radar_plot = ds.sel(
-    time=slice("2024-09-26 12:20", "2024-09-26 13:00"), height=slice(0, 2e3)
+# %% plot filtered vs unfiltered data
+timeslice = slice("2024-09-26 12:42", "2024-09-26 12:45")
+ds_radar_plot = ds_radar.sel(time=timeslice, height=slice(0, 3e3))
+ds_radar_plot_ground = ds_radar.sel(time=timeslice, height=slice(0, 0.2e3))
+ds_plot = ds.sel(time=timeslice, height=slice(0, 0.2e3))
+
+fig, axes = plt.subplots(3, 1, figsize=(10, 10), sharex=True)
+pcol = axes[0].pcolormesh(
+    ds_radar_plot.time,
+    ds_radar_plot.height,
+    ds_radar_plot.dBZg.T,
+    cmap="YlGnBu",
+    vmin=-30,
+    vmax=30,
 )
-plot_radardata_timeseries(
-    ds_radar_plot.time, ds_radar_plot.height / 1e3, ds_radar_plot.dBZg.T, ax=ax, fig=fig
+
+pcol = axes[1].pcolormesh(
+    ds_radar_plot_ground.time,
+    ds_radar_plot_ground.height,
+    ds_radar_plot_ground.dBZg.T,
+    cmap="YlGnBu",
+    vmin=-30,
+    vmax=30,
 )
+
+pcol = axes[2].pcolormesh(
+    ds_plot.time,
+    ds_plot.height,
+    ds_plot.dBZg.T,
+    cmap="YlGnBu",
+    vmin=-30,
+    vmax=30,
+)
+
+clab, extend, shrink = "Z /dBZg", "max", 0.8
+fig.colorbar(pcol, ax=axes, label=clab, extend=extend, shrink=shrink)
+axes[2].set_xlabel("Time")
+
+for ax in axes:
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.set_ylabel("Height / m")
+
+fig.savefig("quicklooks/gound_filter.png", bbox_inches="tight", dpi=300)
 
 # %%
