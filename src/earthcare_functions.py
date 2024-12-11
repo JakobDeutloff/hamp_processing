@@ -8,8 +8,10 @@ def get_earthcare_track(date):
     day = pd.Timestamp(date)
     if day < pd.Timestamp("2024-09-06"):
         roi = "CAPE_VERDE"
-    else:
+    elif day < pd.Timestamp("2024-11-04"):
         roi = "BARBADOS"
+    else:
+        roi = "EUR"
     try:
         track = sat.SattrackLoader(
             "EARTHCARE",
@@ -46,8 +48,10 @@ def find_ec_under_time(ec_track, ds):
     lon_ec = ec_track["lon"]
 
     dist = geod.inv(lon_ec, lat_ec, lon_halo, lat_halo)[2]
-
-    return ds.time[dist.argmin()].values
+    if dist.min() < 5e4:
+        return ds.time[dist.argmin()].values
+    else:
+        return None
 
 
 def add_earthcare_underpass(ax, ec_under_time, annotate=False):
