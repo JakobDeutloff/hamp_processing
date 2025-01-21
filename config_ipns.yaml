@@ -1,7 +1,8 @@
 date: '20240827'
-flightname: HALO-{date}a
-iwv: ipns://latest.orcestra-campaign.org/products/HALO/iwv/HALO-{date}a.zarr
+flightletter: 'a'
+flightname: HALO-{date}{flightletter}
+iwv: ipns://latest.orcestra-campaign.org/products/HALO/iwv/HALO-{date}{flightletter}.zarr
 path_dropsondes: ipns://latest.orcestra-campaign.org/products/HALO/dropsondes/Level_3/PERCUSION_Level_3.zarr
 path_saveplots: ''
-radar: ipns://latest.orcestra-campaign.org/products/HALO/radar/moments/HALO-{date}a.zarr
-radiometer: ipns://latest.orcestra-campaign.org/products/HALO/radiometer/HALO-{date}a.zarr
+radar: ipns://latest.orcestra-campaign.org/products/HALO/radar/moments/HALO-{date}{flightletter}.zarr
+radiometer: ipns://latest.orcestra-campaign.org/products/HALO/radiometer/HALO-{date}{flightletter}.zarr
