@@ -12,42 +12,74 @@ import matplotlib.dates as mdates
 
 
 # %%
-def read_radar(date):
+
+
+def segmet_track(ec_track, ds_radar):
+    # Calculate the time differences between consecutive time points
+    time_diffs = ec_track.time.diff(dim="time")
+
+    # Find the indices where the time difference is greater than 20 minutes
+    gap_indices = time_diffs > pd.Timedelta("20min")
+
+    # Extract the times where the gaps occur
+    ec_sections = []
+    gap_times = ec_track.time[:-1][gap_indices.values]
+    ec_full = ec_track.copy()
+    for gap_time in gap_times:
+        ec_sections.append(ec_full.sel(time=slice(ec_full.time.min(), gap_time)))
+        idx_gap = int((ec_full.time == gap_time).argmax())
+        ec_full = ec_full.isel(time=slice(idx_gap + 1, None))
+
+    # check overlap with radar data
+    ec_inflight = []
+    for ec_section in ec_sections:
+        if (
+            (ec_section.time[0].values > ds_radar.time[0].values)
+            and (ec_section.time[0].values < ds_radar.time[-1].values)
+        ) or (
+            (ec_section.time[-1].values > ds_radar.time[0].values)
+            and (ec_section.time[-1].values < ds_radar.time[-1].values)
+        ):
+            ec_inflight.append(ec_section)
+
+    return ec_inflight
+
+
+def read_radar(date, flightletter):
     ds_radar = xr.open_dataset(
-        f"Data/Hamp_Processed/radar/HALO-{date}a_radar.zarr", engine="zarr"
+        f"Data/Hamp_Processed/radar/HALO-{date}{flightletter}_radar.zarr", engine="zarr"
     )
-    #  find time when earthcare crosses halo
+    plot_duration = pd.Timedelta("20m")
     ec_track = ecfuncs.get_earthcare_track(date)
-    ec_under_time = ecfuncs.find_ec_under_time(ec_track, ds_radar)
+    if pd.Timestamp(date) > pd.Timestamp("2024-11-01"):
+        ec_segments = segmet_track(ec_track, ds_radar)
+    else:
+        ec_segments = [ec_track]
 
-    plot_duration = pd.Timedelta("30m")
-    ec_starttime, ec_endtime = (
-        ec_under_time - plot_duration / 2,
-        ec_under_time + plot_duration / 2,
-    )
-    timeframe = slice(ec_starttime, ec_endtime)
-    ds_radar = ds_radar.sel(time=timeframe)
-    return ds_radar, ec_under_time
+    ec_under_times = []
+    radar_segments = []
+    for segment in ec_segments:
+        ec_under_time = ecfuncs.find_ec_under_time(segment, ds_radar)
+        ec_under_times.append(ec_under_time)
+        ec_starttime, ec_endtime = (
+            ec_under_time - plot_duration / 2,
+            ec_under_time + plot_duration / 2,
+        )
+        timeframe = slice(ec_starttime, ec_endtime)
+        radar = ds_radar.sel(time=timeframe)
+        if radar.time.size > 0:
+            radar_segments.append(radar)
+        else:
+            radar_segments.append(None)
+
+    return radar_segments, ec_under_times
 
 
-def plot_cloudfraction(date, ax, ds_radar, ec_under_time):
-    # calculate cloud fractions
-    cf = (ds_radar["dBZe"].sel(height=slice(120, 15000)).max("height") > -30).astype(
-        int
-    )
-    cf_total = cf.mean("time")
-
+def plot_cloudfraction(ax, ds_radar, ec_under_time):
     # plot
-    ax.fill_between(
-        cf.time,
-        cf * int(ds_radar.height.max()),
-        color="grey",
-        alpha=0.5,
-        edgecolor=None,
-    )
     pmesh = (
-        ds_radar["dBZe"]
-        .where(ds_radar["dBZe"] > -30)
+        ds_radar["dBZg"]
+        .where(ds_radar["dBZg"] > -30)
         .plot.pcolormesh(
             ax=ax,
             x="time",
@@ -55,20 +87,30 @@ def plot_cloudfraction(date, ax, ds_radar, ec_under_time):
             add_colorbar=False,
             vmax=30,
             vmin=-30,
-            cmap="viridis",
+            cmap="YlGnBu",
             extend="max",
         )
     )
-    ax.set_title(f"{date}, CF: {(cf_total.values * 100).round(2)}%")
+    # print underpass time at the top of the axis
+
+    ax.text(
+        1,
+        0.95,
+        f"{pd.to_datetime(ec_under_time).strftime('%d.%m.')}",
+        transform=ax.transAxes,
+        ha="right",
+        va="top",
+        fontsize=10,
+        color="k",
+    )
     ax.set_xlabel("")
     ax.set_ylabel("")
     ax.spines[["top", "right"]].set_visible(False)
 
     # Set the x-axis formatter to show only the time
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax.axvline(ec_under_time, color="r", linestyle="--", linewidth=1.0)
 
-    return pmesh, cf_total
+    return pmesh
 
 
 # %% load data
@@ -89,26 +131,58 @@ dates = [
     "20240912",
     "20240914",
     "20240916",
+    "20240919",
+    "20240921",
+    "20240923",
+    "20240924",
+    "20240926",
+    "20240928",
+    "20241105",
+    "20241107",
+    "20241110",
+    "20241112",
+    "20241114",
+    "20241116",
+    "20241119",
 ]
-ec_under_times = {}
-radar_data = {}
-for date in dates:
-    radar_data[date], ec_under_times[date] = read_radar(date)
+flightletters = ["a"] * len(dates)
+flightletters[25] = "b"
+flightletters[26] = "b"
+
+underpasses = []
+radar_data = []
+for date, flightletter in zip(dates, flightletters):
+    (
+        radar_segments,
+        ec_under_times,
+    ) = read_radar(date, flightletter)
+    radar_data += radar_segments
+    underpasses += ec_under_times
+
+radar_data = [entry for entry in radar_data if entry is not None]
+underpasses = [entry for entry in underpasses if entry is not None]
+
 
 # %% call plotfunction
-cf_total = {}
-fig, axes = plt.subplots(4, 4, figsize=(35, 18), sharey=True)
-for date, ax in zip(dates, axes.flatten()):
-    pmesh, cf_total[date] = plot_cloudfraction(
-        date, ax, radar_data[date], ec_under_times[date]
+fig, axes = plt.subplots(11, 3, figsize=(23.4, 33.1), sharey=True)
+for i in range(len(radar_data)):
+    ax = axes.flat[i]
+    pmesh = plot_cloudfraction(
+        ax, radar_data[i].assign(height=radar_data[i].height / 1e3), underpasses[i]
     )
 
 fig.colorbar(
     pmesh,
     ax=axes,
-    label="Z / dBZe",
+    label="Z / dBZg",
     aspect=40,
     extend="max",
+    orientation="horizontal",
+    pad=0.03,
 )
-fig.savefig("quicklooks/cloudfractions/all_days.png", dpi=300, bbox_inches="tight")
+for ax in axes[:, 0]:
+    ax.set_ylabel("Height / km")
+for ax in axes[-1, :]:
+    ax.set_xlabel("Time / UTC")
+fig.savefig("quicklooks/underpasses.png", dpi=200, bbox_inches="tight")
 # %%
